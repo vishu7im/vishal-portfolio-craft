@@ -41,7 +41,7 @@ export default function Testimonials() {
       company: 'CodeCorp',
       avatar: '/placeholder.svg',
       content: 'Vishal's backend expertise helped us solve complex performance issues. His code is clean, well-documented, and highly maintainable.'
-    },
+    }
   ];
 
   return (
