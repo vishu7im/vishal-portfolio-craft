@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { Sun, Moon, Palette, X, Paintbrush, TextCursor } from 'lucide-react';
 import { Button } from './ui/button';
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from './ui/dropdown-menu';
+import { usePortfolioData, AppTheme } from '@/services/dataService';
 
 // Font options
 const fonts = [
@@ -34,6 +35,31 @@ export default function ThemeSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentFont, setCurrentFont] = useState(fonts[0]);
   const [currentPalette, setCurrentPalette] = useState(colorPalettes[0]);
+  const [savedTheme] = usePortfolioData<AppTheme | undefined>('theme');
+  
+  useEffect(() => {
+    // Apply saved theme if available
+    if (savedTheme) {
+      // Apply font
+      document.documentElement.style.setProperty('--font-family', savedTheme.fontFamily);
+      
+      // Find and set current font
+      const foundFont = fonts.find(f => f.value === savedTheme.fontFamily);
+      if (foundFont) {
+        setCurrentFont(foundFont);
+      }
+      
+      // Apply colors
+      document.documentElement.style.setProperty('--primary', savedTheme.primaryColor);
+      document.documentElement.style.setProperty('--accent', savedTheme.accentColor);
+      
+      // Find and set current palette
+      const foundPalette = colorPalettes.find(p => p.name === savedTheme.name);
+      if (foundPalette) {
+        setCurrentPalette(foundPalette);
+      }
+    }
+  }, [savedTheme]);
   
   const toggleOpen = () => setIsOpen(!isOpen);
   
@@ -157,7 +183,7 @@ export default function ThemeSwitcher() {
                 onClick={() => changeFont(font)}
                 className={`cursor-pointer ${currentFont.name === font.name ? 'bg-accent/20' : ''}`}
               >
-                {font.name}
+                <span style={{ fontFamily: font.value }}>{font.name}</span>
               </DropdownMenuItem>
             ))}
             

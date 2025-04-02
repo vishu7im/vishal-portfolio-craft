@@ -27,7 +27,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePortfolioData, Project, generateId } from '@/services/dataService';
-import { Edit, Trash } from 'lucide-react';
+import { Edit, Trash, Image as ImageIcon } from 'lucide-react';
+import FileUpload from '@/components/FileUpload';
+import { uploadImage } from '@/services/uploadService';
 
 const AdminProjects: React.FC = () => {
   const [projects, setProjects] = usePortfolioData<Project[]>('projects');
@@ -45,6 +47,7 @@ const AdminProjects: React.FC = () => {
   const [techInput, setTechInput] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const resetForm = () => {
     setCurrentProject({
@@ -108,6 +111,19 @@ const AdminProjects: React.FC = () => {
       setProjects(projects.filter(proj => proj.id !== projectToDelete));
       setDeleteDialogOpen(false);
       setProjectToDelete(null);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const downloadURL = await uploadImage(file, "projects");
+      setCurrentProject(prev => ({
+        ...prev,
+        image: downloadURL
+      }));
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -177,14 +193,36 @@ const AdminProjects: React.FC = () => {
               
               <div>
                 <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                  Image URL
+                  Project Image
                 </label>
-                <Input
-                  id="image"
-                  name="image"
-                  value={currentProject.image}
-                  onChange={handleChange}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  <div className="flex flex-col space-y-4">
+                    <FileUpload
+                      onUpload={handleImageUpload}
+                      label="Upload Project Image"
+                      isUploading={isUploading}
+                    />
+                    <Input
+                      id="image"
+                      name="image"
+                      value={currentProject.image}
+                      onChange={handleChange}
+                      placeholder="Or enter image URL"
+                    />
+                  </div>
+                  
+                  {currentProject.image && (
+                    <div className="flex justify-center">
+                      <div className="relative border rounded-md overflow-hidden w-full max-w-xs">
+                        <img
+                          src={currentProject.image}
+                          alt="Project preview"
+                          className="w-full h-auto object-cover aspect-video"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -277,6 +315,7 @@ const AdminProjects: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
+                  <TableHead>Image</TableHead>
                   <TableHead>Featured</TableHead>
                   <TableHead>Technologies</TableHead>
                   <TableHead>Actions</TableHead>
@@ -287,6 +326,15 @@ const AdminProjects: React.FC = () => {
                   projects.map(project => (
                     <TableRow key={project.id}>
                       <TableCell className="font-medium">{project.title}</TableCell>
+                      <TableCell>
+                        {project.image ? (
+                          <div className="w-10 h-10 overflow-hidden rounded">
+                            <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <ImageIcon size={16} className="text-gray-400" />
+                        )}
+                      </TableCell>
                       <TableCell>{project.featured ? 'Yes' : 'No'}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
@@ -314,7 +362,7 @@ const AdminProjects: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       No projects found
                     </TableCell>
                   </TableRow>

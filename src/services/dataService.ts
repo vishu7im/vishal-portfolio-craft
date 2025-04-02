@@ -1,4 +1,3 @@
-
 import db from '../data/db.json';
 import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
@@ -17,6 +16,9 @@ export interface Profile {
   github: string;
   linkedin: string;
   avatar: string;
+  aboutImage?: string;
+  resume?: string;
+  resumeName?: string;
 }
 
 export interface Skill {
@@ -66,6 +68,13 @@ export interface Testimonial {
   content: string;
 }
 
+export interface AppTheme {
+  name: string;
+  primaryColor: string;
+  accentColor: string;
+  fontFamily: string;
+}
+
 export interface AdminCredentials {
   username: string;
   password: string;
@@ -79,6 +88,7 @@ export interface DatabaseSchema {
   projects: Project[];
   testimonials: Testimonial[];
   admin: AdminCredentials;
+  theme?: AppTheme;
 }
 
 // Initial data

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { User, Briefcase, FileText, Settings, GraduationCap, MessageSquareQuote } from 'lucide-react';
+import { User, Briefcase, FileText, Settings, GraduationCap, MessageSquareQuote, Palette } from 'lucide-react';
 
 const AdminSidebar: React.FC = () => {
   const navItems = [
@@ -29,6 +29,11 @@ const AdminSidebar: React.FC = () => {
       label: 'Testimonials',
       icon: <MessageSquareQuote size={18} />,
       href: '/admin/testimonials'
+    },
+    {
+      label: 'Customization',
+      icon: <Palette size={18} />,
+      href: '/admin/customization'
     },
     {
       label: 'Settings',

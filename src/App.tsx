@@ -1,37 +1,47 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "./components/ThemeProvider";
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { Toaster } from '@/components/ui/toaster';
+import AdminLayout from '@/components/admin/AdminLayout';
 
-import Index from "./pages/Index";
-import About from "./pages/About";
-import Projects from "./pages/Projects";
-import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
+// Pages
+import Index from '@/pages/Index';
+import About from '@/pages/About';
+import Projects from '@/pages/Projects';
+import Contact from '@/pages/Contact';
+import Login from '@/pages/Login';
+import NotFound from '@/pages/NotFound';
 
-// Admin routes
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminProfile from "./pages/admin/AdminProfile";
-import AdminExperience from "./pages/admin/AdminExperience";
-import AdminEducation from "./pages/admin/AdminEducation";
-import AdminProjects from "./pages/admin/AdminProjects";
-import AdminTestimonials from "./pages/admin/AdminTestimonials";
-import AdminSettings from "./pages/admin/AdminSettings";
+// Admin Pages
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import AdminProfile from '@/pages/admin/AdminProfile';
+import AdminExperience from '@/pages/admin/AdminExperience';
+import AdminEducation from '@/pages/admin/AdminEducation';
+import AdminProjects from '@/pages/admin/AdminProjects';
+import AdminTestimonials from '@/pages/admin/AdminTestimonials';
+import AdminSettings from '@/pages/admin/AdminSettings';
+import AdminCustomization from '@/pages/admin/AdminCustomization';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+function App() {
+  useEffect(() => {
+    // Apply any saved theme from localStorage
+    const savedTheme = localStorage.getItem('portfolio-theme');
+    if (savedTheme) {
+      document.documentElement.classList.add(savedTheme);
+    } else {
+      // Default to dark theme
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <Router>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Index />} />
@@ -39,7 +49,7 @@ const App = () => (
             <Route path="/projects" element={<Projects />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
-
+            
             {/* Admin routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
@@ -48,16 +58,18 @@ const App = () => (
               <Route path="education" element={<AdminEducation />} />
               <Route path="projects" element={<AdminProjects />} />
               <Route path="testimonials" element={<AdminTestimonials />} />
+              <Route path="customization" element={<AdminCustomization />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
-
-            {/* Catch-all route */}
+            
+            {/* 404 route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+        </Router>
+        <Toaster />
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
