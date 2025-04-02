@@ -47,8 +47,9 @@ const Index: React.FC = () => {
         </ScrollReveal>
       </div>
       <Skills />
-      <ProjectsSection />
       <ExperienceSection />
+
+      <ProjectsSection />
       <EducationSection />
       <Testimonials />
       <ContactCTA />

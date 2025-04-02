@@ -64,7 +64,7 @@ const ExperienceSection: React.FC = () => {
                             {exp.company}
                           </CardDescription>
                         </div>
-                        <div className="text-sm text-navy-600 bg-navy-100/50 px-3 py-1 rounded-full">
+                        <div className="text-sm  bg-navy-100/30 px-3 py-1 rounded-full">
                           {formatDate(exp.startDate)} —{" "}
                           {exp.current ? "Present" : formatDate(exp.endDate)}
                         </div>

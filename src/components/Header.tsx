@@ -45,13 +45,31 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           {authenticated ? (
             <>
+              {" "}
               <Link to="/admin">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" className="hidden md:block" size="sm">
                   Dashboard
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" onClick={logout}>
+              <Button
+                variant="ghost"
+                className="hidden md:block"
+                size="sm"
+                onClick={logout}
+              >
                 Logout
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="md:hidden"
+                onClick={() => setIsOpen(!isOpen)}
+              >
+                {isOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
               </Button>
             </>
           ) : (
