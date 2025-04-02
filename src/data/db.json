@@ -1,0 +1,83 @@
+
+{
+  "profile": {
+    "name": "Vishal",
+    "title": "Backend Developer",
+    "company": "Edgenroots",
+    "experience": "2 years",
+    "intro": "Hi, I'm Vishal, a backend developer with 2 years of experience. I specialize in building robust and scalable server-side applications.",
+    "bio": "I'm passionate about creating efficient backend solutions that power modern web applications. With a strong foundation in server-side technologies, I enjoy solving complex problems and optimizing performance.",
+    "location": "India",
+    "email": "vishal@example.com",
+    "phone": "+91 1234567890",
+    "github": "https://github.com/vishal",
+    "linkedin": "https://linkedin.com/in/vishal",
+    "avatar": "/placeholder.svg"
+  },
+  "skills": [
+    { "name": "Node.js", "level": 90 },
+    { "name": "Express", "level": 85 },
+    { "name": "MongoDB", "level": 80 },
+    { "name": "SQL", "level": 75 },
+    { "name": "API Design", "level": 90 },
+    { "name": "Docker", "level": 70 }
+  ],
+  "experience": [
+    {
+      "id": "1",
+      "company": "Edgenroots",
+      "position": "Backend Developer",
+      "startDate": "2021-06-15",
+      "endDate": "",
+      "current": true,
+      "description": "Developing and maintaining server-side applications. Working with Node.js, Express, and various databases to create scalable API solutions.",
+      "technologies": ["Node.js", "Express", "MongoDB", "Docker"]
+    },
+    {
+      "id": "2",
+      "company": "Tech Startup",
+      "position": "Junior Developer",
+      "startDate": "2020-01-10",
+      "endDate": "2021-05-30",
+      "current": false,
+      "description": "Started as a junior developer working on various backend tasks and gradually taking on more responsibility.",
+      "technologies": ["JavaScript", "Node.js", "SQL"]
+    }
+  ],
+  "projects": [
+    {
+      "id": "1",
+      "title": "E-commerce API",
+      "description": "A RESTful API for an e-commerce platform with full CRUD operations, authentication, and payment integrations.",
+      "image": "/placeholder.svg",
+      "technologies": ["Node.js", "Express", "MongoDB", "JWT"],
+      "github": "https://github.com/vishal/ecommerce-api",
+      "demo": "https://api.example.com",
+      "featured": true
+    },
+    {
+      "id": "2",
+      "title": "Task Management System",
+      "description": "Backend for a task management application with user roles, task assignment, and real-time notifications.",
+      "image": "/placeholder.svg",
+      "technologies": ["Node.js", "Socket.io", "PostgreSQL"],
+      "github": "https://github.com/vishal/task-manager",
+      "demo": "https://tasks.example.com",
+      "featured": true
+    },
+    {
+      "id": "3",
+      "title": "Authentication Microservice",
+      "description": "A standalone authentication service that can be integrated with various applications.",
+      "image": "/placeholder.svg",
+      "technologies": ["Node.js", "Express", "JWT", "Redis"],
+      "github": "https://github.com/vishal/auth-service",
+      "demo": "",
+      "featured": false
+    }
+  ],
+  "admin": {
+    "username": "admin",
+    "password": "admin123"
+  }
+}
