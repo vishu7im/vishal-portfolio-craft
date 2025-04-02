@@ -1,17 +1,16 @@
-
-import React, { useState, useEffect } from 'react';
-import { useTheme } from './ThemeProvider';
-import { Sun, Moon, Palette, X, Paintbrush, TextCursor } from 'lucide-react';
-import { Button } from './ui/button';
-import { 
+import React, { useState, useEffect } from "react";
+import { useTheme } from "./ThemeProvider";
+import { Sun, Moon, Palette, X, Paintbrush, TextCursor } from "lucide-react";
+import { Button } from "./ui/button";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from './ui/dropdown-menu';
-import { usePortfolioData, AppTheme } from '@/services/dataService';
+} from "./ui/dropdown-menu";
+import { usePortfolioData, AppTheme } from "@/services/dataService";
 
 // Font options
 const fonts = [
@@ -23,7 +22,11 @@ const fonts = [
 
 // Color palette options
 const colorPalettes = [
-  { name: "Default", primary: "hsl(var(--primary))", accent: "hsl(var(--accent))" },
+  {
+    name: "Default",
+    primary: "hsl(var(--primary))",
+    accent: "hsl(var(--accent))",
+  },
   { name: "Ocean", primary: "#0ea5e9", accent: "#22d3ee" },
   { name: "Forest", primary: "#10b981", accent: "#84cc16" },
   { name: "Sunset", primary: "#f97316", accent: "#f59e0b" },
@@ -34,46 +37,33 @@ export default function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [currentFont, setCurrentFont] = useState(fonts[0]);
-  const [currentPalette, setCurrentPalette] = useState(colorPalettes[0]);
-  const [savedTheme] = usePortfolioData<AppTheme | undefined>('theme');
-  
+
+  const [savedTheme] = usePortfolioData<AppTheme | undefined>("theme");
+
   useEffect(() => {
     // Apply saved theme if available
     if (savedTheme) {
       // Apply font
-      document.documentElement.style.setProperty('--font-family', savedTheme.fontFamily);
-      
+      document.documentElement.style.setProperty(
+        "--font-family",
+        savedTheme.fontFamily
+      );
+
       // Find and set current font
-      const foundFont = fonts.find(f => f.value === savedTheme.fontFamily);
+      const foundFont = fonts.find((f) => f.value === savedTheme.fontFamily);
       if (foundFont) {
         setCurrentFont(foundFont);
       }
-      
-      // Apply colors
-      document.documentElement.style.setProperty('--primary', savedTheme.primaryColor);
-      document.documentElement.style.setProperty('--accent', savedTheme.accentColor);
-      
-      // Find and set current palette
-      const foundPalette = colorPalettes.find(p => p.name === savedTheme.name);
-      if (foundPalette) {
-        setCurrentPalette(foundPalette);
-      }
     }
   }, [savedTheme]);
-  
+
   const toggleOpen = () => setIsOpen(!isOpen);
-  
-  const changeFont = (font: typeof fonts[0]) => {
+
+  const changeFont = (font: (typeof fonts)[0]) => {
     setCurrentFont(font);
-    document.documentElement.style.setProperty('--font-family', font.value);
+    document.documentElement.style.setProperty("--font-family", font.value);
   };
-  
-  const changeColorPalette = (palette: typeof colorPalettes[0]) => {
-    setCurrentPalette(palette);
-    document.documentElement.style.setProperty('--primary', palette.primary);
-    document.documentElement.style.setProperty('--accent', palette.accent);
-  };
-  
+
   return (
     <>
       {/* Mobile theme switcher */}
@@ -90,37 +80,37 @@ export default function ThemeSwitcher() {
             <Palette size={20} className="rotate-0 scale-100 transition-all" />
           )}
         </Button>
-        
+
         {isOpen && (
           <div className="absolute bottom-16 right-0 flex flex-col gap-2 animate-slide-in">
             <Button
               size="icon"
-              variant={theme === 'dark' ? 'default' : 'outline'}
-              onClick={() => setTheme('dark')}
+              variant={theme === "dark" ? "default" : "outline"}
+              onClick={() => setTheme("dark")}
               className="h-10 w-10 rounded-full"
             >
               <Moon size={18} />
             </Button>
             <Button
               size="icon"
-              variant={theme === 'light' ? 'default' : 'outline'}
-              onClick={() => setTheme('light')}
+              variant={theme === "light" ? "default" : "outline"}
+              onClick={() => setTheme("light")}
               className="h-10 w-10 rounded-full"
             >
               <Sun size={18} />
             </Button>
             <Button
               size="icon"
-              variant={theme === 'cyberpunk' ? 'default' : 'outline'}
-              onClick={() => setTheme('cyberpunk')}
+              variant={theme === "cyberpunk" ? "default" : "outline"}
+              onClick={() => setTheme("cyberpunk")}
               className="h-10 w-10 rounded-full bg-cyber-primary text-black"
             >
               <span className="text-xs font-bold">CP</span>
             </Button>
             <Button
               size="icon"
-              variant={theme === 'retro' ? 'default' : 'outline'}
-              onClick={() => setTheme('retro')}
+              variant={theme === "retro" ? "default" : "outline"}
+              onClick={() => setTheme("retro")}
               className="h-10 w-10 rounded-full text-primary"
             >
               <span className="text-xs font-bold">RE</span>
@@ -128,7 +118,7 @@ export default function ThemeSwitcher() {
           </div>
         )}
       </div>
-      
+
       {/* Desktop theme switcher */}
       <div className="fixed bottom-6 right-6 z-50 hidden md:block">
         <DropdownMenu>
@@ -144,35 +134,43 @@ export default function ThemeSwitcher() {
           <DropdownMenuContent align="end" className="w-56 animate-fade-in">
             <DropdownMenuLabel>Appearance</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            
+
             <DropdownMenuLabel className="flex items-center">
               <Moon size={16} className="mr-2" /> Theme
             </DropdownMenuLabel>
-            <DropdownMenuItem 
-              onClick={() => setTheme('dark')} 
-              className={`cursor-pointer ${theme === 'dark' ? 'bg-accent/20' : ''}`}
+            <DropdownMenuItem
+              onClick={() => setTheme("dark")}
+              className={`cursor-pointer ${
+                theme === "dark" ? "bg-accent/20" : ""
+              }`}
             >
               Dark
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setTheme('light')} 
-              className={`cursor-pointer ${theme === 'light' ? 'bg-accent/20' : ''}`}
+            <DropdownMenuItem
+              onClick={() => setTheme("light")}
+              className={`cursor-pointer ${
+                theme === "light" ? "bg-accent/20" : ""
+              }`}
             >
               Light
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setTheme('cyberpunk')} 
-              className={`cursor-pointer ${theme === 'cyberpunk' ? 'bg-accent/20' : ''}`}
+            <DropdownMenuItem
+              onClick={() => setTheme("cyberpunk")}
+              className={`cursor-pointer ${
+                theme === "cyberpunk" ? "bg-accent/20" : ""
+              }`}
             >
               Cyberpunk
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setTheme('retro')} 
-              className={`cursor-pointer ${theme === 'retro' ? 'bg-accent/20' : ''}`}
+            <DropdownMenuItem
+              onClick={() => setTheme("retro")}
+              className={`cursor-pointer ${
+                theme === "retro" ? "bg-accent/20" : ""
+              }`}
             >
               Retro
             </DropdownMenuItem>
-            
+
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="flex items-center">
               <TextCursor size={16} className="mr-2" /> Font
@@ -181,31 +179,15 @@ export default function ThemeSwitcher() {
               <DropdownMenuItem
                 key={font.name}
                 onClick={() => changeFont(font)}
-                className={`cursor-pointer ${currentFont.name === font.name ? 'bg-accent/20' : ''}`}
+                className={`cursor-pointer ${
+                  currentFont.name === font.name ? "bg-accent/20" : ""
+                }`}
               >
                 <span style={{ fontFamily: font.value }}>{font.name}</span>
               </DropdownMenuItem>
             ))}
-            
+
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="flex items-center">
-              <Paintbrush size={16} className="mr-2" /> Color Palette
-            </DropdownMenuLabel>
-            {colorPalettes.map((palette) => (
-              <DropdownMenuItem
-                key={palette.name}
-                onClick={() => changeColorPalette(palette)}
-                className={`cursor-pointer ${currentPalette.name === palette.name ? 'bg-accent/20' : ''}`}
-              >
-                <div className="flex items-center">
-                  <div 
-                    className="w-4 h-4 rounded-full mr-2" 
-                    style={{ backgroundColor: palette.primary }}
-                  />
-                  {palette.name}
-                </div>
-              </DropdownMenuItem>
-            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

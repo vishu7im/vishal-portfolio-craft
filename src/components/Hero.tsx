@@ -1,32 +1,33 @@
-
-import React, { useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Github, Linkedin, Mail, Calendar } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { usePortfolioData, Profile } from '@/services/dataService';
+import React, { useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Github, Linkedin, Mail, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
+import { usePortfolioData, Profile } from "@/services/dataService";
 
 const Hero: React.FC = () => {
-  const [profile] = usePortfolioData<Profile>('profile');
+  const [profile] = usePortfolioData<Profile>("profile");
   const heroRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  
+
   // Mouse movement tracking for parallax effect
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!heroRef.current || !imageRef.current) return;
-      
+
       const { clientX, clientY } = e;
       const { innerWidth, innerHeight } = window;
-      
+
       // Calculate mouse position relative to center of screen (-0.5 to 0.5)
-      const x = (clientX / innerWidth) - 0.5;
-      const y = (clientY / innerHeight) - 0.5;
-      
+      const x = clientX / innerWidth - 0.5;
+      const y = clientY / innerHeight - 0.5;
+
       // Apply subtle transform to image (parallax effect)
-      imageRef.current.style.transform = `perspective(1000px) rotateY(${x * 5}deg) rotateX(${y * -5}deg) scale(1.05)`;
-      
+      imageRef.current.style.transform = `perspective(1000px) rotateY(${
+        x * 5
+      }deg) rotateX(${y * -5}deg) scale(1.05)`;
+
       // Apply subtle transform to hero section
-      const spotlight = document.querySelector('.spotlight') as HTMLElement;
+      const spotlight = document.querySelector(".spotlight") as HTMLElement;
       if (spotlight) {
         spotlight.style.background = `radial-gradient(
           600px circle at ${clientX}px ${clientY}px,
@@ -35,30 +36,35 @@ const Hero: React.FC = () => {
         )`;
       }
     };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    
+
+    window.addEventListener("mousemove", handleMouseMove);
+
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
-  
+
   // Text typing animation
   useEffect(() => {
-    const titles = ["Developer", "Problem Solver", "API Expert", "Node.js Specialist"];
+    const titles = [
+      "Developer",
+      "Problem Solver",
+      "API Expert",
+      "Node.js Specialist",
+    ];
     let currentTitle = 0;
     let currentChar = 0;
     let isDeleting = false;
     const typingSpeed = 100;
     const deletingSpeed = 50;
     const pauseTime = 1000;
-    
-    const titleElement = document.getElementById('animated-title');
+
+    const titleElement = document.getElementById("animated-title");
     if (!titleElement) return;
-    
+
     const typeTitle = () => {
       const title = titles[currentTitle];
-      
+
       if (isDeleting) {
         titleElement.textContent = title.substring(0, currentChar - 1);
         currentChar--;
@@ -66,7 +72,7 @@ const Hero: React.FC = () => {
         titleElement.textContent = title.substring(0, currentChar + 1);
         currentChar++;
       }
-      
+
       // Change state
       if (!isDeleting && currentChar === title.length) {
         isDeleting = true;
@@ -79,22 +85,25 @@ const Hero: React.FC = () => {
         setTimeout(typeTitle, isDeleting ? deletingSpeed : typingSpeed);
       }
     };
-    
+
     const typingTimeout = setTimeout(typeTitle, 1000);
-    
+
     return () => clearTimeout(typingTimeout);
   }, []);
-  
+
   return (
-    <div className="bg-gradient-to-r from-background to-background/70 min-h-[90vh] flex items-center relative overflow-hidden" ref={heroRef}>
+    <div
+      className="bg-gradient-to-r from-background to-background/70 min-h-[90vh] flex items-center relative overflow-hidden"
+      ref={heroRef}
+    >
       {/* Spotlight follow effect */}
       <div className="spotlight absolute inset-0 z-0"></div>
-      
+
       {/* Floating shapes */}
       <div className="absolute top-20 right-20 w-16 h-16 rounded-full bg-primary/30 animate-float"></div>
       <div className="absolute bottom-20 left-20 w-12 h-12 rounded-full bg-accent/20 animate-spin-slow"></div>
       <div className="absolute top-1/3 left-1/4 w-8 h-8 rounded-md bg-secondary/20 animate-bounce-slow"></div>
-      
+
       <div className="section-container relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="animate-slide-up">
@@ -106,44 +115,72 @@ const Hero: React.FC = () => {
               <span className="animated-border ml-2">{profile.company}</span>
             </h2>
             <h3 className="text-2xl text-primary mb-6">
-              I'm a <span id="animated-title" className="font-medium">Developer</span>
+              I'm a{" "}
+              <span id="animated-title" className="font-medium">
+                Developer
+              </span>
             </h3>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl leading-relaxed">
-              {profile.intro} With a strong foundation in server-side technologies and database management,
-              I focus on creating scalable, efficient, and secure backend solutions that power modern web applications.
+              {profile.intro} With a strong foundation in server-side
+              technologies and database management, I focus on creating
+              scalable, efficient, and secure backend solutions that power
+              modern web applications.
             </p>
-            
+
             <div className="flex flex-wrap gap-4 mb-8">
-              <a href={profile.github} target="_blank" rel="noopener noreferrer" 
-                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300">
+              <a
+                href={profile.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300"
+              >
                 <Github className="h-5 w-5" />
               </a>
-              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" 
-                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300">
+              <a
+                href={profile.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300"
+              >
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href={`mailto:${profile.email}`}
-                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300">
+              <a
+                href={`mailto:${profile.email}`}
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300"
+              >
                 <Mail className="h-5 w-5" />
               </a>
-              <a href="#" className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 flex items-center gap-2">
+              <a
+                href="#"
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 flex items-center gap-2"
+              >
                 <Calendar className="h-5 w-5" />
-                <span className="text-sm hidden sm:inline">Schedule a call</span>
+                <span className="text-sm hidden sm:inline">
+                  Schedule a call
+                </span>
               </a>
             </div>
-            
-            <div className="flex flex-wrap gap-4 staggered-container">
-              <Link to="/projects" className="staggered-item">
+
+            <div className="flex flex-wrap gap-4 ">
+              <Link to="/projects" className="">
                 <Button className="btn-primary flex items-center gap-2 text-lg py-6 px-8 relative group overflow-hidden">
                   <span className="relative z-10">View Projects</span>
-                  <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
-                  <div className="absolute inset-0 bg-primary/80 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  <ArrowRight
+                    size={18}
+                    className="relative z-10 translate-x-1 transition-transform"
+                  />
+                  <div className="absolute inset-0 bg-primary/80 transform translate-y-0 transition-transform duration-300"></div>
                 </Button>
               </Link>
-              <Link to="/contact" className="staggered-item">
-                <Button variant="outline" className="btn-outline text-lg py-6 px-8 relative group overflow-hidden">
-                  <span className="relative z-10 group-hover:text-white transition-colors duration-300">Contact Me</span>
-                  <div className="absolute inset-0 bg-primary transform scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></div>
+              <Link to="/contact" className="">
+                <Button
+                  variant="outline"
+                  className="btn-outline text-lg py-6 px-8 relative group overflow-hidden"
+                >
+                  <span className="relative z-10 text-white transition-colors duration-300">
+                    Contact Me
+                  </span>
+                  <div className="absolute inset-0 bg-primary transform  scale-x-100 origin-left transition-transform duration-300"></div>
                 </Button>
               </Link>
             </div>
@@ -151,19 +188,21 @@ const Hero: React.FC = () => {
           <div className="hidden lg:flex justify-center animate-slide-in-right">
             <div className="relative perspective-effect">
               <div className="w-72 h-72 rounded-full bg-primary/20 animate-pulse absolute -top-6 -left-6"></div>
-              <img 
+              <img
                 ref={imageRef}
-                src="/assets/vishal-profile.jpg" 
-                alt="Vishal - Backend Developer" 
+                src="/assets/vishal-profile.jpg"
+                alt="Vishal - Backend Developer"
                 className="w-80 h-80 object-cover rounded-lg shadow-xl relative z-10 transition-transform duration-200 animate-glow"
-                style={{ transformStyle: 'preserve-3d' }}
+                style={{ transformStyle: "preserve-3d" }}
                 onError={(e) => {
                   // Fallback to placeholder if image fails to load
-                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  (e.target as HTMLImageElement).src = "/placeholder.svg";
                 }}
               />
               <div className="absolute -bottom-4 -right-4 bg-card p-4 rounded-lg shadow-lg animate-float">
-                <p className="font-bold text-foreground">{profile.experience} Experience</p>
+                <p className="font-bold text-foreground">
+                  {profile.experience} Experience
+                </p>
               </div>
             </div>
           </div>
