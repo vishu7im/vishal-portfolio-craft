@@ -24,7 +24,7 @@ export default function Testimonials() {
       position: 'CTO',
       company: 'Tech Innovations',
       avatar: '/placeholder.svg',
-      content: 'Vishal is one of the most talented backend developers I've worked with. His attention to detail and commitment to quality code is impressive.'
+      content: "Vishal is one of the most talented backend developers I've worked with. His attention to detail and commitment to quality code is impressive."
     },
     {
       id: '2',
@@ -32,7 +32,7 @@ export default function Testimonials() {
       position: 'Project Manager',
       company: 'WebSolutions',
       avatar: '/placeholder.svg',
-      content: 'Working with Vishal was a game-changer for our project. He delivered everything on time and his technical skills are outstanding.'
+      content: "Working with Vishal was a game-changer for our project. He delivered everything on time and his technical skills are outstanding."
     },
     {
       id: '3',
@@ -40,7 +40,7 @@ export default function Testimonials() {
       position: 'Lead Developer',
       company: 'CodeCorp',
       avatar: '/placeholder.svg',
-      content: 'Vishal's backend expertise helped us solve complex performance issues. His code is clean, well-documented, and highly maintainable.'
+      content: "Vishal's backend expertise helped us solve complex performance issues. His code is clean, well-documented, and highly maintainable."
     }
   ];
 
