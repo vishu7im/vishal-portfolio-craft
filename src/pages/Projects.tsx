@@ -15,6 +15,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { usePortfolioData, Project } from '@/services/dataService';
 import { ExternalLink, Github } from 'lucide-react';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
 
 const Projects: React.FC = () => {
   const [projects] = usePortfolioData<Project[]>('projects');
@@ -44,15 +45,31 @@ const Projects: React.FC = () => {
       (card as HTMLElement).style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
     };
     
+    const handleTiltEffect = (e: Event) => {
+      if (!(e instanceof MouseEvent)) return;
+      
+      const target = e.currentTarget;
+      if (target instanceof Element) {
+        handleMouseMove(e, target);
+      }
+    };
+    
+    const handleTiltReset = (e: Event) => {
+      const target = e.currentTarget;
+      if (target instanceof Element) {
+        handleMouseLeave(target);
+      }
+    };
+    
     cards.forEach(card => {
-      card.addEventListener('mousemove', (e) => handleMouseMove(e, card));
-      card.addEventListener('mouseleave', () => handleMouseLeave(card));
+      card.addEventListener('mousemove', handleTiltEffect);
+      card.addEventListener('mouseleave', handleTiltReset);
     });
     
     return () => {
       cards.forEach(card => {
-        card.removeEventListener('mousemove', (e) => handleMouseMove(e as MouseEvent, card));
-        card.removeEventListener('mouseleave', () => handleMouseLeave(card));
+        card.removeEventListener('mousemove', handleTiltEffect);
+        card.removeEventListener('mouseleave', handleTiltReset);
       });
     };
   }, [projects]);
@@ -61,8 +78,9 @@ const Projects: React.FC = () => {
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <Header />
       <Background />
+      <ThemeSwitcher />
       
-      <main className="flex-grow bg-navy-50/80 backdrop-blur-sm py-16 relative">
+      <main className="flex-grow bg-background/80 backdrop-blur-sm py-16 relative">
         <div className="section-container">
           <ScrollReveal>
             <h1 className="section-title text-center gradient-text text-5xl">Projects</h1>
@@ -74,7 +92,7 @@ const Projects: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-12">
             {projects.map((project, index) => (
               <ScrollReveal key={project.id} threshold={0.1} delay={index * 100}>
-                <Card className="tilt-card flex flex-col h-full backdrop-blur-sm bg-white/80 border-none shadow-lg overflow-hidden">
+                <Card className="tilt-card flex flex-col h-full backdrop-blur-sm bg-card/80 border-border shadow-lg overflow-hidden">
                   <div className="h-48 overflow-hidden group">
                     <img 
                       src={project.image} 
@@ -94,7 +112,7 @@ const Projects: React.FC = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="flex-grow">
-                    <CardDescription className="text-navy-700">{project.description}</CardDescription>
+                    <CardDescription className="text-muted-foreground">{project.description}</CardDescription>
                   </CardContent>
                   <CardFooter className="flex justify-between">
                     {project.github && (
@@ -102,7 +120,7 @@ const Projects: React.FC = () => {
                         href={project.github} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="flex items-center gap-1 text-navy-700 hover:text-primary transition-colors group"
+                        className="flex items-center gap-1 text-foreground/80 hover:text-primary transition-colors group"
                       >
                         <Github size={16} className="group-hover:animate-bounce-slow" /> Code
                       </a>
@@ -112,7 +130,7 @@ const Projects: React.FC = () => {
                         href={project.demo} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="flex items-center gap-1 text-navy-700 hover:text-primary transition-colors group"
+                        className="flex items-center gap-1 text-foreground/80 hover:text-primary transition-colors group"
                       >
                         <ExternalLink size={16} className="group-hover:animate-spin-slow" /> Live Demo
                       </a>

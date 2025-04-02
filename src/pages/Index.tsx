@@ -8,6 +8,11 @@ import ProjectsSection from '@/components/ProjectsSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import Background from '@/components/Background';
 import TiltEffect from '@/components/TiltEffect';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
+import PersonalStats from '@/components/PersonalStats';
+import Testimonials from '@/components/Testimonials';
+import ContactCTA from '@/components/ContactCTA';
+import ScrollReveal from '@/components/ScrollReveal';
 
 const Index: React.FC = () => {
   // Initialize the reveal on scroll effect
@@ -32,15 +37,23 @@ const Index: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-navy-50 to-navy-100 relative">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-background/70 relative theme-transition">
       <Background />
       <Header />
       <Hero />
+      <div className="py-8 bg-background/50 backdrop-blur-sm">
+        <ScrollReveal>
+          <PersonalStats />
+        </ScrollReveal>
+      </div>
       <Skills />
       <ProjectsSection />
       <ExperienceSection />
+      <Testimonials />
+      <ContactCTA />
       <Footer />
       <TiltEffect />
+      <ThemeSwitcher />
     </div>
   );
 };

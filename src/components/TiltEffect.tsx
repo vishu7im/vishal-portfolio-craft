@@ -1,9 +1,9 @@
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
-export function useTiltEffect() {
+const TiltEffect: React.FC = () => {
   useEffect(() => {
-    const tiltCards = document.querySelectorAll('.tilt-card');
+    const cards = document.querySelectorAll('.tilt-card');
     
     const handleMouseMove = (e: MouseEvent, card: Element) => {
       const rect = card.getBoundingClientRect();
@@ -16,31 +16,46 @@ export function useTiltEffect() {
       const deltaX = (x - centerX) / centerX;
       const deltaY = (y - centerY) / centerY;
       
-      const rotateX = deltaY * -10; // Negative to make it follow the mouse
+      const rotateX = deltaY * -10;
       const rotateY = deltaX * 10;
       
-      (card as HTMLElement).style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+      (card as HTMLElement).style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     };
     
     const handleMouseLeave = (card: Element) => {
-      (card as HTMLElement).style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+      (card as HTMLElement).style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
     };
     
-    tiltCards.forEach(card => {
-      card.addEventListener('mousemove', (e) => handleMouseMove(e, card));
-      card.addEventListener('mouseleave', () => handleMouseLeave(card));
+    const handleTiltEffect = (e: Event) => {
+      if (!(e instanceof MouseEvent)) return;
+      
+      const target = e.currentTarget;
+      if (target instanceof Element) {
+        handleMouseMove(e, target);
+      }
+    };
+    
+    const handleTiltReset = (e: Event) => {
+      const target = e.currentTarget;
+      if (target instanceof Element) {
+        handleMouseLeave(target);
+      }
+    };
+    
+    cards.forEach(card => {
+      card.addEventListener('mousemove', handleTiltEffect);
+      card.addEventListener('mouseleave', handleTiltReset);
     });
     
     return () => {
-      tiltCards.forEach(card => {
-        card.removeEventListener('mousemove', (e) => handleMouseMove(e as MouseEvent, card));
-        card.removeEventListener('mouseleave', () => handleMouseLeave(card));
+      cards.forEach(card => {
+        card.removeEventListener('mousemove', handleTiltEffect);
+        card.removeEventListener('mouseleave', handleTiltReset);
       });
     };
   }, []);
-}
-
-export default function TiltEffect() {
-  useTiltEffect();
+  
   return null;
-}
+};
+
+export default TiltEffect;

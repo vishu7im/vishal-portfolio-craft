@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -34,6 +33,98 @@
     --ring: 221 83% 53%;
     
     --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 217 19% 27%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217 19% 27%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 217 91% 60%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217 19% 27%;
+    --input: 217 19% 27%;
+    --ring: 224 76% 48%;
+  }
+
+  /* Cyberpunk theme */
+  .theme-cyberpunk {
+    --background: 0 0% 7%;
+    --foreground: 180 100% 50%;
+    
+    --card: 0 0% 10%;
+    --card-foreground: 180 100% 50%;
+    
+    --popover: 0 0% 10%;
+    --popover-foreground: 180 100% 50%;
+    
+    --primary: 180 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    
+    --secondary: 300 100% 50%;
+    --secondary-foreground: 0 0% 0%;
+    
+    --muted: 0 0% 15%;
+    --muted-foreground: 180 100% 40%;
+    
+    --accent: 60 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 0%;
+    
+    --border: 180 100% 30%;
+    --input: 0 0% 20%;
+    --ring: 180 100% 50%;
+  }
+
+  /* Retro theme */
+  .theme-retro {
+    --background: 40 30% 92%;
+    --foreground: 25 70% 33%;
+    
+    --card: 36 100% 90%;
+    --card-foreground: 25 70% 33%;
+    
+    --popover: 36 100% 90%;
+    --popover-foreground: 25 70% 33%;
+    
+    --primary: 25 95% 53%;
+    --primary-foreground: 40 30% 92%;
+    
+    --secondary: 30 60% 80%;
+    --secondary-foreground: 25 70% 33%;
+    
+    --muted: 30 30% 85%;
+    --muted-foreground: 25 40% 40%;
+    
+    --accent: 25 95% 53%;
+    --accent-foreground: 40 30% 92%;
+    
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 40 30% 92%;
+    
+    --border: 30 60% 80%;
+    --input: 30 30% 85%;
+    --ring: 25 95% 53%;
   }
 
   body {
@@ -156,46 +247,114 @@
     background-repeat: no-repeat;
     background-size: cover;
   }
-}
 
-/* Particle background */
-.particles-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-}
+  /* Theme transition */
+  .theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
 
-/* Gradient text */
-.gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600;
-}
+  /* Cyberpunk specific utilities */
+  .cyber-border {
+    border: 2px solid theme('colors.cyber.primary');
+    box-shadow: 0 0 10px theme('colors.cyber.primary'), 0 0 20px theme('colors.cyber.primary');
+  }
 
-/* Animated border */
-.animated-border {
-  position: relative;
-}
+  .cyber-text-glow {
+    text-shadow: 0 0 5px theme('colors.cyber.primary'), 0 0 10px theme('colors.cyber.primary');
+  }
 
-.animated-border::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(to right, transparent, theme('colors.primary.DEFAULT'), transparent);
-  animation: borderGlow 2s ease-in-out infinite;
-}
+  .cyber-backdrop {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid theme('colors.cyber.primary');
+  }
 
-@keyframes borderGlow {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
+  .retro-shadow {
+    box-shadow: 6px 6px 0 theme('colors.navy.700');
+  }
 
-/* 3D card tilt effect - will be powered by JS */
-.tilt-card {
-  transition: transform 0.5s ease;
-  transform-style: preserve-3d;
+  .retro-border {
+    border: 3px solid theme('colors.navy.700');
+  }
+
+  .retro-pattern {
+    background-image: radial-gradient(theme('colors.navy.300') 2px, transparent 2px);
+    background-size: 30px 30px;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .dark .glass {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Better scrollbars */
+  .styled-scrollbars {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) transparent;
+  }
+
+  .styled-scrollbars::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .styled-scrollbars::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .styled-scrollbars::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--primary));
+    border-radius: 10px;
+  }
+
+  /* Particle background */
+  .particles-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600;
+  }
+
+  /* Animated border */
+  .animated-border {
+    position: relative;
+  }
+
+  .animated-border::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, theme('colors.primary.DEFAULT'), transparent);
+    animation: borderGlow 2s ease-in-out infinite;
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* 3D card tilt effect - will be powered by JS */
+  .tilt-card {
+    transition: transform 0.5s ease;
+    transform-style: preserve-3d;
+  }
 }

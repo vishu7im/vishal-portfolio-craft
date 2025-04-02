@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Github, Linkedin, Mail, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePortfolioData, Profile } from '@/services/dataService';
 
@@ -45,7 +45,7 @@ const Hero: React.FC = () => {
   
   // Text typing animation
   useEffect(() => {
-    const titles = ["Developer", "Designer", "Problem Solver"];
+    const titles = ["Developer", "Problem Solver", "API Expert", "Node.js Specialist"];
     let currentTitle = 0;
     let currentChar = 0;
     let isDeleting = false;
@@ -86,14 +86,14 @@ const Hero: React.FC = () => {
   }, []);
   
   return (
-    <div className="bg-gradient-to-r from-navy-50 to-navy-100 min-h-[90vh] flex items-center relative overflow-hidden" ref={heroRef}>
+    <div className="bg-gradient-to-r from-background to-background/70 min-h-[90vh] flex items-center relative overflow-hidden" ref={heroRef}>
       {/* Spotlight follow effect */}
       <div className="spotlight absolute inset-0 z-0"></div>
       
       {/* Floating shapes */}
-      <div className="absolute top-20 right-20 w-16 h-16 rounded-full bg-blue-300/30 animate-float"></div>
-      <div className="absolute bottom-20 left-20 w-12 h-12 rounded-full bg-purple-300/20 animate-spin-slow"></div>
-      <div className="absolute top-1/3 left-1/4 w-8 h-8 rounded-md bg-pink-300/20 animate-bounce-slow"></div>
+      <div className="absolute top-20 right-20 w-16 h-16 rounded-full bg-primary/30 animate-float"></div>
+      <div className="absolute bottom-20 left-20 w-12 h-12 rounded-full bg-accent/20 animate-spin-slow"></div>
+      <div className="absolute top-1/3 left-1/4 w-8 h-8 rounded-md bg-secondary/20 animate-bounce-slow"></div>
       
       <div className="section-container relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -101,16 +101,37 @@ const Hero: React.FC = () => {
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
               Hi, I'm <span className="gradient-text">{profile.name}</span>
             </h1>
-            <h2 className="text-2xl md:text-3xl text-navy-700 mb-2 flex items-center">
+            <h2 className="text-2xl md:text-3xl text-foreground/90 mb-2 flex items-center">
               <span>{profile.title} at </span>
               <span className="animated-border ml-2">{profile.company}</span>
             </h2>
             <h3 className="text-2xl text-primary mb-6">
               I'm a <span id="animated-title" className="font-medium">Developer</span>
             </h3>
-            <p className="text-lg text-navy-600 mb-8 max-w-2xl leading-relaxed">
-              {profile.intro}
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl leading-relaxed">
+              {profile.intro} With a strong foundation in server-side technologies and database management,
+              I focus on creating scalable, efficient, and secure backend solutions that power modern web applications.
             </p>
+            
+            <div className="flex flex-wrap gap-4 mb-8">
+              <a href={profile.github} target="_blank" rel="noopener noreferrer" 
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300">
+                <Github className="h-5 w-5" />
+              </a>
+              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" 
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300">
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a href={`mailto:${profile.email}`}
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300">
+                <Mail className="h-5 w-5" />
+              </a>
+              <a href="#" className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                <span className="text-sm hidden sm:inline">Schedule a call</span>
+              </a>
+            </div>
+            
             <div className="flex flex-wrap gap-4 staggered-container">
               <Link to="/projects" className="staggered-item">
                 <Button className="btn-primary flex items-center gap-2 text-lg py-6 px-8 relative group overflow-hidden">
@@ -132,13 +153,17 @@ const Hero: React.FC = () => {
               <div className="w-72 h-72 rounded-full bg-primary/20 animate-pulse absolute -top-6 -left-6"></div>
               <img 
                 ref={imageRef}
-                src={profile.avatar} 
-                alt={profile.name} 
+                src="/assets/vishal-profile.jpg" 
+                alt="Vishal - Backend Developer" 
                 className="w-80 h-80 object-cover rounded-lg shadow-xl relative z-10 transition-transform duration-200 animate-glow"
                 style={{ transformStyle: 'preserve-3d' }}
+                onError={(e) => {
+                  // Fallback to placeholder if image fails to load
+                  (e.target as HTMLImageElement).src = '/placeholder.svg';
+                }}
               />
-              <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-lg shadow-lg animate-float">
-                <p className="font-bold text-navy-900">{profile.experience} Experience</p>
+              <div className="absolute -bottom-4 -right-4 bg-card p-4 rounded-lg shadow-lg animate-float">
+                <p className="font-bold text-foreground">{profile.experience} Experience</p>
               </div>
             </div>
           </div>

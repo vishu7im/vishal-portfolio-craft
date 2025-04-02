@@ -76,6 +76,14 @@ export default {
           900: "#1e2e4a",
           950: "#0f172a"
         },
+        // Adding cyberpunk theme colors
+        cyber: {
+          primary: "#00fffc",
+          secondary: "#ff00ff", 
+          accent: "#fffc00",
+          dark: "#121212",
+          light: "#e0e0e0"
+        }
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -98,13 +106,30 @@ export default {
         slideIn: {
           from: { transform: "translateY(20px)" },
           to: { transform: "translateY(0)" }
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" }
+        },
+        pulse: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fadeIn 0.5s ease-out",
-        "slide-in": "slideIn 0.5s ease-out"
+        "slide-in": "slideIn 0.5s ease-out",
+        "float": "float 3s ease-in-out infinite",
+        "pulse-slow": "pulse 3s ease-in-out infinite"
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: '100%',
+          },
+        },
       }
     }
   },
