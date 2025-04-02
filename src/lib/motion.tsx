@@ -15,6 +15,8 @@ interface MotionProps {
   [key: string]: any;
 }
 
+type Opacity = number | string;
+
 // Simple utility to simulate Framer Motion functionality
 // without adding another dependency
 export const motion = {
@@ -69,7 +71,7 @@ export const motion = {
         Object.entries(initial).forEach(([key, value]) => {
           switch (key) {
             case 'opacity':
-              finalStyle.opacity = value;
+              finalStyle.opacity = value as Opacity;
               break;
             case 'y':
               finalStyle.transform = `translateY(${value}px)`;
@@ -92,7 +94,7 @@ export const motion = {
           Object.entries(animationState).forEach(([key, value]) => {
             switch (key) {
               case 'opacity':
-                finalStyle.opacity = value;
+                finalStyle.opacity = value as Opacity;
                 break;
               case 'y':
                 finalStyle.transform = `translateY(${value}px)`;

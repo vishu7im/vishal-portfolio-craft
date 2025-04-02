@@ -5,44 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { QuoteIcon } from 'lucide-react';
 import ScrollReveal from './ScrollReveal';
-
-interface Testimonial {
-  id: string;
-  name: string;
-  position: string;
-  company: string;
-  avatar: string;
-  content: string;
-}
+import { Testimonial } from '@/services/dataService';
 
 export default function Testimonials() {
-  // We'll use a hardcoded array for now since the data service might not have testimonials yet
-  const testimonials: Testimonial[] = [
-    {
-      id: '1',
-      name: 'John Smith',
-      position: 'CTO',
-      company: 'Tech Innovations',
-      avatar: '/placeholder.svg',
-      content: "Vishal is one of the most talented backend developers I've worked with. His attention to detail and commitment to quality code is impressive."
-    },
-    {
-      id: '2',
-      name: 'Sarah Johnson',
-      position: 'Project Manager',
-      company: 'WebSolutions',
-      avatar: '/placeholder.svg',
-      content: "Working with Vishal was a game-changer for our project. He delivered everything on time and his technical skills are outstanding."
-    },
-    {
-      id: '3',
-      name: 'Michael Chen',
-      position: 'Lead Developer',
-      company: 'CodeCorp',
-      avatar: '/placeholder.svg',
-      content: "Vishal's backend expertise helped us solve complex performance issues. His code is clean, well-documented, and highly maintainable."
-    }
-  ];
+  const [testimonials] = usePortfolioData<Testimonial[]>('testimonials');
 
   return (
     <section className="py-16 bg-muted/30 relative overflow-hidden">

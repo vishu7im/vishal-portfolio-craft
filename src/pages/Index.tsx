@@ -6,6 +6,7 @@ import Hero from '@/components/Hero';
 import Skills from '@/components/Skills';
 import ProjectsSection from '@/components/ProjectsSection';
 import ExperienceSection from '@/components/ExperienceSection';
+import EducationSection from '@/components/EducationSection';
 import Background from '@/components/Background';
 import TiltEffect from '@/components/TiltEffect';
 import ThemeSwitcher from '@/components/ThemeSwitcher';
@@ -49,6 +50,7 @@ const Index: React.FC = () => {
       <Skills />
       <ProjectsSection />
       <ExperienceSection />
+      <EducationSection />
       <Testimonials />
       <ContactCTA />
       <Footer />

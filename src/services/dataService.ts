@@ -35,6 +35,17 @@ export interface Experience {
   technologies: string[];
 }
 
+export interface Education {
+  id: string;
+  institution: string;
+  degree: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  description: string;
+  grade: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -46,6 +57,15 @@ export interface Project {
   featured: boolean;
 }
 
+export interface Testimonial {
+  id: string;
+  name: string;
+  position: string;
+  company: string;
+  avatar: string;
+  content: string;
+}
+
 export interface AdminCredentials {
   username: string;
   password: string;
@@ -55,7 +75,9 @@ export interface DatabaseSchema {
   profile: Profile;
   skills: Skill[];
   experience: Experience[];
+  education: Education[];
   projects: Project[];
+  testimonials: Testimonial[];
   admin: AdminCredentials;
 }
 

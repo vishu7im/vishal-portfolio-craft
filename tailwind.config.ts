@@ -85,6 +85,11 @@ export default {
           light: "#e0e0e0"
         }
       },
+      fontFamily: {
+        sans: ["var(--font-family, system-ui)", "sans-serif"],
+        serif: ["'Playfair Display'", "serif"],
+        mono: ["'Roboto Mono'", "monospace"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

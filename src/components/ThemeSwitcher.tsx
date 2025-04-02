@@ -1,20 +1,52 @@
 
 import React, { useState } from 'react';
 import { useTheme } from './ThemeProvider';
-import { Sun, Moon, Palette, X } from 'lucide-react';
+import { Sun, Moon, Palette, X, Paintbrush, TextCursor } from 'lucide-react';
 import { Button } from './ui/button';
 import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from './ui/dropdown-menu';
+
+// Font options
+const fonts = [
+  { name: "Default", value: "system-ui, sans-serif" },
+  { name: "Sans", value: "'Open Sans', sans-serif" },
+  { name: "Serif", value: "'Playfair Display', serif" },
+  { name: "Mono", value: "'Roboto Mono', monospace" },
+];
+
+// Color palette options
+const colorPalettes = [
+  { name: "Default", primary: "hsl(var(--primary))", accent: "hsl(var(--accent))" },
+  { name: "Ocean", primary: "#0ea5e9", accent: "#22d3ee" },
+  { name: "Forest", primary: "#10b981", accent: "#84cc16" },
+  { name: "Sunset", primary: "#f97316", accent: "#f59e0b" },
+  { name: "Berry", primary: "#8b5cf6", accent: "#d946ef" },
+];
 
 export default function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentFont, setCurrentFont] = useState(fonts[0]);
+  const [currentPalette, setCurrentPalette] = useState(colorPalettes[0]);
   
   const toggleOpen = () => setIsOpen(!isOpen);
+  
+  const changeFont = (font: typeof fonts[0]) => {
+    setCurrentFont(font);
+    document.documentElement.style.setProperty('--font-family', font.value);
+  };
+  
+  const changeColorPalette = (palette: typeof colorPalettes[0]) => {
+    setCurrentPalette(palette);
+    document.documentElement.style.setProperty('--primary', palette.primary);
+    document.documentElement.style.setProperty('--accent', palette.accent);
+  };
   
   return (
     <>
@@ -72,33 +104,82 @@ export default function ThemeSwitcher() {
       </div>
       
       {/* Desktop theme switcher */}
-      <div className="fixed top-20 right-6 z-50 hidden md:block">
+      <div className="fixed bottom-6 right-6 z-50 hidden md:block">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               size="icon"
               variant="outline"
-              className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border-primary shadow-lg shadow-primary/20"
+              className="h-12 w-12 rounded-full bg-background/80 backdrop-blur-sm border-primary shadow-lg shadow-primary/20"
             >
-              {theme === 'dark' && <Moon size={18} />}
-              {theme === 'light' && <Sun size={18} />}
-              {theme === 'cyberpunk' && <span className="text-xs font-bold text-cyber-primary">CP</span>}
-              {theme === 'retro' && <span className="text-xs font-bold">RE</span>}
+              <Palette size={20} />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="animate-fade-in">
-            <DropdownMenuItem onClick={() => setTheme('dark')} className="cursor-pointer">
-              <Moon size={16} className="mr-2" /> Dark
+          <DropdownMenuContent align="end" className="w-56 animate-fade-in">
+            <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuLabel className="flex items-center">
+              <Moon size={16} className="mr-2" /> Theme
+            </DropdownMenuLabel>
+            <DropdownMenuItem 
+              onClick={() => setTheme('dark')} 
+              className={`cursor-pointer ${theme === 'dark' ? 'bg-accent/20' : ''}`}
+            >
+              Dark
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer">
-              <Sun size={16} className="mr-2" /> Light
+            <DropdownMenuItem 
+              onClick={() => setTheme('light')} 
+              className={`cursor-pointer ${theme === 'light' ? 'bg-accent/20' : ''}`}
+            >
+              Light
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('cyberpunk')} className="cursor-pointer">
-              <span className="w-4 h-4 rounded-full bg-cyber-primary mr-2" /> Cyberpunk
+            <DropdownMenuItem 
+              onClick={() => setTheme('cyberpunk')} 
+              className={`cursor-pointer ${theme === 'cyberpunk' ? 'bg-accent/20' : ''}`}
+            >
+              Cyberpunk
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('retro')} className="cursor-pointer">
-              <span className="w-4 h-4 rounded-full bg-[#f3b27a] mr-2" /> Retro
+            <DropdownMenuItem 
+              onClick={() => setTheme('retro')} 
+              className={`cursor-pointer ${theme === 'retro' ? 'bg-accent/20' : ''}`}
+            >
+              Retro
             </DropdownMenuItem>
+            
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center">
+              <TextCursor size={16} className="mr-2" /> Font
+            </DropdownMenuLabel>
+            {fonts.map((font) => (
+              <DropdownMenuItem
+                key={font.name}
+                onClick={() => changeFont(font)}
+                className={`cursor-pointer ${currentFont.name === font.name ? 'bg-accent/20' : ''}`}
+              >
+                {font.name}
+              </DropdownMenuItem>
+            ))}
+            
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="flex items-center">
+              <Paintbrush size={16} className="mr-2" /> Color Palette
+            </DropdownMenuLabel>
+            {colorPalettes.map((palette) => (
+              <DropdownMenuItem
+                key={palette.name}
+                onClick={() => changeColorPalette(palette)}
+                className={`cursor-pointer ${currentPalette.name === palette.name ? 'bg-accent/20' : ''}`}
+              >
+                <div className="flex items-center">
+                  <div 
+                    className="w-4 h-4 rounded-full mr-2" 
+                    style={{ backgroundColor: palette.primary }}
+                  />
+                  {palette.name}
+                </div>
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -18,7 +18,9 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProfile from "./pages/admin/AdminProfile";
 import AdminExperience from "./pages/admin/AdminExperience";
+import AdminEducation from "./pages/admin/AdminEducation";
 import AdminProjects from "./pages/admin/AdminProjects";
+import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
@@ -43,7 +45,9 @@ const App = () => (
               <Route index element={<AdminDashboard />} />
               <Route path="profile" element={<AdminProfile />} />
               <Route path="experience" element={<AdminExperience />} />
+              <Route path="education" element={<AdminEducation />} />
               <Route path="projects" element={<AdminProjects />} />
+              <Route path="testimonials" element={<AdminTestimonials />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
 

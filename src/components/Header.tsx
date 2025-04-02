@@ -8,7 +8,7 @@ const Header: React.FC = () => {
   const { authenticated, logout } = useAuth();
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-10">
+    <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
         <Link to="/" className="font-bold text-xl text-navy-900">
           Vishal<span className="text-primary">.dev</span>
