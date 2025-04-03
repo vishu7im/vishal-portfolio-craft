@@ -1,6 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Github, Linkedin, Mail, Calendar } from "lucide-react";
+import {
+  ArrowRight,
+  Github,
+  Linkedin,
+  Mail,
+  Calendar,
+  Instagram as InstagramIcon,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePortfolioData, Profile } from "@/services/dataService";
 
@@ -151,13 +158,10 @@ const Hero: React.FC = () => {
                 <Mail className="h-5 w-5" />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/_vi.shu/"
                 className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 flex items-center gap-2"
               >
-                <Calendar className="h-5 w-5" />
-                <span className="text-sm hidden sm:inline">
-                  Schedule a call
-                </span>
+                <InstagramIcon className="h-5 w-5" />
               </a>
             </div>
 
