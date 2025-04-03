@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://vishu.dev",
+  "homepage": "https://vishu7im.github.io/vishal-portfolio-craft",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

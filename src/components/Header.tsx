@@ -43,56 +43,20 @@ const Header: React.FC = () => {
         </nav>
 
         <div className="flex items-center space-x-4">
-          {authenticated ? (
-            <>
-              {" "}
-              <Link to="/admin">
-                <Button variant="outline" className="hidden md:block" size="sm">
-                  Dashboard
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                className="hidden md:block"
-                size="sm"
-                onClick={logout}
-              >
-                Logout
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="md:hidden"
-                onClick={() => setIsOpen(!isOpen)}
-              >
-                {isOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="md:hidden"
-                onClick={() => setIsOpen(!isOpen)}
-              >
-                {isOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
-              </Button>
-              <Link to="/login">
-                <Button variant="outline" className="hidden sm:block" size="sm">
-                  Admin
-                </Button>
-              </Link>
-            </>
-          )}
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </Button>
+          </>
         </div>
       </div>
 
