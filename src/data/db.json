@@ -81,43 +81,101 @@
   "projects": [
     {
       "id": "1",
-      "title": "E-commerce API",
-      "description": "A RESTful API for an e-commerce platform with full CRUD operations, authentication, and payment integrations.",
-      "image": "/placeholder.svg",
-      "technologies": ["Node.js", "Express", "MongoDB", "JWT"],
-      "github": "https://github.com/vishal/ecommerce-api",
-      "demo": "https://api.example.com",
+      "title": "Alma Nilokheri",
+      "description": "A dedicated platform for Alma Nilokheri College, designed to connect alumni with their alma mater. This website fosters networking, collaboration, and a sense of community among past and present students.",
+      "image": "/project/alma.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "MongoDB",
+        "JWT",
+        "React",
+        "Tailwind CSS"
+      ],
+      "github": "https://github.com/alma-nilokheri/almanilokheri",
+      "demo": "https://almanilokheri.in",
       "featured": true
     },
     {
       "id": "2",
-      "title": "Task Management System",
-      "description": "Backend for a task management application with user roles, task assignment, and real-time notifications.",
-      "image": "/placeholder.svg",
-      "technologies": ["Node.js", "Socket.io", "PostgreSQL"],
-      "github": "https://github.com/vishal/task-manager",
-      "demo": "https://tasks.example.com",
-      "featured": true
+      "title": "Admit Easy",
+      "description": "A seamless college admission platform built to bridge the gap between students and colleges. Admit Easy simplifies the admission process, making it more accessible and hassle-free.",
+      "image": "/project/admit-ease.jpeg",
+      "technologies": [
+        "Node.js",
+        "Socket.io",
+        "MongoDB",
+        "React",
+        "Tailwind CSS"
+      ],
+      "github": "https://github.com/vishu7im/AdmitEase.git",
+      "demo": "https://github.com/vishu7im/AdmitEase.git",
+      "featured": false
     },
     {
       "id": "3",
-      "title": "Authentication Microservice",
-      "description": "A standalone authentication service that can be integrated with various applications.",
-      "image": "/placeholder.svg",
-      "technologies": ["Node.js", "Express", "JWT", "Redis"],
-      "github": "https://github.com/vishal/auth-service",
-      "demo": "",
+      "title": "Kiki – AI-Powered Chat & Music Generation",
+      "description": "An advanced AI application featuring an interactive chatbot, music generation capabilities, and more. Kiki brings AI-driven creativity and intelligent conversation to your fingertips.",
+      "image": "/project/kiki.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "JWT",
+        "Redis",
+        "Next.js",
+        "Tailwind CSS",
+        "TypeScript"
+      ],
+      "github": "https://github.com/vishu7im/kiki.git",
+      "demo": "https://kiki-roan.vercel.app/",
+      "featured": true
+    },
+    {
+      "id": "4",
+      "title": "Vercel Clone",
+      "description": "A fully functional Vercel clone built using Next.js and Tailwind CSS, providing seamless project deployment and management features.",
+      "image": "/project/vercel_clone.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "JWT",
+        "Redis",
+        "Next.js",
+        "Tailwind CSS",
+        "TypeScript"
+      ],
+      "github": "https://github.com/vishu7im/vercel-clone.git",
+      "demo": "https://github.com/vishu7im/vercel-clone.git",
+      "featured": true
+    },
+    {
+      "id": "5",
+      "title": "Spotify Clone",
+      "description": "A high-fidelity Spotify clone built with Next.js and Tailwind CSS, offering a sleek music streaming experience with authentication and playlist management.",
+      "image": "/project/spotifyclone.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "JWT",
+        "Redis",
+        "Next.js",
+        "Tailwind CSS",
+        "TypeScript"
+      ],
+      "github": "https://github.com/vishu7im/spotify-clone.git",
+      "demo": "https://spotify-clone-vishu7im.vercel.app/",
       "featured": false
     }
   ],
+
   "testimonials": [
     {
       "id": "1",
-      "name": "John Smith",
-      "position": "CTO",
-      "company": "Tech Innovations",
+      "name": "Tejpal Chawala",
+      "position": "IT Procurement Manager",
+      "company": "",
       "avatar": "/placeholder.svg",
-      "content": "Vishal is one of the most talented backend developers I've worked with. His attention to detail and commitment to quality code is impressive."
+      "content": "I am pleased to recommend Vishal Munday, a talented professional and a fellow alumnus from our college GBN Govt. Polytechnic Nilokheri-Karnal. Vishal is highly proficient in development and coding, with a deep understanding of modern programming languages and frameworks. Vishal's alumni portal not only strengthened connections within our community but also demonstrated his commitment to impactful projects. His dedication to delivering high-quality results, coupled with his collaborative approach, makes him an asset to any team.I am confident that Vishal’s technical expertise and innovative thinking will enable him to excel in any development or coding role he pursues."
     },
     {
       "id": "2",
@@ -126,14 +184,6 @@
       "company": "WebSolutions",
       "avatar": "/placeholder.svg",
       "content": "Working with Vishal was a game-changer for our project. He delivered everything on time and his technical skills are outstanding."
-    },
-    {
-      "id": "3",
-      "name": "Michael Chen",
-      "position": "Lead Developer",
-      "company": "CodeCorp",
-      "avatar": "/placeholder.svg",
-      "content": "Vishal's backend expertise helped us solve complex performance issues. His code is clean, well-documented, and highly maintainable."
     }
   ],
   "admin": {
