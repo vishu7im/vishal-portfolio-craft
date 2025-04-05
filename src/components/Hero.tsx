@@ -114,7 +114,7 @@ const Hero: React.FC = () => {
       <div className="section-container relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="animate-slide-up">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
               Hi, I'm <span className="gradient-text">{profile.name}</span>
             </h1>
             <h2 className="text-2xl md:text-3xl text-foreground/90 mb-2 flex items-center">
