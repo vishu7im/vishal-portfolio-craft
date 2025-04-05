@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePortfolioData, Profile } from "@/services/dataService";
+import ResumeButton from "./ResumeButton";
 
 const Hero: React.FC = () => {
   const [profile] = usePortfolioData<Profile>("profile");
@@ -139,7 +141,7 @@ const Hero: React.FC = () => {
                 href={profile.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300"
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 hover:scale-110"
               >
                 <Github className="h-5 w-5" />
               </a>
@@ -147,46 +149,41 @@ const Hero: React.FC = () => {
                 href={profile.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300"
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 hover:scale-110"
               >
                 <Linkedin className="h-5 w-5" />
               </a>
               <a
                 href={`mailto:${profile.email}`}
-                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300"
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 hover:scale-110"
               >
                 <Mail className="h-5 w-5" />
               </a>
               <a
                 href="https://www.instagram.com/_vi.shu/"
-                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 flex items-center gap-2"
+                className="bg-card/40 p-3 rounded-lg hover:bg-card/70 transition-all duration-300 hover:scale-110 flex items-center gap-2"
               >
                 <InstagramIcon className="h-5 w-5" />
               </a>
             </div>
 
-            <div className="flex flex-wrap gap-4 ">
-              <Link to="/projects" className="">
+            <div className="flex flex-wrap gap-4">
+              <Link to="/projects">
                 <Button className="btn-primary flex items-center gap-2 text-lg py-6 px-8 relative group overflow-hidden">
                   <span className="relative z-10">View Projects</span>
                   <ArrowRight
                     size={18}
-                    className="relative z-10 translate-x-1 transition-transform"
+                    className="relative z-10 translate-x-1 transition-transform group-hover:translate-x-2"
                   />
                   <div className="absolute inset-0 bg-primary/80 transform translate-y-0 transition-transform duration-300"></div>
                 </Button>
               </Link>
-              <Link to="/contact" className="">
-                <Button
-                  variant="outline"
-                  className="btn-outline text-lg py-6 px-8 relative group overflow-hidden"
-                >
-                  <span className="relative z-10 text-white transition-colors duration-300">
-                    Contact Me
-                  </span>
-                  <div className="absolute inset-0 bg-primary transform  scale-x-100 origin-left transition-transform duration-300"></div>
-                </Button>
-              </Link>
+              
+              <ResumeButton 
+                resumeUrl={profile.resume} 
+                resumeName={profile.resumeName}
+                className="py-6 px-8 text-lg"
+              />
             </div>
           </div>
           <div className="hidden lg:flex justify-center animate-slide-in-right">
