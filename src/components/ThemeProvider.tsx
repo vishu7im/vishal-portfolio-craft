@@ -13,7 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(
-    themes[Math.floor(Math.random() * themes.length)] as Theme
+    'retro' 
   );
 
   useEffect(() => {
