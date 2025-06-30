@@ -29,6 +29,7 @@
     { "name": "Model Context Protocol (MCP)", "level": 70 },
     { "name": "Express", "level": 85 },
     { "name": "MongoDB", "level": 70 },
+    { "name": "Extract, Load, Transform (ETL)", "level": 60 },
     { "name": "SQL", "level": 85 },
     { "name": "API Design", "level": 90 },
     { "name": "Docker", "level": 80 },
