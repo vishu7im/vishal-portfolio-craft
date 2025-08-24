@@ -16,25 +16,74 @@
     "resumeName": "Vishal_Munday_Resume.pdf"
   },
   "skills": [
-    { "name": "Node.js", "level": 90 },
-    { "name": "TypeScript", "level": 90 },
-    { "name": "LangChain", "level": 75 },
-    { "name": "LangGraph", "level": 70 },
-    { "name": "Vector Embeddings", "level": 80 },
-    { "name": "Prompt Engineering", "level": 85 },
-    { "name": "Graph Databases", "level": 70 },
-    { "name": "Query Translation & Routing", "level": 75 },
-    { "name": "Guardrails AI", "level": 70 },
-    { "name": "Mem0", "level": 70 },
-    { "name": "Model Context Protocol (MCP)", "level": 70 },
-    { "name": "Express", "level": 85 },
-    { "name": "MongoDB", "level": 70 },
-    { "name": "Extract, Load, Transform (ETL)", "level": 60 },
-    { "name": "SQL", "level": 85 },
-    { "name": "API Design", "level": 90 },
-    { "name": "Docker", "level": 80 },
-    { "name": "OpenAI", "level": 80 },
-    { "name": "Next.js", "level": 80 }
+    {
+      "name": "Node.js",
+      "level": 90
+    },
+    {
+      "name": "TypeScript",
+      "level": 90
+    },
+    {
+      "name": "LangChain",
+      "level": 75
+    },
+    {
+      "name": "LangGraph",
+      "level": 70
+    },
+    {
+      "name": "Vector Embeddings",
+      "level": 80
+    },
+    {
+      "name": "Prompt Engineering",
+      "level": 85
+    },
+    {
+      "name": "Graph Databases",
+      "level": 70
+    },
+    {
+      "name": "Query Translation & Routing",
+      "level": 75
+    },
+    {
+      "name": "Model Context Protocol (MCP)",
+      "level": 70
+    },
+    {
+      "name": "Express",
+      "level": 85
+    },
+    {
+      "name": "MongoDB",
+      "level": 70
+    },
+    {
+      "name": "Extract, Transform, Load (ETL)",
+      "level": 60
+    },
+    {
+      "name": "SQL",
+      "level": 85
+    },
+    {
+      "name": "API Design",
+      "level": 90
+    },
+    {
+      "name": "Docker",
+      "level": 80
+    },
+    {
+      "name": "OpenAI",
+      "level": 80
+    },
+    {
+      "name": "Next.js",
+      "level": 80
+    }
   ],
   "experience": [
     {
@@ -45,7 +94,17 @@
       "endDate": "",
       "current": true,
       "description": "Developing and maintaining server-side applications. Working with Node.js, Express, and various databases to create scalable API solutions.",
-      "technologies": ["Node.js", "Express", "MongoDB", "Docker"]
+      "technologies": [
+        "Node.js",
+        "Express",
+        "MongoDB",
+        "Docker",
+        "LangChain",
+        "LangGraph",
+        "Vector Embeddings",
+        "Query Translation & Routing",
+        "Model Context Protocol (MCP)"
+      ]
     },
     {
       "id": "2",
@@ -55,7 +114,11 @@
       "endDate": "JUL - 2024",
       "current": false,
       "description": "Started as a junior developer working on various backend tasks and gradually taking on more responsibility.",
-      "technologies": ["JavaScript", "Node.js", "SQL"]
+      "technologies": [
+        "JavaScript",
+        "Node.js",
+        "SQL"
+      ]
     }
   ],
   "education": [
