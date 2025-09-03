@@ -189,7 +189,7 @@ const Hero: React.FC = () => {
                 </p>
               </div>
 
-              {/* Enhanced Social Links */}
+              {/* Enhanced Social Links with Heart Button */}
               <div className="flex gap-4 pt-6">
                 {[
                   { href: profile.github, icon: Github, label: 'GitHub' },
@@ -208,6 +208,11 @@ const Hero: React.FC = () => {
                     <social.icon className="h-6 w-6 relative z-10" />
                   </a>
                 ))}
+                
+                {/* Heart Button */}
+                <div className="flex items-center">
+                  <HeartButton />
+                </div>
               </div>
 
               {/* Enhanced CTA Buttons */}
@@ -232,8 +237,8 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Profile Image - Right side on desktop */}
-          <div className={`lg:col-span-5 order-1 lg:order-2 flex flex-col items-center lg:items-end transition-all duration-1000 ${isLoaded ? 'translate-x-0 opacity-100' : 'translate-x-[50px] opacity-0'}`}>
-            <div className="relative mb-8 lg:mb-12">
+          <div className={`lg:col-span-5 order-1 lg:order-2 flex justify-center lg:justify-end transition-all duration-1000 ${isLoaded ? 'translate-x-0 opacity-100' : 'translate-x-[50px] opacity-0'}`}>
+            <div className="relative">
               {/* Enhanced glow effect behind image */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-pink-500/50 rounded-full blur-3xl scale-125 animate-pulse"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/30 to-blue-500/30 rounded-full blur-2xl scale-110 animate-pulse" style={{ animationDelay: '1s' }}></div>
@@ -279,11 +284,6 @@ const Hero: React.FC = () => {
                   <span className="text-xs font-medium">Available</span>
                 </div>
               </div>
-            </div>
-
-            {/* Heart Button positioned below the image section */}
-            <div className="w-full flex justify-center lg:justify-end lg:pr-8">
-              <HeartButton />
             </div>
           </div>
         </div>
