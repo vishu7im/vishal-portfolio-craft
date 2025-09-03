@@ -1,0 +1,315 @@
+{
+  "profile": {
+    "name": "Vishal Munday",
+    "title": "Backend Developer",
+    "company": "EdgeNroots",
+    "experience": "3+ years",
+    "intro": "Hi, I'm Vishal, a backend developer with 3 years of experience. I specialize in building robust and scalable server-side and Retrieval-Augmented Generation (RAG) applications.",
+    "bio": "I'm passionate about creating efficient backend solutions that power modern web applications. With a strong foundation in server-side technologies like Node.js, Express, and databases, I enjoy solving complex problems and optimizing performance. Recently, I've been working on Generative AI and Retrieval-Augmented Generation (RAG) applications using tools like LangChain, LangGraph, and vector embeddings to build intelligent, real-world AI systems.",
+    "location": "India",
+    "email": "vishu.im.0007@gmail.com",
+    "phone": "+91 8570090556",
+    "github": "https://github.com/vishu7im",
+    "linkedin": "https://www.linkedin.com/in/vishal-munday-869024223",
+    "avatar": "/vishal.jpeg",
+    "resume": "https://drive.google.com/file/d/1zslhE_LlPcurHG5cTMgMrTlySYiYD-O4/view?usp=sharing",
+    "resumeName": "Vishal_Munday_Resume.pdf",
+    "experienceInYears": 3
+  },
+  "skills": [
+    {
+      "name": "Node.js"
+    },
+    {
+      "name": "TypeScript"
+    },
+    {
+      "name": "LangChain"
+    },
+    {
+      "name": "LangGraph"
+    },
+    {
+      "name": "Vector Embeddings"
+    },
+    {
+      "name": "Prompt Engineering"
+    },
+    {
+      "name": "Graph Databases"
+    },
+    {
+      "name": "Query Translation"
+    },
+    {
+      "name": "Query Routing"
+    },
+    {
+      "name": "Model Context Protocol"
+    },
+    {
+      "name": "Express"
+    },
+    {
+      "name": "MongoDB"
+    },
+    {
+      "name": "SQL"
+    },
+    {
+      "name": "API Design"
+    },
+    {
+      "name": "Docker"
+    },
+    {
+      "name": "OpenAI"
+    },
+    {
+      "name": "Next.js"
+    }
+  ],
+  "experience": [
+    {
+      "id": "1",
+      "company": "Edgenroots",
+      "position": "Backend Developer",
+      "startDate": "2024 - JUL",
+      "endDate": "",
+      "current": true,
+      "description": "Developing and maintaining server-side applications. Working with Node.js, Express, and various databases to create scalable API solutions.",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "MongoDB",
+        "Docker",
+        "LangChain",
+        "LangGraph",
+        "Vector Embeddings",
+        "Query Translation & Routing",
+        "Model Context Protocol (MCP)"
+      ]
+    },
+    {
+      "id": "2",
+      "company": "iComply Lifescience solutions",
+      "position": "Full Stack Developer",
+      "startDate": "OCT - 2022",
+      "endDate": "JUL - 2024",
+      "current": false,
+      "description": "Started as a junior developer working on various backend tasks and gradually taking on more responsibility.",
+      "technologies": [
+        "JavaScript",
+        "Node.js",
+        "SQL"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "1",
+      "institution": "IIET , Kurukshetra",
+      "degree": "Bachelor of Computer Science",
+      "startDate": "2024",
+      "endDate": "",
+      "current": true,
+      "description": "Studied computer science with focus on software development and databases.",
+      "grade": "--"
+    },
+    {
+      "id": "2",
+      "institution": "GBN Govt. Polytechnic Nilokheri",
+      "degree": "Diploma in Computer Science & Engineering",
+      "startDate": "2021",
+      "endDate": "2024",
+      "current": false,
+      "description": "Studied computer science with ",
+      "grade": "76.2%"
+    },
+    {
+      "id": "3",
+      "institution": "Jawahar Navodaya Vidyalaya , Jind",
+      "degree": "Secondary School",
+      "startDate": "2016",
+      "endDate": "2020",
+      "current": false,
+      "description": "Completed my secondary education with a focus on core subjects.",
+      "grade": "8.8 CGPA"
+    }
+  ],
+  "projects": [
+    {
+      "id": "1",
+      "title": "Alma Nilokheri",
+      "description": "A dedicated platform for Alma Nilokheri College, designed to connect alumni with their alma mater. This website fosters networking, collaboration, and a sense of community among past and present students.",
+      "image": "/project/alma.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "MongoDB",
+        "JWT",
+        "React",
+        "Tailwind CSS"
+      ],
+      "github": "https://github.com/alma-nilokheri/almanilokheri",
+      "demo": "https://almanilokheri.in",
+      "featured": true
+    },
+    {
+      "id": "2",
+      "title": "Admit Easy",
+      "description": "A seamless college admission platform built to bridge the gap between students and colleges. Admit Easy simplifies the admission process, making it more accessible and hassle-free.",
+      "image": "/project/admit-ease.jpeg",
+      "technologies": [
+        "Node.js",
+        "Socket.io",
+        "MongoDB",
+        "React",
+        "Tailwind CSS"
+      ],
+      "github": "https://github.com/vishu7im/AdmitEase.git",
+      "demo": "https://github.com/vishu7im/AdmitEase.git",
+      "featured": false
+    },
+    {
+      "id": "3",
+      "title": "Kiki – AI-Powered Chat & Music Generation",
+      "description": "An advanced AI application featuring an interactive chatbot, music generation capabilities, and more. Kiki brings AI-driven creativity and intelligent conversation to your fingertips.",
+      "image": "/project/kiki.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "JWT",
+        "Redis",
+        "Next.js",
+        "Tailwind CSS",
+        "TypeScript"
+      ],
+      "github": "https://github.com/vishu7im/kiki.git",
+      "demo": "https://kiki-roan.vercel.app/",
+      "featured": false
+    },
+    {
+      "id": "4",
+      "title": "Vercel Clone",
+      "description": "A fully functional Vercel clone built using Next.js and Tailwind CSS, providing seamless project deployment and management features.",
+      "image": "/project/vercel_clone.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "JWT",
+        "Redis",
+        "Next.js",
+        "Tailwind CSS",
+        "TypeScript"
+      ],
+      "github": "https://github.com/vishu7im/vercel-clone.git",
+      "demo": "https://github.com/vishu7im/vercel-clone.git",
+      "featured": true
+    },
+    {
+      "id": "5",
+      "title": "Spotify Clone",
+      "description": "A high-fidelity Spotify clone built with Next.js and Tailwind CSS, offering a sleek music streaming experience with authentication and playlist management.",
+      "image": "/project/spotifyclone.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "JWT",
+        "Redis",
+        "Next.js",
+        "Tailwind CSS",
+        "TypeScript"
+      ],
+      "github": "https://github.com/vishu7im/spotify-clone.git",
+      "demo": "https://spotify-clone-vishu7im.vercel.app/",
+      "featured": false
+    },
+    {
+      "id": "6",
+      "title": "bnbMEhome",
+      "description": "Full-service property management system. Messaging integrations (Airbnb, PMS, Respond.io), inventory & booking management, AI agent 'HostBuddy', approval flows, AI image optimizer, ETL calculator.",
+      "image": "",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "Python",
+        "Gen AI",
+        "SQL",
+        "Redis"
+      ],
+      "github": "PRIVATE",
+      "demo": "https://www.bnbmehomes.com/",
+      "featured": true
+    },
+    {
+      "id": "7",
+      "title": "EasySupply",
+      "description": "Luxury supply chain project. Automated order processing, AI line sheet extractor, discrepancy identification, ledger & approval flow management.",
+      "image": "",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "Python",
+        "Gen AI",
+        "SQL"
+      ],
+      "github": "PRIVATE",
+      "demo": "https://easysupply.ai",
+      "featured": true
+    },
+    {
+      "id": "8",
+      "title": "Aaxel Insurance",
+      "description": "Insurance platform. CSIO integration, AI reconciliation, GL master flow, accounting workflows.",
+      "image": "",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "Python",
+        "SQL",
+        "Gen AI"
+      ],
+      "github": "PRIVATE",
+      "demo": "https://www.aaxel.ca/",
+      "featured": true
+    },
+    {
+      "id": "9",
+      "title": "Task & Expense",
+      "description": "Internal hybrid project of Jira, ClickUp, and Zoho for task & expense management. Internal project, no public demo.",
+      "image": "/project/task_expense.png",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "Python",
+        "SQL"
+      ],
+      "github": "PRIVATE",
+      "demo": "",
+      "featured": false
+    }
+  ],
+  "testimonials": [
+    {
+      "id": "1",
+      "name": "Tejpal Chawala",
+      "position": "IT Procurement Manager",
+      "company": "",
+      "avatar": "/placeholder.svg",
+      "content": "I am pleased to recommend Vishal Munday, a talented professional and a fellow alumnus from our college GBN Govt. Polytechnic Nilokheri-Karnal. Vishal is highly proficient in development and coding, with a deep understanding of modern programming languages and frameworks. Vishal's alumni portal not only strengthened connections within our community but also demonstrated his commitment to impactful projects. His dedication to delivering high-quality results, coupled with his collaborative approach, makes him an asset to any team.I am confident that Vishal’s technical expertise and innovative thinking will enable him to excel in any development or coding role he pursues."
+    },
+    {
+      "id": "2",
+      "name": "Sarah Johnson",
+      "position": "Project Manager",
+      "company": "WebSolutions",
+      "avatar": "/placeholder.svg",
+      "content": "Working with Vishal was a game-changer for our project. He delivered everything on time and his technical skills are outstanding."
+    }
+  ],
+  "admin": {
+    "username": "vishu7im",
+    "password": "kikix.0visix.1"
+  }
+}

@@ -1,0 +1,6 @@
+/* All styles are now handled through Tailwind in index.css */
+.flex-1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
