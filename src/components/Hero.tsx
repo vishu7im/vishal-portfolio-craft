@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { usePortfolioData, Profile } from "@/services/dataService";
 import ResumeButton from "./ResumeButton";
+import HeartButton from "./HeartButton";
 
 const Hero: React.FC = () => {
   const [profile] = usePortfolioData<Profile>("profile");
@@ -277,6 +278,11 @@ const Hero: React.FC = () => {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-xs font-medium">Available</span>
                 </div>
+              </div>
+
+              {/* Heart Button positioned below the image */}
+              <div className="absolute -bottom-20 left-1/2 transform -translate-x-1/2">
+                <HeartButton />
               </div>
             </div>
           </div>

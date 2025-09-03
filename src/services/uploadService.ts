@@ -1,7 +1,10 @@
 
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-// import { storage } from "./firebaseConfig";
+import { getStorage } from "firebase/storage";
+import { db } from "./firebaseConfig";
 import toast from "react-hot-toast";
+
+const storage = getStorage();
 
 export async function uploadImage(file: File, path: string): Promise<string> {
   try {
