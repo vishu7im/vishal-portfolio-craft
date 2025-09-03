@@ -280,8 +280,8 @@ const Hero: React.FC = () => {
                 </div>
               </div>
 
-              {/* Heart Button positioned below the image */}
-              <div className="absolute -bottom-20 left-1/2 transform -translate-x-1/2">
+              {/* Heart Button positioned below the experience badge */}
+              <div className="absolute -bottom-32 left-1/2 transform -translate-x-1/2">
                 <HeartButton />
               </div>
             </div>
