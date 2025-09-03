@@ -463,6 +463,9 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
 
   useEffect(() => {
     if (isVisible) {
+      // Prevent background scrolling when chat is open
+      document.body.style.overflow = 'hidden';
+
       setTimeout(() => inputRef.current?.focus(), 1000);
       // Scroll to bottom when chat becomes visible
       setTimeout(() => {
@@ -470,7 +473,15 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
           messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         });
       }, 500);
+    } else {
+      // Restore background scrolling when chat is closed
+      document.body.style.overflow = 'unset';
     }
+
+    // Cleanup function to restore scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isVisible, activeId]);
 
   useEffect(() => {
@@ -765,10 +776,10 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   if (!isVisible) return null;
 
   return createPortal(
-    <div className="fixed bottom-1 right-1 z-[100] isolate">
+    <div className="fixed bottom-1 right-1 z-[9999] isolate">
       {initializing ? (
-        <div className="fixed bottom-1 right-1 z-[100] isolate">
-          <div className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex h-[92vh] w-[98vw] sm:h-[32rem] sm:w-[34rem] md:h-[35rem] md:w-[38rem] lg:h-[38rem] lg:w-[44rem] items-center justify-center">
+        <div className="fixed bottom-1 right-1 z-[9999] isolate">
+          <div className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex h-[100vh] w-[98vw] sm:h-[32rem] sm:w-[34rem] md:h-[35rem] md:w-[38rem] lg:h-[38rem] lg:w-[44rem] items-center justify-center">
             <Loader size="md" text="Initializing chat..." />
           </div>
         </div>
@@ -777,7 +788,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
 
         <div
           className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex
-h-[92vh] w-[98vw]
+h-[99vh] w-[98vw]
 sm:h-[32rem] sm:w-[34rem]
 md:h-[35rem] md:w-[38rem]
 lg:h-[38rem] lg:w-[44rem]"
