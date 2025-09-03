@@ -97,6 +97,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   const [creatingSession, setCreatingSession] = useState(false);
   const [deletingSession, setDeletingSession] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [viewportHeight, setViewportHeight] = useState('100vh');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -522,6 +523,28 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
     return deviceId || uuidv4()
   }
 
+  // Function to update viewport height
+  const updateViewportHeight = useCallback(() => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    setViewportHeight(`${window.innerHeight}px`);
+  }, []);
+
+  useEffect(() => {
+    // Set initial viewport height
+    updateViewportHeight();
+
+    // Update on resize and orientation change
+    window.addEventListener('resize', updateViewportHeight);
+    window.addEventListener('orientationchange', updateViewportHeight);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', updateViewportHeight);
+      window.removeEventListener('orientationchange', updateViewportHeight);
+    };
+  }, [updateViewportHeight]);
+
   useEffect(() => {
     setInitializing(true);
     getDeviceId().then((id) => {
@@ -779,7 +802,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
     <div className="fixed bottom-1 right-1 z-[9999] isolate">
       {initializing ? (
         <div className="fixed bottom-1 right-1 z-[9999] isolate">
-          <div className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex h-screen w-[98vw] sm:h-[32rem] sm:w-[34rem] md:h-[35rem] md:w-[38rem] lg:h-[38rem] lg:w-[44rem] items-center justify-center">
+          <div className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex h-[calc(100vh-2rem)] w-[98vw] sm:h-[32rem] sm:w-[34rem] md:h-[35rem] md:w-[38rem] lg:h-[38rem] lg:w-[44rem] items-center justify-center">
             <Loader size="md" text="Initializing chat..." />
           </div>
         </div>
@@ -788,7 +811,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
 
         <div
           className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex
-h-screen w-[98vw]
+h-[calc(100vh-2rem)] w-[98vw]
 sm:h-[32rem] sm:w-[34rem]
 md:h-[35rem] md:w-[38rem]
 lg:h-[38rem] lg:w-[44rem]"
