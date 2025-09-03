@@ -232,8 +232,8 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Profile Image - Right side on desktop */}
-          <div className={`lg:col-span-5 order-1 lg:order-2 flex justify-center lg:justify-end transition-all duration-1000 ${isLoaded ? 'translate-x-0 opacity-100' : 'translate-x-[50px] opacity-0'}`}>
-            <div className="relative">
+          <div className={`lg:col-span-5 order-1 lg:order-2 flex flex-col items-center lg:items-end transition-all duration-1000 ${isLoaded ? 'translate-x-0 opacity-100' : 'translate-x-[50px] opacity-0'}`}>
+            <div className="relative mb-8 lg:mb-12">
               {/* Enhanced glow effect behind image */}
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-pink-500/50 rounded-full blur-3xl scale-125 animate-pulse"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/30 to-blue-500/30 rounded-full blur-2xl scale-110 animate-pulse" style={{ animationDelay: '1s' }}></div>
@@ -258,13 +258,13 @@ const Hero: React.FC = () => {
               </div>
 
               {/* Enhanced experience badge */}
-              <div className="absolute -bottom-6 -left-6 gradient-border bg-card/95 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/10">
+              <div className="absolute -bottom-6 -left-6 gradient-border bg-card/95 backdrop-blur-md p-4 lg:p-6 rounded-2xl shadow-2xl border border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-primary to-purple-500 rounded-full flex items-center justify-center">
-                    <Calendar className="h-5 w-5 text-white" />
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-primary to-purple-500 rounded-full flex items-center justify-center">
+                    <Calendar className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold gradient-text text-lg">
+                    <p className="text-base lg:text-lg font-bold gradient-text">
                       {profile.experience} Years
                     </p>
                     <p className="text-xs text-muted-foreground">Experience</p>
@@ -279,11 +279,11 @@ const Hero: React.FC = () => {
                   <span className="text-xs font-medium">Available</span>
                 </div>
               </div>
+            </div>
 
-              {/* Heart Button positioned below the experience badge */}
-              <div className="absolute -bottom-32 left-1/2 transform -translate-x-1/2">
-                <HeartButton />
-              </div>
+            {/* Heart Button positioned below the image section */}
+            <div className="w-full flex justify-center lg:justify-end lg:pr-8">
+              <HeartButton />
             </div>
           </div>
         </div>
