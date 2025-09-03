@@ -104,6 +104,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   const isFetchingRef = useRef(false);
   const isFetchingMessageRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -497,6 +498,23 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
     }
   }, [activeSession?.messages?.length, isTyping, isLoadingOlderMessages, isVisible, isAddingNewMessage]);
 
+  // Handle click outside to close chat
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (chatContainerRef.current && !chatContainerRef.current.contains(event.target as Node)) {
+        onToggle();
+      }
+    };
+
+    if (isVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isVisible, onToggle]);
+
   async function getDeviceId(): Promise<string> {
     let deviceId = localStorage.getItem("device-id");
 
@@ -810,6 +828,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
 
 
         <div
+          ref={chatContainerRef}
           className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex
 h-full w-full
 sm:h-[32rem] sm:w-[34rem]
