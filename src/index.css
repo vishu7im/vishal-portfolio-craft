@@ -304,6 +304,22 @@
     }
   }
 
+  /* Heart button animations */
+  @keyframes heartFloat {
+    0% {
+      opacity: 1;
+      transform: translateY(-25px) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-40px) scale(0.5);
+    }
+  }
+
+  .animate-heart-float {
+    animation: heartFloat 800ms ease-out forwards;
+  }
+
   /* Parallax effect */
   .parallax {
     background-attachment: fixed;

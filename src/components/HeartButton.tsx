@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
-import { motion } from '@/lib/motion';
 
 // Generate a unique device ID
 const getDeviceId = () => {
@@ -67,71 +66,48 @@ export default function HeartButton() {
         onClick={handleHeartClick}
         className={`
           relative group p-4 rounded-lg
-          bg-gradient-to-br from-pink-500/20 via-red-500/20 to-rose-500/20
-          hover:from-pink-500/30 hover:via-red-500/30 hover:to-rose-500/30
-          border border-pink-500/40 hover:border-pink-500/60
-          backdrop-blur-sm
-          transition-all duration-300 ease-out
-          hover:scale-110 hover:shadow-2xl hover:shadow-pink-500/50
-          animate-pulse
-          ${hasLiked ? 'bg-gradient-to-br from-pink-500/40 via-red-500/40 to-rose-500/40 border-pink-500/70 shadow-lg shadow-pink-500/40' : ''}
+          minimal-card
+          hover:scale-110 transition-all duration-300 ease-out
+          ${hasLiked 
+            ? 'bg-gradient-to-br from-red-500/20 via-pink-500/20 to-rose-500/20 border-red-500/40 shadow-lg shadow-red-500/20' 
+            : 'hover:bg-gradient-to-br hover:from-red-500/10 hover:via-pink-500/10 hover:to-rose-500/10'
+          }
           ${isAnimating ? 'animate-bounce' : ''}
         `}
       >
-        {/* Intense glow effect */}
-        <div 
-          className={`
-            absolute inset-0 rounded-lg
-            bg-gradient-to-br from-pink-500/50 via-red-500/50 to-rose-500/50 
-            blur-xl opacity-60 group-hover:opacity-90 
-            transition-opacity duration-300
-            animate-pulse
-            ${hasLiked ? 'opacity-80' : ''}
-            ${isAnimating ? 'opacity-100 animate-ping' : ''}
-          `} 
-        />
-        
-        {/* Extra glow ring */}
-        <div 
-          className={`
-            absolute -inset-2 rounded-lg
-            bg-gradient-to-br from-pink-400/30 via-red-400/30 to-rose-400/30 
-            blur-2xl opacity-40 group-hover:opacity-70
-            transition-opacity duration-500
-            ${hasLiked ? 'opacity-60' : ''}
-          `} 
-        />
+        {/* Glow effect for liked state */}
+        {hasLiked && (
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/30 via-pink-500/30 to-rose-500/30 rounded-lg blur-md opacity-60 animate-pulse" />
+        )}
         
         {/* Heart icon */}
         <Heart 
           className={`
             h-6 w-6 relative z-10 transition-all duration-300
             ${hasLiked 
-              ? 'text-pink-400 fill-pink-400 drop-shadow-lg' 
-              : 'text-pink-400/80 hover:text-pink-400'
+              ? 'text-red-500 fill-red-500 drop-shadow-sm' 
+              : 'text-muted-foreground group-hover:text-red-500'
             }
-            ${isAnimating ? 'animate-bounce' : ''}
+            ${isAnimating ? 'animate-pulse' : ''}
           `}
         />
         
-        {/* Animated particles when liked */}
+        {/* Floating hearts animation */}
         {isAnimating && (
           <div className="absolute inset-0 pointer-events-none">
-            {[...Array(8)].map((_, i) => (
+            {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className={`
-                  absolute w-1.5 h-1.5 bg-pink-400 rounded-full
-                  animate-ping opacity-90
-                `}
+                className="absolute w-2 h-2 text-red-500"
                 style={{
                   left: '50%',
                   top: '50%',
-                  transform: `translate(-50%, -50%) rotate(${i * 45}deg) translateY(-20px)`,
-                  animationDelay: `${i * 100}ms`,
-                  animationDuration: '700ms'
+                  transform: `translate(-50%, -50%) rotate(${i * 60}deg) translateY(-25px)`,
+                  animation: `heartFloat 800ms ease-out ${i * 100}ms forwards`
                 }}
-              />
+              >
+                <Heart className="w-2 h-2 fill-current" />
+              </div>
             ))}
           </div>
         )}
@@ -139,10 +115,23 @@ export default function HeartButton() {
       
       {/* Heart count */}
       <div className="text-center">
-        <p className="text-sm font-bold bg-gradient-to-r from-pink-400 via-red-400 to-rose-400 bg-clip-text text-transparent">
+        <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
           {heartCount}
         </p>
       </div>
+      
+      <style jsx>{`
+        @keyframes heartFloat {
+          0% {
+            opacity: 1;
+            transform: translate(-50%, -50%) rotate(var(--rotation)) translateY(-25px) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) rotate(var(--rotation)) translateY(-40px) scale(0.5);
+          }
+        }
+      `}</style>
     </div>
   );
 }

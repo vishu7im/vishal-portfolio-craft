@@ -26,7 +26,7 @@ export default function ChatBotTrigger() {
   return (
     <>
       {/* Toggle button with proper spacing from ThemeSwitcher */}
-      <div className="fixed bottom-20 right-6 z-[80]">
+      <div className="fixed bottom-24 right-6 z-[80]">
         <Button
           onClick={toggleChat}
           size="icon"

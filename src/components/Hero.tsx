@@ -191,26 +191,25 @@ const Hero: React.FC = () => {
 
               {/* Enhanced Social Links with Heart Button */}
               <div className="flex gap-4 pt-6">
-                {[
-                  { href: profile.github, icon: Github, label: 'GitHub' },
-                  { href: profile.linkedin, icon: Linkedin, label: 'LinkedIn' },
-                  { href: `mailto:${profile.email}`, icon: Mail, label: 'Email' }
-                ].map((social, index) => (
-                  <a
-                    key={social.label}
-                    href={social.href}
-                    target={social.label !== 'Email' ? "_blank" : undefined}
-                    rel={social.label !== 'Email' ? "noopener noreferrer" : undefined}
-                    className="group minimal-card p-4 hover:scale-110 hover:bg-primary/20 transition-all duration-300 relative overflow-hidden"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                    <social.icon className="h-6 w-6 relative z-10" />
-                  </a>
-                ))}
-                
-                {/* Heart Button */}
-                <div className="flex items-center">
+                <div className="flex items-center gap-4">
+                  {[
+                    { href: profile.github, icon: Github, label: 'GitHub' },
+                    { href: profile.linkedin, icon: Linkedin, label: 'LinkedIn' },
+                    { href: `mailto:${profile.email}`, icon: Mail, label: 'Email' }
+                  ].map((social, index) => (
+                    <a
+                      key={social.label}
+                      href={social.href}
+                      target={social.label !== 'Email' ? "_blank" : undefined}
+                      rel={social.label !== 'Email' ? "noopener noreferrer" : undefined}
+                      className="group minimal-card p-4 hover:scale-110 hover:bg-primary/20 transition-all duration-300 relative overflow-hidden"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                      <social.icon className="h-6 w-6 relative z-10" />
+                    </a>
+                  ))}
+                  
                   <HeartButton />
                 </div>
               </div>
