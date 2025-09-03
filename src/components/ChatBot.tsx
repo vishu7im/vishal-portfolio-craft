@@ -799,10 +799,10 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   if (!isVisible) return null;
 
   return createPortal(
-    <div className="fixed bottom-1 right-1 z-[9999] isolate">
+    <div className="fixed inset-0 z-[9999] isolate sm:bottom-1 sm:right-1 sm:inset-auto">
       {initializing ? (
-        <div className="fixed bottom-1 right-1 z-[9999] isolate">
-          <div className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex h-[calc(100vh-2rem)] w-[98vw] sm:h-[32rem] sm:w-[34rem] md:h-[35rem] md:w-[38rem] lg:h-[38rem] lg:w-[44rem] items-center justify-center">
+        <div className="fixed inset-0 z-[9999] isolate sm:bottom-1 sm:right-1 sm:inset-auto">
+          <div className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex h-full w-full sm:h-[32rem] sm:w-[34rem] md:h-[35rem] md:w-[38rem] lg:h-[38rem] lg:w-[44rem] items-center justify-center">
             <Loader size="md" text="Initializing chat..." />
           </div>
         </div>
@@ -811,7 +811,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
 
         <div
           className="bg-background/95 backdrop-blur-lg rounded-2xl border gradient-border shadow-2xl shadow-primary/20 flex
-h-[calc(100vh-2rem)] w-[98vw]
+h-full w-full
 sm:h-[32rem] sm:w-[34rem]
 md:h-[35rem] md:w-[38rem]
 lg:h-[38rem] lg:w-[44rem]"
