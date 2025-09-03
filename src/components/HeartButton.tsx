@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
+import { db } from '../services/firebaseConfig';
+import { serverTimestamp, doc, getDoc, increment, setDoc, updateDoc } from 'firebase/firestore';
 
 // Generate a unique device ID
 const getDeviceId = () => {
-  let deviceId = localStorage.getItem('device-id');
+  let deviceId = localStorage.getItem('like-device-id');
   if (!deviceId) {
-    deviceId = `device-${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    localStorage.setItem('device-id', deviceId);
+    deviceId = uuidv4();
+    localStorage.setItem('like-device-id', deviceId);
   }
   return deviceId;
 };
@@ -15,48 +18,85 @@ export default function HeartButton() {
   const [heartCount, setHeartCount] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Load heart count from localStorage
-    const savedCount = localStorage.getItem('heart-count');
     const deviceId = getDeviceId();
-    const likedDevices = JSON.parse(localStorage.getItem('liked-devices') || '[]');
 
-    if (savedCount) {
-      setHeartCount(parseInt(savedCount));
-    }
+    const fetchData = async () => {
+      // Check if this device has liked
+      const likeDoc = await getDoc(doc(db, "heart", deviceId));
+      if (likeDoc.exists() && likeDoc.data().liked) {
+        setHasLiked(true);
+      }
 
-    if (likedDevices.includes(deviceId)) {
-      setHasLiked(true);
-    }
+      // Get global count
+      const statsDoc = await getDoc(doc(db, "meta", "heart_stats"));
+      if (statsDoc.exists()) {
+        setHeartCount(statsDoc.data().total_likes || 0);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const handleHeartClick = () => {
-    const deviceId = getDeviceId();
-    const likedDevices = JSON.parse(localStorage.getItem('liked-devices') || '[]');
 
-    if (hasLiked) {
-      // Unlike
-      const newCount = Math.max(0, heartCount - 1);
-      const updatedDevices = likedDevices.filter((id: string) => id !== deviceId);
+  const handleHeartClick = async () => {
+    // Prevent multiple simultaneous clicks
+    if (isLoading) return;
 
-      setHeartCount(newCount);
-      setHasLiked(false);
-      localStorage.setItem('heart-count', newCount.toString());
-      localStorage.setItem('liked-devices', JSON.stringify(updatedDevices));
-    } else {
-      // Like
-      const newCount = heartCount + 1;
-      const updatedDevices = [...likedDevices, deviceId];
+    setIsLoading(true);
 
-      setHeartCount(newCount);
-      setHasLiked(true);
-      setIsAnimating(true);
-      localStorage.setItem('heart-count', newCount.toString());
-      localStorage.setItem('liked-devices', JSON.stringify(updatedDevices));
+    // Store previous state for potential rollback
+    const previousCount = heartCount;
+    const previousLiked = hasLiked;
 
-      // Reset animation after a short delay
-      setTimeout(() => setIsAnimating(false), 600);
+    try {
+      const deviceId = getDeviceId();
+      const heartRef = doc(db, "heart", deviceId);
+      const statsRef = doc(db, "meta", "heart_stats");
+
+      if (hasLiked) {
+        // Optimistic update
+        setHeartCount((prev) => Math.max(0, prev - 1));
+        setHasLiked(false);
+
+        // Unlike
+        await setDoc(heartRef, { device_id: deviceId, liked: false }, { merge: true });
+
+        // Create if missing, otherwise decrement
+        await setDoc(statsRef, { total_likes: increment(-1) }, { merge: true });
+      } else {
+        // Optimistic update
+        setHeartCount((prev) => prev + 1);
+        setHasLiked(true);
+        setIsAnimating(true);
+        setTimeout(() => setIsAnimating(false), 600);
+
+        // Like
+        await setDoc(heartRef, {
+          device_id: deviceId,
+          liked: true,
+          created_at: serverTimestamp(),
+        }, { merge: true });
+
+        // Create if missing, otherwise increment
+        await setDoc(statsRef, { total_likes: increment(1) }, { merge: true });
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
+
+      // Rollback optimistic updates on error
+      if (hasLiked !== previousLiked) {
+        setHeartCount(previousCount);
+        setHasLiked(previousLiked);
+        setIsAnimating(false);
+      }
+
+      // Optional: Show user-friendly error message
+      // You could add a toast notification here
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -65,10 +105,12 @@ export default function HeartButton() {
       <div className="relative">
         <button
           onClick={handleHeartClick}
+          disabled={isLoading}
           className={`
             relative group px-6 py-4 rounded-2xl min-w-[120px]
             border backdrop-blur-sm shadow-lg
             hover:scale-105 active:scale-95 transition-all duration-300 ease-out
+            ${isLoading ? 'cursor-not-allowed opacity-70' : ''}
             ${hasLiked
               ? 'bg-gradient-to-r from-red-500/30 via-pink-500/30 to-rose-500/30 border-red-600 shadow-xl shadow-red-500/30'
               : 'bg-gray-100 dark:bg-white/10 border-gray-300 dark:border-white/20 hover:bg-gradient-to-r hover:from-red-500/20 hover:via-pink-500/20 hover:to-rose-500/20 hover:border-red-600 hover:shadow-xl'

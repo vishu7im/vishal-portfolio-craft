@@ -13,6 +13,7 @@ const { onRequest } = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { Timestamp } = require('firebase-admin/firestore');
 
 const cors = require("cors")({ origin: true });
 
@@ -66,14 +67,20 @@ exports.chatWithGemini = onRequest(async (req, res) => {
             // }
 
             // --- Use provided session_id or generate a new one ---
+
             const finalSessionId = session_id
             const sessionRef = db.collection("sessions").doc(finalSessionId);
             let sessionDoc = await sessionRef.get();
 
+            if (!sessionDoc.exists) {
+                return res.status(400).send({ error: "Session not found" });
+            }
+
             let description = "";
+
             if (sessionDoc.data().description == "New Chat") {
                 // Create new session with empty description (to be generated)
-                const DESC_SYSTEM_PROMPT = "You are a summarizer. Create a concise 5-7 word summary for a conversation.";
+                const DESC_SYSTEM_PROMPT = "You are a summarizer of vishal munday personal portfolio chat bot. Create a concise 5-7 word summary for a conversation.";
                 const descPrompt = `Generate a short description (5-7 words) summarizing this conversation: "${message}"`;
 
                 const minimodel = genAI.getGenerativeModel({
@@ -99,11 +106,11 @@ exports.chatWithGemini = onRequest(async (req, res) => {
                 description = sessionDoc.data().description;
             }
 
-            // --- Fetch last 30 messages ---
+            // --- Fetch last 20 messages ---
             const messagesSnapshot = await db.collection("messages")
-                .where("session_id", "==", finalSessionId)
+                .where("session_id", "==", sessionDoc.data().session_id)
                 .orderBy("timestamp", "desc")
-                .limit(30)
+                .limit(20)
                 .get();
 
             const geminiHistory = [];
@@ -124,6 +131,8 @@ exports.chatWithGemini = onRequest(async (req, res) => {
                 ],
             });
 
+            console.log("geminiHistory", geminiHistory)
+
             const chatReply = await chatResponse.sendMessage(message);
 
             const reply = chatReply.response.text();
@@ -132,10 +141,11 @@ exports.chatWithGemini = onRequest(async (req, res) => {
             const user_message = {
                 message_id: db.collection("messages").doc().id,
                 device_id,
-                session_id: finalSessionId,
+                session_id: sessionDoc.data().session_id,
                 role: "user",
                 message,
-                created_at: new Date()
+                created_at: new Date(),
+                timestamp: Timestamp.now()
             }
             await db.collection("messages").add(user_message);
 
@@ -144,10 +154,11 @@ exports.chatWithGemini = onRequest(async (req, res) => {
             const ai_message = {
                 message_id: db.collection("messages").doc().id,
                 device_id,
-                session_id: finalSessionId,
+                session_id: sessionDoc.data().session_id,
                 role: "model",
                 message: reply,
-                created_at: new Date()
+                created_at: new Date(),
+                timestamp: Timestamp.now()
             }
 
             await db.collection("messages").add(ai_message);

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
-import { Bot, ChevronLeft, ChevronRight, MessageSquare, Plus, Send, Trash2, User, X, Loader2 } from "lucide-react";
+import { Bot, ChevronDown, ChevronLeft, ChevronRight, MessageSquare, Plus, Send, Trash2, User, X, Loader2 } from "lucide-react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -12,6 +12,7 @@ import axios from "axios";
 import { db } from "../services/firebaseConfig";
 import { v4 as uuidv4 } from "uuid";
 import toast from "react-hot-toast";
+
 
 import { collection, query, where, orderBy, limit, startAfter, getDocs, addDoc, Timestamp, doc, updateDoc } from "firebase/firestore";
 
@@ -22,6 +23,7 @@ interface Message {
   role: "model" | "user";
   message: string;
   created_at: Date;
+  timestamp: Timestamp;
 }
 
 interface ChatSession {
@@ -33,6 +35,7 @@ interface ChatSession {
   status: "ACTIVE" | "INACTIVE";
   messages?: Message[];
   created_at: Date;
+  updated_at: Timestamp;
 }
 
 
@@ -86,6 +89,9 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [lastScrollTime, setLastScrollTime] = useState(0);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const [isAddingNewMessage, setIsAddingNewMessage] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   // New loading states
   const [creatingSession, setCreatingSession] = useState(false);
@@ -96,7 +102,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isFetchingRef = useRef(false);
   const isFetchingMessageRef = useRef(false);
-
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -120,7 +126,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
         collection(db, "sessions"),
         where("device_id", "==", device_id),
         where("status", "==", "ACTIVE"),
-        orderBy("created_at", "desc"),
+        orderBy("updated_at", "desc"),
         limit(SESSION_SIZE)
       );
 
@@ -155,7 +161,8 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
           session_id: session_id,
           description: "New Chat",
           status: "ACTIVE",
-          created_at: new Date()
+          created_at: new Date(),
+          updated_at: Timestamp.now()
         });
 
         // create an welcome message
@@ -164,9 +171,10 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
           device_id: device_id,
           session_id: session_id,
           message_id: message_id,
-          message: "Hi! I'm Vishal's AI assistant. Ask me anything about his experience, projects, or skills!",
+          message: "Hi! I'm Kiki , Ask me anything about vishal's experience, projects, or skills!",
           role: "model",
-          created_at: new Date()
+          created_at: new Date(),
+          timestamp: Timestamp.now()
         });
 
         // console.log({
@@ -190,16 +198,28 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
               device_id: device_id,
               session_id: session_id,
               role: "model",
-              message: "Hi! I'm Vishal's AI assistant. Ask me anything about his experience, projects, or skills!",
-              created_at: new Date()
+              message: "Hi! I'm Kiki , Ask me anything about vishal's experience, projects, or skills!",
+              created_at: new Date(),
+              timestamp: Timestamp.now(),
             }
           ],
-          created_at: new Date()
+          created_at: new Date(),
+          updated_at: Timestamp.now()
+
         });
       }
 
       console.table(fetchedSessions)
       setSessions(prev => [...prev, ...fetchedSessions]);
+
+      // Scroll to bottom after initial session load
+      if (isVisible && fetchedSessions.length > 0) {
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          });
+        }, 500);
+      }
     } catch (err) {
       console.error("Error fetching sessions:", err);
     } finally {
@@ -213,7 +233,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
     const now = Date.now();
 
     // Throttle scroll events to prevent excessive API calls
-    if (now - lastScrollTime < 1000) { // Increased to 1 second
+    if (now - lastScrollTime < 2000) { // Increased to 1 second
       return; // Ignore scroll events that are too frequent
     }
 
@@ -233,115 +253,179 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
     }
   }, [deviceId, sessionHasMore, sessionLoading, lastScrollTime]);
 
-  const loadMessages = useCallback(async (session_id: string, forceLoad: boolean = false) => {
-    console.log("fetching messages", session_id, "forceLoad:", forceLoad)
+  const loadMessages = useCallback(
+    async (session_id: string, forceLoad: boolean = false) => {
+      console.log("fetching messages", session_id, "forceLoad:", forceLoad);
 
-    let device_id = deviceId;
+      if (!deviceId) return;
 
-    if (!device_id) return;
+      const session = sessions.find((s) => s.session_id === session_id);
 
-    const session = sessions.find((s) => s.session_id === session_id);
-
-    // If session already has messages and we're not forcing a load (pagination), skip
-    if (!forceLoad && session?.messages?.length > 0) {
-      console.log("Session already has messages, skipping fetch");
-      return;
-    }
-
-    if (messageLoading || !messageHasMore || isFetchingMessageRef.current) {
-      console.log("Skipping fetch - loading:", messageLoading, "hasMore:", messageHasMore, "isFetching:", isFetchingMessageRef.current);
-      return;
-    }
-
-    console.log("Starting to fetch messages...");
-    setMessageLoading(true);
-    isFetchingMessageRef.current = true;
-
-    try {
-      let q = query(
-        collection(db, "messages"),
-        where("session_id", "==", session_id),
-        orderBy("created_at", "desc"),
-        limit(MESSAGE_SIZE)
-      );
-
-      // Only use lastMessageDoc for pagination (forceLoad = true)
-      if (forceLoad && lastMessageDoc) {
-        q = query(q, startAfter(lastMessageDoc));
+      // Skip if messages already exist and not forcing load
+      if (!forceLoad && session?.messages && session.messages.length > 0) {
+        console.log("Session already has messages, skipping fetch");
+        return;
       }
 
-      const snapshot = await getDocs(q);
-      const fetchedMessages: Message[] = [];
-
-      snapshot.forEach(doc => {
-        fetchedMessages.push({ ...(doc.data() as Message) });
-      });
-
-      console.log("Fetched messages:", fetchedMessages.length);
-
-      if (snapshot.docs.length < MESSAGE_SIZE) {
-        setMessageHasMore(false);
-        console.log("No more messages to load");
+      if (messageLoading || !messageHasMore || isFetchingMessageRef.current) {
+        console.log(
+          "Skipping fetch - loading:",
+          messageLoading,
+          "hasMore:",
+          messageHasMore,
+          "isFetching:",
+          isFetchingMessageRef.current
+        );
+        return;
       }
 
-      if (snapshot.docs.length > 0) {
-        setLastMessageDoc(snapshot.docs[snapshot.docs.length - 1]);
-      }
+      console.log("Starting to fetch messages...");
+      setMessageLoading(true);
+      isFetchingMessageRef.current = true;
 
-      // Update the session with the new messages
-      if (session) {
-        let updatedMessages;
-        if (forceLoad) {
-          // For pagination, append to existing messages
-          updatedMessages = [...(session.messages || []), ...fetchedMessages];
-        } else {
-          // For new session, replace messages
-          updatedMessages = fetchedMessages;
+      try {
+        // Base query (latest messages first)
+        let q = query(
+          collection(db, "messages"),
+          where("session_id", "==", session_id),
+          orderBy("timestamp", "desc"),
+          limit(MESSAGE_SIZE)
+        );
+
+        // Add pagination if loading older
+        if (forceLoad && lastMessageDoc) {
+          q = query(q, startAfter(lastMessageDoc));
         }
 
-        const updatedSession = {
-          ...session,
-          messages: updatedMessages
-        };
+        const snapshot = await getDocs(q);
+        const fetchedMessages: Message[] = [];
+        snapshot.forEach((doc) => {
+          fetchedMessages.unshift({ ...(doc.data() as Message) });
+        });
 
-        // Update the sessions array with the updated session
-        setSessions(prev => prev.map(s =>
-          s.session_id === session_id ? updatedSession : s
-        ));
+        console.log("Fetched messages:", fetchedMessages.length);
+        console.log("Snapshot docs length:", snapshot.docs.length, "MESSAGE_SIZE:", MESSAGE_SIZE);
+
+        if (snapshot.docs.length < MESSAGE_SIZE) {
+          setMessageHasMore(false);
+          console.log("No more messages to load");
+        }
+
+        if (snapshot.docs.length > 0) {
+          setLastMessageDoc(snapshot.docs[snapshot.docs.length - 1]);
+        } else if (forceLoad) {
+          // If we're loading older messages and got no results, there are no more messages
+          setMessageHasMore(false);
+          console.log("No more older messages to load");
+        }
+
+        if (session) {
+          let updatedMessages: Message[];
+
+          if (forceLoad) {
+            // Prepend older messages to the beginning
+            updatedMessages = [...fetchedMessages, ...(session.messages || [])];
+          } else {
+            // Prepend newer messages
+            updatedMessages = [
+              ...fetchedMessages,
+              ...(session.messages || []),
+            ];
+          }
+
+
+          // duplicate by message_id
+          const seen = new Set();
+          updatedMessages = updatedMessages.filter((m) => {
+            if (seen.has(m.message_id)) return false;
+            seen.add(m.message_id);
+            return true;
+          });
+
+
+          const updatedSession = {
+            ...session,
+            messages: updatedMessages,
+          };
+
+          setSessions((prev) =>
+            prev.map((s) =>
+              s.session_id === session_id ? updatedSession : s
+            )
+          );
+
+          console.table(sessions)
+        }
+      } catch (err) {
+        console.error("Error fetching messages:", err);
+      } finally {
+        setMessageLoading(false);
+        isFetchingMessageRef.current = false;
+        console.log("Finished fetching messages");
       }
-    } catch (err) {
-      console.error("Error fetching messages:", err);
-    } finally {
-      setMessageLoading(false);
-      isFetchingMessageRef.current = false;
-      console.log("Finished fetching messages");
-    }
-  }, [deviceId, sessions, messageLoading, messageHasMore, lastMessageDoc]);
+    },
+    [deviceId, sessions, messageLoading, messageHasMore, lastMessageDoc]
+  );
 
-  const handleMessageScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+
+  const handleMessageScroll = useCallback(async (e: React.UIEvent<HTMLDivElement>) => {
     const now = Date.now();
+    if (now - lastScrollTime < 1000) return;
 
-    // Throttle scroll events to prevent excessive API calls
-    if (now - lastScrollTime < 1000) { // Increased to 1 second
-      return; // Ignore scroll events that are too frequent
-    }
-
-    console.log("handleMessageScroll triggered", deviceId, "currentSessionId:", activeId);
     if (!deviceId || !activeId) return;
 
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 
     console.log("Scroll values:", { scrollTop, scrollHeight, clientHeight, messageHasMore, messageLoading });
 
-    // Check if we're near the bottom (within 50px) and can load more
-    if (scrollHeight - scrollTop <= clientHeight + 50 && messageHasMore && !messageLoading) {
-      console.log("Loading more messages...");
-      setLastScrollTime(now);
+    // Check if we should show scroll to bottom button
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShowScrollToBottom(!isNearBottom);
 
-      console.log("*******************************Loading more messages...***************************************");
-      loadMessages(activeId, true); // forceLoad = true for pagination
+    if (scrollTop <= 50 && messageHasMore && !messageLoading) {
+      console.log("Loading older messages...");
+      setIsLoadingOlderMessages(true);
+
+      const container = scrollContainerRef.current;
+      const prevScrollHeight = container?.scrollHeight || 0;
+
+      await loadMessages(activeId, true); // load older
+
+      // After load, adjust scrollTop so user stays at same place
+      requestAnimationFrame(() => {
+        if (container) {
+          const newScrollHeight = container.scrollHeight;
+          const scrollHeightDifference = newScrollHeight - prevScrollHeight;
+          container.scrollTop = scrollTop + scrollHeightDifference;
+        }
+      });
+
+      setLastScrollTime(now);
+      setIsLoadingOlderMessages(false);
     }
   }, [deviceId, activeId, messageHasMore, messageLoading, lastScrollTime, loadMessages]);
+  // const handleMessageScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+  //   const now = Date.now();
+
+  //   // Throttle scroll events to prevent excessive API calls
+  //   if (now - lastScrollTime < 2000) { // Increased to 1 second
+  //     return; // Ignore scroll events that are too frequent
+  //   }
+
+  //   console.log("handleMessageScroll triggered", deviceId, "currentSessionId:", activeId);
+  //   if (!deviceId || !activeId) return;
+
+  //   const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+
+  //   console.log("Scroll values:", { scrollTop, scrollHeight, clientHeight, messageHasMore, messageLoading });
+
+  //   // Check if we're near the bottom (within 50px) and can load more
+  //   if (scrollTop <= 50 && messageHasMore && !messageLoading) {
+  //     console.log("Loading older messages...");
+  //     setLastScrollTime(now);
+  //     loadMessages(activeId, true); // forceLoad = true for pagination
+  //   }
+  // }, [deviceId, activeId, messageHasMore, messageLoading, lastScrollTime, loadMessages]);
 
 
   const deleteSession = async (session_id: string, e: React.MouseEvent) => {
@@ -380,12 +464,26 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   useEffect(() => {
     if (isVisible) {
       setTimeout(() => inputRef.current?.focus(), 1000);
+      // Scroll to bottom when chat becomes visible
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        });
+      }, 500);
     }
   }, [isVisible, activeId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeSession?.messages?.length, isTyping]);
+    // Only auto-scroll to bottom when new messages are added (not when loading older messages)
+    if (isAddingNewMessage && isVisible && !isLoadingOlderMessages) {
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        });
+      }, 100);
+      setShowScrollToBottom(false);
+    }
+  }, [activeSession?.messages?.length, isTyping, isLoadingOlderMessages, isVisible, isAddingNewMessage]);
 
   async function getDeviceId(): Promise<string> {
     let deviceId = localStorage.getItem("device-id");
@@ -432,6 +530,33 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   }, []);
 
 
+
+  async function handleSessionUpdate(id: string) {
+    setSessions(prev => {
+      if (prev.length === 0) return prev;
+
+      // if already top, no Firestore write
+      if (prev[0].id === id) {
+        console.log("Session already at top, no Firestore write")
+        return prev;
+      }
+
+      // otherwise, update Firestore
+      updateDoc(doc(db, "sessions", id), {
+        updated_at: Timestamp.now(),
+      });
+
+      // also reorder locally for immediate UI feedback
+      const idx = prev.findIndex(s => s.id === id);
+      if (idx === -1) return prev;
+
+      const updated = [...prev];
+      const [target] = updated.splice(idx, 1);
+      updated.unshift({ ...target, updated_at: Timestamp.now() }); // optimistic
+      return updated;
+    });
+  }
+
   const createNewSession = async (device_id: string) => {
     setCreatingSession(true);
     try {
@@ -443,22 +568,25 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
         description: "New Chat",
         status: "ACTIVE",
         created_at: new Date(),
+        updated_at: Timestamp.now()
       });
 
       // 2️⃣ Create a welcome message
       const message_id = uuidv4();
-      await addDoc(collection(db, "messages"), {
+      const messageRef = await addDoc(collection(db, "messages"), {
         device_id,
         session_id,
         message_id,
         message:
-          "Hi! I'm Vishal's AI assistant. Ask me anything about his experience, projects, or skills!",
+          "Hi! I'm Kiki , Ask me anything about vishal's experience, projects, or skills!",
         role: "model",
         created_at: new Date(),
+        timestamp: Timestamp.now()
       });
 
       // 3️⃣ Update UI state immediately
       const newSession = {
+        id: newSessionRef.id,
         device_id,
         session_id,
         description: "New Chat",
@@ -469,16 +597,22 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
             device_id,
             session_id,
             message:
-              "Hi! I'm Vishal's AI assistant. Ask me anything about his experience, projects, or skills!",
+              "Hi! I'm Kiki , Ask me anything about vishal's experience, projects, or skills!",
             role: "model",
             created_at: new Date(),
+            timestamp: Timestamp.now()
           },
         ],
         created_at: new Date(),
+        updated_at: Timestamp.now()
       };
 
-      setSessions((prev) => [...prev, newSession as ChatSession]);
+      setSessions((prev) => [newSession as ChatSession, ...prev,]);
       setActiveId(session_id); // set new session as active
+      setIsLoadingOlderMessages(false); // Ensure we're not in loading older messages state
+      setIsAddingNewMessage(false);
+      console.log("New session created:", newSession)
+      console.log("New session created:", session_id)
       toast.success("New session created successfully!");
 
     } catch (error) {
@@ -498,24 +632,45 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
     setMessageHasMore(true);
     setLastMessageDoc(null);
     isFetchingMessageRef.current = false;
+    setIsLoadingOlderMessages(false);
+    setIsAddingNewMessage(false);
+    setShowScrollToBottom(false);
+
+    // Reset scroll position to bottom for new session
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
+    }, 500);
   };
 
-  const renameActiveSessionIfNeeded = (firstUserText: string, active_session_id: string) => {
-    // const activeSession = sessions.find((s) => s.id === active_session_id)
-    // if (!activeSession || activeSession.title !== "New chat") return;
-
-    // if (!activeSession || activeSession.title !== firstUserText) return;
+  const renameActiveSessionIfNeeded = (UserText: string, session_id: string) => {
+    const Session = sessions.find((s) => s.session_id === session_id)
 
 
 
-    // const newTitle = firstUserText || "New chat";
-    // setSessions((prev) =>
-    //   prev.map((s) =>
-    //     s.id === activeSession.id
-    //       ? { ...s, title: newTitle, }
-    //       : s
-    //   )
-    // );
+    console.log("before change")
+    console.table(Session)
+    if (!Session || UserText === "New chat") return;
+
+    if (!Session || Session.description === UserText) return;
+
+
+    console.log("Renaming session:", session_id, "to:", UserText)
+    console.log("Session:", Session.description)
+
+
+    const newDescription = UserText || "New Chat";
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.session_id === session_id
+          ? { ...s, description: newDescription, }
+          : s
+      )
+    );
+
+    console.log("after change")
+    console.table(Session)
   };
 
   useEffect(() => {
@@ -533,11 +688,76 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
   useEffect(() => {
     if (activeId) {
       loadMessages(activeId, false);
+      // Scroll to bottom after loading messages for a session
+
     }
-  }, [activeId, loadMessages]);
+  }, [activeId, loadMessages, isVisible]);
 
 
   const handleSendMessage = async (e: React.FormEvent) => {
+
+    e.preventDefault();
+
+    console.log("handleSendMessage", activeId, inputMessage, deviceId)
+    if (!activeId || !inputMessage || inputMessage.trim() === "" || !deviceId) return;
+
+    let msg_id = `msg_${Math.random().toString(36).substring(2, 15)}`
+    let session = sessions.find((s) => s.session_id === activeId)
+
+
+    setIsTyping(true);
+    setIsAddingNewMessage(true);
+
+    const message = inputMessage.trim();
+
+
+
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.session_id === session.session_id
+          ? { ...s, messages: [...(s.messages || []), { message_id: msg_id, device_id: deviceId, session_id: s.session_id, role: "user", message: message, created_at: new Date(), timestamp: Timestamp.now() }] }
+          : s
+      )
+    );
+
+    const url = "https://us-central1-vishu-dev-2da2c.cloudfunctions.net/chatWithGemini"
+
+
+
+    const payload = {
+      device_id: deviceId,
+      session_id: session.id,
+      message: message
+    }
+
+    console.log(payload)
+
+
+
+    const response = await axios.post(url, payload);
+    renameActiveSessionIfNeeded(response.data.description, session.session_id)
+
+
+    console.log(response.data)
+
+    // remove the first message from the response.data.message
+
+    const NewMessages = [...session.messages.filter((m) => m.message_id !== msg_id), ...response.data.message]
+
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.session_id === session.session_id
+          ? { ...s, messages: NewMessages }
+          : s
+      )
+    );
+
+    setIsTyping(false);
+    setIsAddingNewMessage(false);
+    setInputMessage("");
+
+    handleSessionUpdate(session.id);
+
 
   };
 
@@ -590,7 +810,7 @@ lg:h-[38rem] lg:w-[44rem]"
               </div>
 
               {/* Sessions List */}
-              <div className="flex-1 px-3 py-3 overflow-y-auto" onScroll={handleSessionScroll} style={{ height: '100%' }}>
+              <div className="flex-1 px-3 py-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400" onScroll={handleSessionScroll} style={{ height: '100%' }}>
                 <div className="space-y-2">
                   {sessions.map((session) => {
                     const isActive = session.session_id === activeId;
@@ -689,6 +909,21 @@ lg:h-[38rem] lg:w-[44rem]"
 
           {/* Main chat area */}
           <div className="flex-1 flex flex-col min-w-0 relative">
+
+            {/* Floating Scroll to Bottom Button */}
+            {showScrollToBottom && (
+              <Button
+                size="icon"
+                className="absolute bottom-20 right-4 h-10 w-10 rounded-full bg-primary/90 backdrop-blur-sm shadow-lg hover:bg-primary transition-all duration-200 z-10"
+                onClick={() => {
+                  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                  setShowScrollToBottom(false);
+                }}
+                aria-label="Scroll to bottom"
+              >
+                <ChevronDown className="h-5 w-5 text-white" />
+              </Button>
+            )}
             {/* Chat Header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-accent/5 relative z-10">
               <div className="flex items-center gap-3">
@@ -709,7 +944,7 @@ lg:h-[38rem] lg:w-[44rem]"
                   <Bot size={16} className="text-white" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-sm truncate text-foreground">AI Assistant</h3>
+                  <h3 className="font-semibold text-sm truncate text-foreground">Kiki</h3>
                   <p className="text-xs text-muted-foreground truncate">Ask me about Vishal</p>
                 </div>
               </div>
@@ -791,8 +1026,30 @@ lg:h-[38rem] lg:w-[44rem]"
               </div>
             </ScrollArea> */}
 
-            <ScrollArea className="flex-1 px-4 py-4" onScroll={handleMessageScroll}>
+            <div className="flex-1 px-4 py-4 overflow-y-auto relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400" ref={scrollContainerRef} onScroll={handleMessageScroll}>
               <div className="space-y-4">
+                {/* Load More Messages Button */}
+                {messageHasMore && !messageLoading && activeSession?.messages && activeSession.messages.length > 0 && (
+                  <div className="flex justify-center py-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        setIsLoadingOlderMessages(true);
+                        await loadMessages(activeId, true);
+                        setIsLoadingOlderMessages(false);
+                      }}
+                      className="text-xs"
+                      disabled={messageLoading}
+                    >
+                      {messageLoading ? (
+                        <Loader size="xs" text="Loading..." />
+                      ) : (
+                        "Load Older Messages"
+                      )}
+                    </Button>
+                  </div>
+                )}
                 {activeSession?.messages?.map((message) => (
                   <div
                     key={message.message_id}
@@ -854,7 +1111,7 @@ lg:h-[38rem] lg:w-[44rem]"
 
                 <div ref={messagesEndRef} />
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Input Area */}
             <form onSubmit={handleSendMessage} className="px-4 pb-4 pt-3 border-t border-border/50 bg-gradient-to-r from-primary/5 to-accent/5">
@@ -863,7 +1120,7 @@ lg:h-[38rem] lg:w-[44rem]"
                   ref={inputRef}
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
-                  placeholder="Ask me anything about Vishal..."
+                  placeholder="Ask me anything about vishal..."
                   className="flex-1 bg-background/80 border-border/50 focus:border-primary rounded-full px-4 py-2 text-sm placeholder:text-muted-foreground/70 transition-all duration-200"
                   aria-label="Message input"
                   disabled={isTyping}
