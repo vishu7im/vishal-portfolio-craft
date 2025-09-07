@@ -12,6 +12,7 @@ import Index from "@/pages/Index";
 import About from "@/pages/About";
 import Projects from "@/pages/Projects";
 import Contact from "@/pages/Contact";
+import Admin from "@/pages/Admin";
 
 import NotFound from "@/pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
@@ -54,6 +55,9 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/projects" element={<Projects />} />
               <Route path="/contact" element={<Contact />} />
+              
+              {/* Admin route */}
+              <Route path="/admin" element={<Admin />} />
 
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
