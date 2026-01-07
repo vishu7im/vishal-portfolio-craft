@@ -53,7 +53,7 @@ const Index: React.FC = () => {
       </div>
       <Footer />
       <TiltEffect />
-      <ChatBotTrigger />
+      {/* <ChatBotTrigger /> */}
       <ThemeSwitcher />
     </div>
   );

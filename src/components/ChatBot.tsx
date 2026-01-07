@@ -772,7 +772,7 @@ export default function ChatBot({ isVisible, onToggle }: ChatBotProps) {
       )
     );
 
-    const url = "https://us-central1-vishu-dev-2da2c.cloudfunctions.net/chatWithGemini"
+    const url = "https://us-central1-vishu-dev-2da2c.cloudfunctions.net/chatWithGemini" || "http://127.0.0.1:5001/vishu-dev-2da2c/us-central1/chatWithGemini"
 
 
 
