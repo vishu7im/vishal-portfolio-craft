@@ -76,6 +76,11 @@ export const mountainAnchors: PortfolioAnchor[] = [
 export const mountainCollectibles: CollectibleDef[] = [
   { id: "c-mtn-1", kind: "coin", x: 1500, y: 5650, value: 5 },
   { id: "c-mtn-2", kind: "coin", x: 1500, y: 5450, value: 5 },
-  { id: "c-mtn-core", kind: "ai-core", x: 2150, y: 6500, value: 30, secret: true },
   { id: "c-mtn-duck", kind: "duck", x: 700, y: 5450, value: 15, secret: true },
+  // stunt-jump reward arc off the ramp (hit the ramp, sail through the coins)
+  { id: "c-mtn-jump-1", kind: "coin", x: 1900, y: 6500, value: 5 },
+  { id: "c-mtn-jump-2", kind: "coin", x: 1760, y: 6500, value: 5 },
+  { id: "c-mtn-jump-3", kind: "coin", x: 1620, y: 6500, value: 5 },
+  { id: "c-mtn-jump-4", kind: "coin", x: 1480, y: 6500, value: 5 },
+  { id: "c-mtn-jump-core", kind: "ai-core", x: 1340, y: 6500, value: 30 },
 ];

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { PALETTE } from "../config/palette";
+import { PALETTE, type AreaId } from "../config/palette";
 import { makeCanvasTexture } from "./textureFactory";
 
 // Procedural utility textures (tileable ground, soft blobs, particles, marks).
@@ -109,5 +109,115 @@ export function buildGroundTextures(scene: Phaser.Scene): void {
     g.addColorStop(1, "rgba(120,200,220,0)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
+  });
+}
+
+// --- distinct, soft-edged ground patch per area ---------------------------
+// Each biome gets its own base colour + surface pattern so it reads as a real,
+// different place rather than the same paper everywhere.
+
+type PatternFn = (ctx: CanvasRenderingContext2D, w: number, h: number, rnd: () => number) => void;
+
+function specks(color: string, count: number, size: number): PatternFn {
+  return (ctx, w, h, rnd) => {
+    ctx.fillStyle = color;
+    for (let i = 0; i < count; i++) {
+      const x = rnd() * w;
+      const y = rnd() * h;
+      const s = size * (0.5 + rnd());
+      ctx.beginPath();
+      ctx.ellipse(x, y, s, s * 1.8, rnd() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  };
+}
+
+function grid(color: string, step: number, lw: number): PatternFn {
+  return (ctx, w, h) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    for (let x = 0; x <= w; x += step) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y <= h; y += step) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+  };
+}
+
+function combine(...fns: PatternFn[]): PatternFn {
+  return (ctx, w, h, rnd) => fns.forEach((f) => f(ctx, w, h, rnd));
+}
+
+const ripples: PatternFn = (ctx, w, h, rnd) => {
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.lineWidth = 3;
+  for (let y = 30; y < h; y += 46) {
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 12) ctx.lineTo(x, y + Math.sin((x + rnd() * 40) / 40) * 8);
+    ctx.stroke();
+  }
+};
+
+const stripes: PatternFn = (ctx, w, h) => {
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  for (let y = 0; y < h; y += 96) ctx.fillRect(0, y, w, 48);
+};
+
+const glowDots = (color: string): PatternFn => (ctx, w, h, rnd) => {
+  for (let i = 0; i < 40; i++) {
+    const x = rnd() * w;
+    const y = rnd() * h;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 9);
+    g.addColorStop(0, color);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 9, y - 9, 18, 18);
+  }
+};
+
+const AREA_GROUND: Record<AreaId, { base: string; pattern: PatternFn }> = {
+  forest: { base: "#bcd9a6", pattern: specks("rgba(58,125,84,0.55)", 520, 2.2) },
+  "tech-campus": { base: "#c9e0c0", pattern: combine(stripes, specks("rgba(90,150,110,0.4)", 260, 1.8)) },
+  city: { base: "#d0d3da", pattern: combine(grid("rgba(90,100,120,0.18)", 46, 2), specks("rgba(90,100,120,0.12)", 120, 2)) },
+  garage: { base: "#d8c8a8", pattern: combine(specks("rgba(120,95,60,0.28)", 60, 5), grid("rgba(120,95,60,0.1)", 90, 2)) },
+  mountain: { base: "#ccd4de", pattern: combine(specks("rgba(120,130,150,0.4)", 130, 4), specks("rgba(255,255,255,0.7)", 300, 2)) },
+  beach: { base: "#f1e0ac", pattern: combine(ripples, specks("rgba(200,170,110,0.35)", 200, 1.6)) },
+  industrial: { base: "#b9ad95", pattern: combine(grid("rgba(80,68,52,0.22)", 60, 3), specks("rgba(70,58,44,0.3)", 90, 5)) },
+  "research-lab": { base: "#d6ccf5", pattern: combine(grid("rgba(123,92,255,0.25)", 44, 2), glowDots("rgba(140,110,255,0.6)")) },
+  "cloud-datacenter": { base: "#bfd4ea", pattern: combine(grid("rgba(57,160,240,0.28)", 44, 2), glowDots("rgba(80,180,255,0.7)")) },
+};
+
+export function buildAreaGround(scene: Phaser.Scene): void {
+  const S = 512;
+  let seed = 1;
+  (Object.keys(AREA_GROUND) as AreaId[]).forEach((id) => {
+    const { base, pattern } = AREA_GROUND[id];
+    const s = seed++;
+    let a = s * 9301 + 49297;
+    const rnd = () => {
+      a = (a * 9301 + 49297) % 233280;
+      return a / 233280;
+    };
+    makeCanvasTexture(scene, `aground-${id}`, S, S, (ctx, w, h) => {
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, w, h);
+      pattern(ctx, w, h, rnd);
+      // soft radial mask so patches blend into the surrounding wilds
+      ctx.globalCompositeOperation = "destination-in";
+      const g = ctx.createRadialGradient(w / 2, h / 2, w * 0.18, w / 2, h / 2, w * 0.52);
+      g.addColorStop(0, "rgba(0,0,0,1)");
+      g.addColorStop(0.72, "rgba(0,0,0,1)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over";
+    });
   });
 }

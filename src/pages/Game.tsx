@@ -6,6 +6,7 @@ import { InteractHint } from "@/components/game/InteractHint";
 import { Minimap } from "@/components/game/Minimap";
 import { ObjectiveTracker } from "@/components/game/ObjectiveTracker";
 import { GarageMenu } from "@/components/game/GarageMenu";
+import { TouchControls } from "@/components/game/TouchControls";
 import { AreaIntro, ControlsCard, LoadingVeil, Speedometer } from "@/components/game/HudExtras";
 
 // Hosts the Phaser canvas with the React HUD/panel/minimap overlaid on top.
@@ -34,6 +35,7 @@ export default function Game() {
         <ControlsCard />
         <PortfolioPanel />
         <GarageMenu />
+        <TouchControls />
         <LoadingVeil />
       </div>
     </div>

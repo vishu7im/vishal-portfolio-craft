@@ -53,10 +53,8 @@ export class WorldScene extends Phaser.Scene {
     this.add.tileSprite(0, 0, W, H, "ground").setOrigin(0).setDepth(0);
     for (const area of WORLD.areas) {
       this.add
-        .image(area.center.x, area.center.y, "area-blob")
-        .setDisplaySize(area.footprint.w * 1.25, area.footprint.h * 1.25)
-        .setTint(hex(area.palette.ground))
-        .setAlpha(0.9)
+        .image(area.center.x, area.center.y, `aground-${area.id}`)
+        .setDisplaySize(area.footprint.w * 1.3, area.footprint.h * 1.3)
         .setDepth(1);
     }
     this.drawRoads();

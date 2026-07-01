@@ -48,19 +48,11 @@ export class CollectibleSystem {
         .image(def.x, def.y, `col-${def.kind}`)
         .setScale(1 / TEX_SS)
         .setDepth(10 + def.y + 40);
-      // gentle bob + spin
+      // gentle bob (one tween per collectible keeps the world cheap)
       scene.tweens.add({
         targets: img,
         y: def.y - 8,
         duration: 900 + Math.random() * 400,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.inOut",
-      });
-      scene.tweens.add({
-        targets: img,
-        scaleX: { from: 1 / TEX_SS, to: -1 / TEX_SS },
-        duration: 1600,
         yoyo: true,
         repeat: -1,
         ease: "Sine.inOut",

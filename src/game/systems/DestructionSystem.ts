@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { gameStore } from "../state/gameStore";
 import type { AudioSystem } from "./AudioSystem";
 
 // Reactive-world effects: smashing crates/barrels into debris + dust, leaves
@@ -52,7 +53,9 @@ export class DestructionSystem {
     const y = img.y;
     this.dust.emitParticleAt(x, y, 16);
     this.audio.crash(Math.min(1, impact / 6));
-    this.scene.cameras.main.shake(140, 0.004 + Math.min(0.006, impact * 0.001));
+    if (!gameStore.getState().reducedMotion) {
+      this.scene.cameras.main.shake(140, 0.004 + Math.min(0.006, impact * 0.001));
+    }
     img.destroy();
   }
 
@@ -67,7 +70,7 @@ export class DestructionSystem {
   thud(x: number, y: number, impact: number) {
     this.dust.emitParticleAt(x, y, 6);
     this.audio.crash(Math.min(0.6, impact / 8));
-    this.scene.cameras.main.shake(90, 0.003);
+    if (!gameStore.getState().reducedMotion) this.scene.cameras.main.shake(90, 0.003);
   }
 
   /** continuous drift dust at the rear wheels */

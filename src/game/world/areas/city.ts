@@ -37,6 +37,14 @@ export const cityProps: PropInstance[] = [
   ...scatter("crate", 10, { x: 7500, y: 2050, w: 800, h: 500 }, rng, { physics: "destructible", keepOut }),
   ...scatter("barrel", 8, { x: 8700, y: 900, w: 700, h: 500 }, rng, { physics: "destructible", keepOut }),
   { id: "city-sign", kind: "sign", x: 7450, y: 1550, physics: "pushable" },
+  // a cone slalom along the western approach — weave through for style
+  ...Array.from({ length: 7 }, (_, i) => ({
+    id: `city-slalom-${i}`,
+    kind: "cone" as const,
+    x: 7050 + i * 150,
+    y: 1500 + (i % 2 === 0 ? -70 : 70),
+    physics: "pushable" as const,
+  })),
 ];
 
 export const cityAnchors: PortfolioAnchor[] = [

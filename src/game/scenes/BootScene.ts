@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { buildGroundTextures } from "../art/ground";
+import { buildGroundTextures, buildAreaGround } from "../art/ground";
 import { buildVehicleTextures } from "../art/vehicles";
 import { buildPropTextures } from "../art/props";
 import { buildCollectibleTextures } from "../art/collectibles";
@@ -14,6 +14,7 @@ export class BootScene extends Phaser.Scene {
 
   async create() {
     buildGroundTextures(this);
+    buildAreaGround(this);
     await Promise.all([
       buildVehicleTextures(this),
       buildPropTextures(this),

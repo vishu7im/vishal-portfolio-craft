@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { TUNING } from "../config/tuning";
+import { gameStore } from "../state/gameStore";
 import type { CarController } from "./CarController";
 
 // Smooth follow camera with a small deadzone, a gentle zoom-out under nitro, and
@@ -20,6 +21,7 @@ export class CameraRig {
   }
 
   shake(intensity: number, durationMs = 180) {
+    if (gameStore.getState().reducedMotion) return;
     this.cam.shake(durationMs, intensity);
   }
 
