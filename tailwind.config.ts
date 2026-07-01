@@ -53,42 +53,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
         },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          'primary-foreground': "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          'accent-foreground': "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))"
-        },
-        navy: {
-          50: "#f0f5fa",
-          100: "#dce8f5",
-          200: "#bed5ed",
-          300: "#8fb7df",
-          400: "#5992cc",
-          500: "#3674b3",
-          600: "#295c97",
-          700: "#244b7b",
-          800: "#224066",
-          900: "#1e2e4a",
-          950: "#0f172a"
-        },
-        // Adding cyberpunk theme colors
-        cyber: {
-          primary: "#00fffc",
-          secondary: "#ff00ff",
-          accent: "#fffc00",
-          dark: "#121212",
-          light: "#e0e0e0"
-        }
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
-        display: ["Inter", "system-ui", "sans-serif"],
+        sans: ["Geist", "system-ui", "sans-serif"],
+        mono: ["Geist Mono", "ui-monospace", "monospace"],
+        display: ["Geist", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -11,8 +11,8 @@
     "phone": "+91 8570090556",
     "github": "https://github.com/vishu7im",
     "linkedin": "https://www.linkedin.com/in/vishal-munday-869024223",
-    "avatar": "/vishal.jpeg",
-    "resume": "https://drive.google.com/file/d/1zslhE_LlPcurHG5cTMgMrTlySYiYD-O4/view?usp=sharing",
+    "avatar": "/vishal1.jpeg",
+    "resume": "https://drive.google.com/file/d/1vvqYgIdk910Wsrdlk7VsAeXgVi9z-7js/view?usp=sharing",
     "resumeName": "Vishal_Munday_Resume.pdf",
     "experienceInYears": 3
   },
@@ -108,9 +108,9 @@
   "education": [
     {
       "id": "1",
-      "institution": "IIET , Kurukshetra",
-      "degree": "Bachelor of Computer Science",
-      "startDate": "2024",
+      "institution": "BITS Pilani Wilp",
+      "degree": "B.Tech. Artificial Intelligence and Machine Learning",
+      "startDate": "2026",
       "endDate": "",
       "current": true,
       "description": "Studied computer science with focus on software development and databases.",
@@ -138,6 +138,60 @@
     }
   ],
   "projects": [
+    {
+      "id": "10",
+      "title": "FabricatorOS (uPVC SaaS Platform)",
+      "description": "Multi-tenant SaaS platform for uPVC and aluminium fabricators featuring quotation, work order, production management, cutting list generation, material optimization, and dynamic window/door configuration with live SVG rendering.",
+      "image": "",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "PostgreSQL",
+        "Prisma",
+        "React",
+        "Docker",
+        "SVG",
+        "Redis"
+      ],
+      "github": "PRIVATE",
+      "demo": "",
+      "featured": true
+    },
+    {
+      "id": "11",
+      "title": "MetaOS - WhatsApp CRM Platform",
+      "description": "Enterprise WhatsApp CRM platform supporting customer engagement, campaigns, automation, approvals, analytics, and AI-powered customer support workflows.",
+      "image": "",
+      "technologies": [
+        "Node.js",
+        "Express",
+        "Redis",
+        "SQL",
+        "Microservices",
+        "WhatsApp API",
+        "Gen AI"
+      ],
+      "github": "PRIVATE",
+      "demo": "",
+      "featured": true
+    },
+    {
+      "id": "12",
+      "title": "VoxAI - Real-Time Voice Agent",
+      "description": "Real-time voice-to-voice AI agent built using LiveKit and WebRTC, enabling low-latency conversational experiences with speech-to-text, LLM orchestration, and text-to-speech pipelines.",
+      "image": "",
+      "technologies": [
+        "Node.js",
+        "LiveKit",
+        "WebRTC",
+        "OpenAI",
+        "Redis",
+        "Gen AI"
+      ],
+      "github": "PRIVATE",
+      "demo": "",
+      "featured": true
+    },
     {
       "id": "1",
       "title": "Alma Nilokheri",

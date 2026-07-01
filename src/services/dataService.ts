@@ -1,6 +1,5 @@
 import db from '../data/db.json';
 import { useState, useEffect } from 'react';
-import toast from "react-hot-toast";
 
 // Types
 export interface Profile {
@@ -75,11 +74,6 @@ export interface AppTheme {
   fontFamily: string;
 }
 
-export interface AdminCredentials {
-  username: string;
-  password: string;
-}
-
 export interface DatabaseSchema {
   profile: Profile;
   skills: Skill[];
@@ -87,7 +81,7 @@ export interface DatabaseSchema {
   education: Education[];
   projects: Project[];
   testimonials: Testimonial[];
-  admin: AdminCredentials;
+  admin?: { username: string; password: string };
   theme?: AppTheme;
 }
 
@@ -118,6 +112,12 @@ const saveData = () => {
 // Initialize data
 loadData();
 
+// Non-hook accessor for non-React consumers (e.g. Phaser scenes).
+export function getPortfolioData(): DatabaseSchema {
+  loadData();
+  return data;
+}
+
 // Hook for accessing data
 export function usePortfolioData<T>(key: keyof DatabaseSchema): [T, (newData: T) => void] {
   const [value, setValue] = useState<T>(data[key] as unknown as T);
@@ -135,45 +135,9 @@ export function usePortfolioData<T>(key: keyof DatabaseSchema): [T, (newData: T)
     };
     setValue(newValue);
     saveData();
-    toast.success("Data updated successfully");
-
   };
 
   return [value, updateValue];
-}
-
-// Auth functions
-export function useAuth() {
-  const [authenticated, setAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-    setAuthenticated(isAuth);
-  }, []);
-
-  const login = (username: string, password: string) => {
-    if (username === data.admin.username && password === data.admin.password) {
-      localStorage.setItem('isAuthenticated', 'true');
-      setAuthenticated(true);
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('isAuthenticated');
-    setAuthenticated(false);
-  };
-
-  return { authenticated, login, logout };
-}
-
-export function updateAdminCredentials(username: string, password: string) {
-  data.admin = { username, password };
-  saveData();
-  toast.success("Admin credentials updated successfully");
-
-
 }
 
 // Helper functions to generate unique IDs
