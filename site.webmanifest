@@ -1,0 +1,31 @@
+{
+  "name": "Vishu.dev - Interactive Portfolio Game",
+  "short_name": "Vishu.dev",
+  "description": "Playable portfolio game for Vishal Munday, a backend tech lead and AI engineer building APIs, AI agents, RAG systems, DevOps workflows, and production software.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4ede0",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
