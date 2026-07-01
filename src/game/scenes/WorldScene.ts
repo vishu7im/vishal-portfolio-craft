@@ -18,6 +18,8 @@ import { ProgressionSystem } from "../systems/ProgressionSystem";
 import { ReactivitySystem } from "../systems/ReactivitySystem";
 import { DestructionSystem } from "../systems/DestructionSystem";
 import { AudioSystem } from "../systems/AudioSystem";
+import { WorldVignetteSystem } from "../systems/WorldVignetteSystem";
+import { AmbientWorldSystem } from "../systems/AmbientWorldSystem";
 
 export class WorldScene extends Phaser.Scene {
   private car!: CarController;
@@ -29,6 +31,8 @@ export class WorldScene extends Phaser.Scene {
   private progression!: ProgressionSystem;
   private reactivity!: ReactivitySystem;
   private destruction!: DestructionSystem;
+  private vignettes!: WorldVignetteSystem;
+  private ambient!: AmbientWorldSystem;
   private audio!: AudioSystem;
 
   private removeInput: () => void = () => {};
@@ -82,11 +86,13 @@ export class WorldScene extends Phaser.Scene {
     const accentFor = (a: PortfolioAnchor) =>
       WORLD.areas.find((ar) => ar.id === a.areaId)?.palette.accent ?? PALETTE.area.city.accent;
     this.reactivity = new ReactivitySystem(this, WORLD.anchors, accentFor);
+    this.vignettes = new WorldVignetteSystem(this);
 
     // --- car + camera ---
     const s = WORLD.spawn;
     this.car = new CarController(this, s.x, s.y, s.angle, VEHICLES[DEFAULT_VEHICLE]);
     this.rig = new CameraRig(this, this.car, W, H);
+    this.ambient = new AmbientWorldSystem(this, this.car);
 
     // --- systems that depend on car ---
     this.tire = new TireMarks(this);
@@ -271,19 +277,23 @@ export class WorldScene extends Phaser.Scene {
 
       const kind = (other as Phaser.GameObjects.Image).getData("kind");
       const physics = (other as Phaser.GameObjects.Image).getData("physics");
-      if (!kind) continue;
+      if (!kind || (other as Phaser.GameObjects.Image).getData("destroyed")) continue;
       const impact = this.carSpeedPx();
 
       if (physics === "decor") {
         if (kind === "bush") this.destruction.bushRustle(other.x, other.y);
         else if (kind === "puddle") this.destruction.puddleSplash(other.x, other.y);
         else if (kind === "ramp") this.car.hop();
+        else if (kind === "boost") {
+          this.car.boost();
+          this.destruction.boostBurst(other.x, other.y);
+        }
         continue;
       }
       if (physics === "destructible") {
         if (impact > TUNING.destroySpeedThreshold) {
-          this.destruction.smash(other as Phaser.GameObjects.Image, impact);
-          this.car.onCollision(impact);
+          const blasted = this.destruction.smash(other as Phaser.GameObjects.Image, impact);
+          if (blasted) this.car.flipFromCollision(impact, other.x, other.y);
         } else {
           this.destruction.thud(other.x, other.y, impact);
         }
@@ -291,13 +301,13 @@ export class WorldScene extends Phaser.Scene {
       }
       if (physics === "pushable") {
         this.destruction.thud(other.x, other.y, impact * 0.5);
-        if (impact > TUNING.crashSpeedThreshold) this.car.onCollision(impact);
+        if (impact > TUNING.crashSpeedThreshold) this.car.onCollision(impact, other.x, other.y);
         continue;
       }
       // solid static
       if (impact > TUNING.crashSpeedThreshold) {
         this.destruction.thud(other.x, other.y, impact);
-        this.car.onCollision(impact);
+        this.car.onCollision(impact, other.x, other.y);
       }
     }
   }
@@ -310,7 +320,7 @@ export class WorldScene extends Phaser.Scene {
     this.tire.update(this.car);
 
     // drift dust
-    if (this.car.driftLoad > 0.32) {
+    if (this.car.lateralSlip > TUNING.driftMarkThreshold && this.car.drifting) {
       const [x1, y1] = this.car.rearWheels();
       this.destruction.driftPuff(x1, y1);
     }
@@ -331,6 +341,8 @@ export class WorldScene extends Phaser.Scene {
     this.mission.update(delta);
     this.progression.update();
     this.reactivity.update(this.car.x, this.car.y, time);
+    this.vignettes.update(this.car.x, this.car.y, time, delta);
+    this.ambient.update(time, delta);
 
     // area transitions
     const area = areaAt(this.car.x, this.car.y);
@@ -367,6 +379,8 @@ export class WorldScene extends Phaser.Scene {
     this.removeInput();
     this.unsub();
     this.matter.world.off("collisionstart", this.onCollisionStart, this);
+    this.ambient?.destroy();
+    this.vignettes?.destroy();
     this.audio?.dispose();
   }
 }

@@ -35,13 +35,13 @@ export class TireMarks {
 
   update(car: CarController) {
     // lateral slip (handbrake or hard drift) leaves marks; require some travel
-    if (car.driftLoad < 0.18 && !car.drifting) return;
+    if (!car.drifting || car.lateralSlip < TUNING.driftMarkThreshold) return;
     const moved = Math.hypot(car.x - this.lastX, car.y - this.lastY);
-    if (moved < 7) return;
+    if (moved < 9) return;
     this.lastX = car.x;
     this.lastY = car.y;
     const [x1, y1, x2, y2] = car.rearWheels();
-    const alpha = Phaser.Math.Clamp(0.28 + car.driftLoad * 0.4, 0.28, 0.6);
+    const alpha = Phaser.Math.Clamp(0.22 + car.driftLoad * 0.32, 0.22, 0.5);
     this.stamp(x1, y1, car.angle, alpha);
     this.stamp(x2, y2, car.angle, alpha);
   }

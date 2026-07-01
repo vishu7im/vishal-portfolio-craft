@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Gamepad2 } from "lucide-react";
+import { Seo } from "@/components/Seo";
 import { usePortfolioData, Profile } from "@/services/dataService";
 import {
   AboutContent,
@@ -14,6 +15,13 @@ export default function Classic() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Seo
+        title="Vishal Munday Resume | Backend Tech Lead, AI Engineer, Node.js & RAG"
+        description="Classic resume view for Vishal Munday: backend development, AI agents, RAG applications, APIs, DevOps, databases, professional experience, projects, and contact details."
+        path="/#/classic"
+        canonical="/"
+        keywords="Vishal Munday resume, Vishu portfolio, backend developer resume, AI engineer portfolio, Node.js, RAG, LangChain, OpenAI, Docker, Redis, API developer"
+      />
       {/* top bar */}
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
@@ -33,6 +41,9 @@ export default function Classic() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-16 px-5 py-12 sm:py-16">
+        <h1 className="sr-only">
+          Vishal Munday resume and portfolio for backend leadership and AI engineering
+        </h1>
         <AboutContent />
         <SkillsContent />
         <WorkContent />

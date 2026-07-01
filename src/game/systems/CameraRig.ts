@@ -9,13 +9,15 @@ import type { CarController } from "./CarController";
 export class CameraRig {
   private cam: Phaser.Cameras.Scene2D.Camera;
   private car: CarController;
+  private target: Phaser.GameObjects.Zone;
   private targetZoom = TUNING.camZoom;
 
   constructor(scene: Phaser.Scene, car: CarController, worldW: number, worldH: number) {
     this.cam = scene.cameras.main;
     this.car = car;
+    this.target = scene.add.zone(car.x, car.y, 1, 1);
     this.cam.setBounds(0, 0, worldW, worldH);
-    this.cam.startFollow(car.body, false, TUNING.camLerp, TUNING.camLerp);
+    this.cam.startFollow(this.target, false, TUNING.camLerp, TUNING.camLerp);
     this.cam.setZoom(TUNING.camZoom);
     this.cam.setRoundPixels(true);
   }
@@ -26,6 +28,16 @@ export class CameraRig {
   }
 
   update(deltaMs: number) {
+    const v = this.car.body.body.velocity;
+    const lookahead = 4 + this.car.speedNorm * 8;
+    const desiredX = this.car.x + v.x * lookahead;
+    const desiredY = this.car.y + v.y * lookahead;
+    const lerp = Math.min(1, deltaMs * 0.0048);
+    this.target.setPosition(
+      this.target.x + (desiredX - this.target.x) * lerp,
+      this.target.y + (desiredY - this.target.y) * lerp
+    );
+
     // speed + nitro widen the view a touch for a sense of pace
     const zoomOut = this.car.nitroActive ? TUNING.camZoomNitro : TUNING.camZoom - this.car.speedNorm * 0.04;
     this.targetZoom = zoomOut;

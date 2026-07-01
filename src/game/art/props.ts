@@ -175,6 +175,23 @@ const S: Record<PropKind, PropSpec> = {
       </g>
     </svg>`,
   },
+  boost: {
+    kind: "boost",
+    w: 82,
+    h: 52,
+    body: { shape: "none", sensor: true },
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="82" height="52" viewBox="0 0 82 52">
+      ${shadow(41, 46, 32, 5)}
+      <rect x="7" y="10" width="68" height="30" rx="8" fill="#202631" stroke="#20242c" stroke-width="1.6"/>
+      <rect x="12" y="15" width="58" height="20" rx="5" fill="#26313a"/>
+      <g fill="#4ce0a0">
+        <polygon points="22,32 34,26 22,20"/>
+        <polygon points="38,32 50,26 38,20"/>
+        <polygon points="54,32 66,26 54,20"/>
+      </g>
+      <rect x="12" y="15" width="58" height="20" rx="5" fill="none" stroke="#4ce0a0" stroke-width="2" opacity="0.8"/>
+    </svg>`,
+  },
   puddle: {
     kind: "puddle",
     w: 78,

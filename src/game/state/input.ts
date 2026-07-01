@@ -29,8 +29,8 @@ export const touch = { throttle: 0, reverse: 0, steer: 0, handbrake: false, nitr
 
 function recompute() {
   const k = carInput.keys;
-  let throttle = k.has("KeyW") || k.has("ArrowUp") ? 1 : 0;
-  let reverse = k.has("KeyS") || k.has("ArrowDown") ? 1 : 0;
+  const throttle = k.has("KeyW") || k.has("ArrowUp") ? 1 : 0;
+  const reverse = k.has("KeyS") || k.has("ArrowDown") ? 1 : 0;
   let steer = 0;
   if (k.has("KeyA") || k.has("ArrowLeft")) steer -= 1;
   if (k.has("KeyD") || k.has("ArrowRight")) steer += 1;

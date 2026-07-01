@@ -67,8 +67,9 @@ export class CollectibleSystem {
       if (Math.hypot(carX - def.x, carY - def.y) > TUNING.collectRadius) continue;
       this.live.splice(i, 1);
       gameStore.collect(def.id, def.value);
-      this.sparkle.emitParticleAt(def.x, def.y);
+      this.sparkle.emitParticleAt(def.x, def.y, def.secret ? 22 : 12);
       this.audio.ding(def.secret ? 1.5 : 1);
+      this.floatReward(def.x, def.y, def.secret ? `SECRET +${def.value}` : `XP +${def.value}`);
       this.scene.tweens.add({
         targets: img,
         scale: 0,
@@ -82,5 +83,30 @@ export class CollectibleSystem {
         toast(`✨ Found a secret ${KIND_LABEL[def.kind]}! +${def.value}`);
       }
     }
+  }
+
+  private floatReward(x: number, y: number, text: string) {
+    const label = this.scene.add
+      .text(x, y - 34, text, {
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+        fontSize: "13px",
+        color: "#20242c",
+        align: "center",
+        backgroundColor: "rgba(244,237,224,0.9)",
+        stroke: "#ffffff",
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setPadding(7, 4, 7, 4)
+      .setDepth(99999);
+    this.scene.tweens.add({
+      targets: label,
+      y: y - 84,
+      alpha: 0,
+      scale: 1.12,
+      duration: 950,
+      ease: "Cubic.out",
+      onComplete: () => label.destroy(),
+    });
   }
 }

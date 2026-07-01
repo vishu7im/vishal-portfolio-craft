@@ -49,6 +49,7 @@ export type PropKind =
   | "lamp"
   | "building"
   | "ramp"
+  | "boost"
   | "puddle"
   | "palm"
   | "umbrella"

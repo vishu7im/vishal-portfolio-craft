@@ -12,6 +12,8 @@ export class DestructionSystem {
   private dust: Phaser.GameObjects.Particles.ParticleEmitter;
   private leaves: Phaser.GameObjects.Particles.ParticleEmitter;
   private splash: Phaser.GameObjects.Particles.ParticleEmitter;
+  private boost: Phaser.GameObjects.Particles.ParticleEmitter;
+  private blast: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor(scene: Phaser.Scene, audio: AudioSystem) {
     this.scene = scene;
@@ -46,17 +48,54 @@ export class DestructionSystem {
         emitting: false,
       })
       .setDepth(99998);
+
+    this.boost = scene.add
+      .particles(0, 0, "sparkle", {
+        tint: [0x4ce0a0, 0x39a0f0, 0xf2b843],
+        speed: { min: 90, max: 280 },
+        scale: { start: 0.75, end: 0 },
+        lifespan: 520,
+        emitting: false,
+        blendMode: Phaser.BlendModes.ADD,
+      })
+      .setDepth(99999);
+
+    this.blast = scene.add
+      .particles(0, 0, "sparkle", {
+        tint: [0xf2b843, 0xf0813a, 0xe04f3f, 0xf4ede0],
+        speed: { min: 130, max: 360 },
+        scale: { start: 0.9, end: 0 },
+        lifespan: 650,
+        emitting: false,
+        blendMode: Phaser.BlendModes.ADD,
+      })
+      .setDepth(99999);
   }
 
-  smash(img: Phaser.GameObjects.Image, impact: number) {
+  smash(img: Phaser.GameObjects.Image, impact: number): boolean {
+    if (img.getData("destroyed")) return false;
+    img.setData("destroyed", true);
+
     const x = img.x;
     const y = img.y;
-    this.dust.emitParticleAt(x, y, 16);
+    this.dust.emitParticleAt(x, y, 24);
+    this.blast.emitParticleAt(x, y, 28);
+    this.spawnDebris(x, y, img.rotation);
     this.audio.crash(Math.min(1, impact / 6));
     if (!gameStore.getState().reducedMotion) {
-      this.scene.cameras.main.shake(140, 0.004 + Math.min(0.006, impact * 0.001));
+      this.scene.cameras.main.shake(120, 0.003 + Math.min(0.004, impact * 0.0008));
     }
-    img.destroy();
+    img.setVisible(false);
+    img.setActive(false);
+
+    // Removing a Matter body synchronously from collisionstart can wedge Matter.
+    this.scene.time.delayedCall(0, () => {
+      if (!img.scene) return;
+      const body = img.body as MatterJS.BodyType | undefined;
+      if (body) this.scene.matter.world.remove(body);
+      img.destroy();
+    });
+    return true;
   }
 
   bushRustle(x: number, y: number) {
@@ -67,14 +106,41 @@ export class DestructionSystem {
     this.splash.emitParticleAt(x, y, 12);
   }
 
+  boostBurst(x: number, y: number) {
+    this.boost.emitParticleAt(x, y, 18);
+  }
+
   thud(x: number, y: number, impact: number) {
     this.dust.emitParticleAt(x, y, 6);
     this.audio.crash(Math.min(0.6, impact / 8));
-    if (!gameStore.getState().reducedMotion) this.scene.cameras.main.shake(90, 0.003);
+    if (!gameStore.getState().reducedMotion && impact > 2.2) this.scene.cameras.main.shake(80, 0.0022);
   }
 
   /** continuous drift dust at the rear wheels */
   driftPuff(x: number, y: number) {
     this.dust.emitParticleAt(x, y, 1);
+  }
+
+  private spawnDebris(x: number, y: number, rotation: number) {
+    const colors = [0xc79a5c, 0x8f6a38, 0xf2d199, 0x5a6170];
+    for (let i = 0; i < 9; i++) {
+      const a = rotation + (i / 9) * Math.PI * 2 + Phaser.Math.FloatBetween(-0.25, 0.25);
+      const speed = Phaser.Math.Between(70, 190);
+      const shard = this.scene.add
+        .rectangle(x, y, Phaser.Math.Between(6, 14), Phaser.Math.Between(4, 10), colors[i % colors.length], 0.95)
+        .setStrokeStyle(1, 0x20242c, 0.35)
+        .setRotation(a)
+        .setDepth(99997);
+      this.scene.tweens.add({
+        targets: shard,
+        x: x + Math.cos(a) * speed,
+        y: y + Math.sin(a) * speed,
+        rotation: a + Phaser.Math.FloatBetween(-4, 4),
+        alpha: 0,
+        duration: Phaser.Math.Between(420, 760),
+        ease: "Cubic.out",
+        onComplete: () => shard.destroy(),
+      });
+    }
   }
 }

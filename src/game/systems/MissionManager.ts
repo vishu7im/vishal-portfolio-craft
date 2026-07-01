@@ -27,6 +27,7 @@ export class MissionManager {
   private pkg?: Phaser.GameObjects.Image;
   private markers: Phaser.GameObjects.Image[] = [];
   private chaser?: Phaser.GameObjects.Container;
+  private fireworks: Phaser.GameObjects.Particles.ParticleEmitter;
   private cpIndex = 0;
   private timer = 0;
   private lastObjective = "";
@@ -35,6 +36,17 @@ export class MissionManager {
     this.scene = scene;
     this.car = car;
     this.audio = audio;
+    this.fireworks = scene.add
+      .particles(0, 0, "sparkle", {
+        tint: [0x39a0f0, 0x4ce0a0, 0xf2b843, 0xf0813a, 0x7b5cff],
+        speed: { min: 110, max: 320 },
+        scale: { start: 0.9, end: 0 },
+        lifespan: 900,
+        gravityY: 80,
+        emitting: false,
+        blendMode: Phaser.BlendModes.ADD,
+      })
+      .setDepth(99999);
     for (const m of WORLD.missions) {
       if (!gameStore.getState().missionsDone.includes(m.id)) this.addBeacon(m);
     }
@@ -144,6 +156,25 @@ export class MissionManager {
       }
     }
     this.audio.chord();
+    this.fireworks.emitParticleAt(this.car.x, this.car.y - 70, 42);
+    const banner = this.scene.add
+      .text(this.car.x, this.car.y - 110, "ACHIEVEMENT UNLOCKED", {
+        fontFamily: "ui-monospace, monospace",
+        fontSize: "14px",
+        color: "#20242c",
+        backgroundColor: "rgba(244,237,224,0.92)",
+      })
+      .setOrigin(0.5)
+      .setPadding(8, 4, 8, 4)
+      .setDepth(99999);
+    this.scene.tweens.add({
+      targets: banner,
+      y: this.car.y - 170,
+      alpha: 0,
+      duration: 1500,
+      ease: "Cubic.out",
+      onComplete: () => banner.destroy(),
+    });
     toast.success(`${m.rewardText}  +${m.rewardCoins} coins`);
   }
 

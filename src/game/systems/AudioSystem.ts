@@ -18,6 +18,8 @@ export class AudioSystem {
   private engGain: GainNode | null = null;
   // drift
   private driftGain: GainNode | null = null;
+  // speed wind
+  private windGain: GainNode | null = null;
   // pad
   private padGain: GainNode | null = null;
   private padOscs: OscillatorNode[] = [];
@@ -44,6 +46,7 @@ export class AudioSystem {
 
     this.buildEngine(ctx, master);
     this.buildDrift(ctx, master);
+    this.buildWind(ctx, master);
     this.buildPad(ctx, master, area);
 
     if (ctx.state === "suspended") ctx.resume();
@@ -88,6 +91,7 @@ export class AudioSystem {
     this.engFilter!.frequency.setTargetAtTime(340 + throttle * 2000 + rpm * 900, t, 0.05);
     this.engGain!.gain.setTargetAtTime(0.03 + rpm * 0.07, t, 0.08);
     this.driftGain!.gain.setTargetAtTime(Math.min(0.16, driftLoad * 0.2), t, 0.05);
+    this.windGain!.gain.setTargetAtTime(Math.max(0, rpm - 0.35) * 0.08, t, 0.12);
   }
 
   setArea(area: AudioLayerConfig) {
@@ -229,6 +233,20 @@ export class AudioSystem {
     src.connect(filter).connect(gain).connect(out);
     src.start();
     this.driftGain = gain;
+  }
+
+  private buildWind(ctx: AudioContext, out: GainNode) {
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = 1500;
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    src.connect(filter).connect(gain).connect(out);
+    src.start();
+    this.windGain = gain;
   }
 
   private buildPad(ctx: AudioContext, out: GainNode, area: AudioLayerConfig) {

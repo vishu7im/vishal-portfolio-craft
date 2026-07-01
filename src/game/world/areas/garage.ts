@@ -36,6 +36,8 @@ export const garageProps: PropInstance[] = [
   ...scatter("cone", 12, { x: C.x, y: C.y, w: 1600, h: 1200 }, rng, { physics: "pushable", keepOut }),
   { id: "garage-ramp-1", kind: "ramp", x: 1000, y: 4250, rotation: 0, physics: "decor" },
   { id: "garage-ramp-2", kind: "ramp", x: 2100, y: 3150, rotation: Math.PI, physics: "decor" },
+  { id: "garage-boost-east", kind: "boost", x: 2050, y: 3700, rotation: 0, physics: "decor" },
+  { id: "garage-boost-north", kind: "boost", x: 1500, y: 3000, rotation: Math.PI / 2, physics: "decor" },
   { id: "garage-sign", kind: "sign", x: 900, y: 4200, physics: "pushable" },
 ];
 
