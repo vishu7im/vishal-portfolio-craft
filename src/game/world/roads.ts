@@ -76,14 +76,46 @@ export const roads: RoadSegment[] = [
       { x: 4950, y: 5850 },
     ],
   },
-  // --- boardwalk over the Freelance Bay lagoon (leads to a secret) ---
+  // --- bridge over the Freelance Bay lagoon (leads to a secret) ---
   {
     id: "beach-boardwalk",
-    kind: "boardwalk",
+    kind: "bridge",
     width: 108,
     points: [
       { x: 8600, y: 4250 },
       { x: 9400, y: 4250 },
     ],
   },
+  // --- neon strip overlaying the spine's final approach into the AI Lab ---
+  {
+    id: "ai-lab-approach",
+    kind: "neon",
+    width: 150,
+    points: [
+      { x: 1500, y: 5150 },
+      { x: 1500, y: 6000 },
+    ],
+  },
 ];
+
+const DIRT_ROADS = roads.filter((r) => r.kind === "dirt");
+
+/** whether the point sits on a dirt shortcut — drives dust tint + body rumble */
+export function isOnDirt(x: number, y: number): boolean {
+  for (const road of DIRT_ROADS) {
+    const half = road.width / 2 + 14;
+    const pts = road.points;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      const abx = b.x - a.x;
+      const aby = b.y - a.y;
+      const len2 = abx * abx + aby * aby;
+      const t = len2 ? Math.max(0, Math.min(1, ((x - a.x) * abx + (y - a.y) * aby) / len2)) : 0;
+      const dx = x - (a.x + abx * t);
+      const dy = y - (a.y + aby * t);
+      if (dx * dx + dy * dy < half * half) return true;
+    }
+  }
+  return false;
+}

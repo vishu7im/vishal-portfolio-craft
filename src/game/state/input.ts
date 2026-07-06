@@ -10,6 +10,7 @@ export interface CarInput {
   nitro: boolean; // Shift
   interact: boolean; // E / Enter — edge-triggered, consumed by proximity system
   dismiss: boolean; // Escape — consumed by the panel
+  horn: boolean; // H — edge-triggered, consumed by the scene
   keys: Set<string>;
 }
 
@@ -21,6 +22,7 @@ export const carInput: CarInput = {
   nitro: false,
   interact: false,
   dismiss: false,
+  horn: false,
   keys: new Set(),
 };
 
@@ -59,6 +61,7 @@ export function installInputListeners(): () => void {
       if (!e.repeat) carInput.interact = true;
     }
     if (e.code === "Escape") carInput.dismiss = true;
+    if (e.code === "KeyH" && !e.repeat) carInput.horn = true;
     if (DRIVE_CODES.has(e.code)) {
       if (e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();
       if (!e.repeat) {

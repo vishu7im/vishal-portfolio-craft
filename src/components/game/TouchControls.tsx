@@ -78,6 +78,13 @@ export function TouchControls() {
         )}
         <div className="flex gap-3">
           <button
+            onPointerDown={() => (carInput.horn = true)}
+            className="glass pointer-events-auto grid h-12 w-12 self-end place-items-center rounded-full text-lg"
+            aria-label="Horn"
+          >
+            📢
+          </button>
+          <button
             {...hold({ handbrake: true })}
             className="glass pointer-events-auto grid h-16 w-16 place-items-center rounded-full text-xs font-bold text-white"
           >

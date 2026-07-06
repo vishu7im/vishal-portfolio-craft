@@ -16,7 +16,7 @@ export function usePhaserGame() {
     gameRef.current = game;
     if (import.meta.env.DEV) {
       // test/debug handle for driving the game from the console or Playwright
-      (window as unknown as Record<string, unknown>).__drive = { gameStore, frame };
+      (window as unknown as Record<string, unknown>).__drive = { gameStore, frame, game };
     }
     return () => {
       game.destroy(true);

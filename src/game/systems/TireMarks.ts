@@ -33,6 +33,14 @@ export class TireMarks {
     img.setScale(0.9, 1.15);
   }
 
+  /** wheelspin marks while doing a stationary burnout (jittered so they pile up) */
+  burnout(car: CarController) {
+    const [x1, y1, x2, y2] = car.rearWheels();
+    const j = () => Phaser.Math.FloatBetween(-2.5, 2.5);
+    this.stamp(x1 + j(), y1 + j(), car.angle, 0.3);
+    this.stamp(x2 + j(), y2 + j(), car.angle, 0.3);
+  }
+
   update(car: CarController) {
     // lateral slip (handbrake or hard drift) leaves marks; require some travel
     if (!car.drifting || car.lateralSlip < TUNING.driftMarkThreshold) return;

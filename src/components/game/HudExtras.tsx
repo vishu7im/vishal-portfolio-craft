@@ -118,37 +118,108 @@ export function ClockChip() {
     return () => cancelAnimationFrame(raf);
   }, []);
   return (
-    <div className="glass pointer-events-none absolute bottom-4 left-52 grid h-10 w-10 place-items-center rounded-full">
+    <div className="glass pointer-events-none absolute bottom-4 left-44 grid h-10 w-10 place-items-center rounded-full">
       <span ref={ref} className="text-base" aria-label="time of day" />
     </div>
   );
 }
 
-/** Speedometer + nitro flash, driven by the frame channel (no React re-render). */
+// gauge geometry: 240° sweep centred on (50,55), needle parked at 150°
+const GAUGE_R = 38;
+const GAUGE_ARC = 2 * Math.PI * GAUGE_R * (240 / 360);
+
+/** Circular racing-style speedometer, driven by the frame channel (no React re-render). */
 export function Speedometer() {
-  const barRef = useRef<HTMLDivElement>(null);
-  const nitroRef = useRef<HTMLDivElement>(null);
+  const arcRef = useRef<SVGPathElement>(null);
+  const needleRef = useRef<SVGGElement>(null);
+  const numRef = useRef<HTMLSpanElement>(null);
+  const ringRef = useRef<SVGPathElement>(null);
+  const driftRef = useRef<HTMLSpanElement>(null);
+  const revRef = useRef<HTMLSpanElement>(null);
+
   useEffect(() => {
     let raf = 0;
     const loop = () => {
-      if (barRef.current) barRef.current.style.width = `${Math.round(frame.speed * 100)}%`;
-      if (nitroRef.current) nitroRef.current.style.opacity = frame.nitro ? "1" : "0";
+      const s = frame.speed;
+      if (arcRef.current)
+        arcRef.current.style.strokeDashoffset = `${GAUGE_ARC * (1 - s)}`;
+      if (needleRef.current)
+        needleRef.current.setAttribute("transform", `rotate(${150 + 240 * s}, 50, 55)`);
+      if (numRef.current) {
+        const v = `${Math.round(s * 180)}`;
+        if (numRef.current.textContent !== v) numRef.current.textContent = v;
+      }
+      if (ringRef.current) ringRef.current.style.opacity = frame.nitro ? "1" : "0";
+      if (driftRef.current) driftRef.current.style.opacity = frame.drifting ? "1" : "0";
+      if (revRef.current) revRef.current.style.opacity = frame.reversing ? "1" : "0";
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  // arc endpoints for a 240° sweep (150° → 390°) around (50,55)
+  const p = (deg: number) => {
+    const a = (deg * Math.PI) / 180;
+    return `${50 + GAUGE_R * Math.cos(a)} ${55 + GAUGE_R * Math.sin(a)}`;
+  };
+  const arcPath = `M ${p(150)} A ${GAUGE_R} ${GAUGE_R} 0 1 1 ${p(390)}`;
+
   return (
-    <div className="glass pointer-events-none absolute bottom-4 left-4 w-44 rounded-2xl px-4 py-3 text-white">
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/55">Speed</span>
-        <span ref={nitroRef} className="text-[10px] font-bold text-amber-300 transition-opacity" style={{ opacity: 0 }}>
-          NITRO
-        </span>
+    <div className="glass pointer-events-none absolute bottom-4 left-4 h-36 w-36 rounded-full text-white">
+      <svg viewBox="0 0 100 100" className="h-full w-full">
+        {/* nitro halo */}
+        <path
+          ref={ringRef}
+          d={arcPath}
+          fill="none"
+          stroke="#59c8ff"
+          strokeWidth={9}
+          strokeLinecap="round"
+          style={{ opacity: 0, filter: "blur(3px)", transition: "opacity 200ms" }}
+        />
+        {/* track + progress */}
+        <path d={arcPath} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth={5} strokeLinecap="round" />
+        <path
+          ref={arcRef}
+          d={arcPath}
+          fill="none"
+          stroke="url(#speedo-grad)"
+          strokeWidth={5}
+          strokeLinecap="round"
+          strokeDasharray={GAUGE_ARC}
+          strokeDashoffset={GAUGE_ARC}
+        />
+        <defs>
+          <linearGradient id="speedo-grad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stopColor="#fcd34d" />
+            <stop offset="100%" stopColor="#fb7185" />
+          </linearGradient>
+        </defs>
+        {/* needle */}
+        <g ref={needleRef} transform="rotate(150, 50, 55)">
+          <line x1={50} y1={55} x2={79} y2={55} stroke="#ffffff" strokeWidth={2.4} strokeLinecap="round" />
+          <circle cx={50} cy={55} r={4} fill="#ffffff" />
+        </g>
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-end pb-4">
+        <span ref={numRef} className="font-mono text-xl font-bold leading-none">0</span>
+        <span className="font-mono text-[8px] uppercase tracking-[0.3em] text-white/50">km/h</span>
       </div>
-      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/15">
-        <div ref={barRef} className="h-full rounded-full bg-gradient-to-r from-amber-300 to-rose-400" style={{ width: "0%" }} />
-      </div>
+      <span
+        ref={driftRef}
+        className="absolute left-1/2 top-5 -translate-x-1/2 font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-amber-300 transition-opacity"
+        style={{ opacity: 0 }}
+      >
+        drift
+      </span>
+      <span
+        ref={revRef}
+        className="absolute right-4 top-9 font-mono text-[10px] font-bold text-white/70 transition-opacity"
+        style={{ opacity: 0 }}
+      >
+        R
+      </span>
     </div>
   );
 }
@@ -178,6 +249,7 @@ export function ControlsCard() {
         <Legend keys="Space" label="Drift" />
         <Legend keys="Shift" label="Nitro" />
         <Legend keys="E" label="Interact" />
+        <Legend keys="H" label="Horn" />
       </div>
     </div>
   );

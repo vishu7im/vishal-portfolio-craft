@@ -21,6 +21,8 @@ export class AudioSystem {
   private engGain: GainNode | null = null;
   // drift
   private driftGain: GainNode | null = null;
+  // idle "lump" — slow wobble on engine gain at low rpm
+  private engLfoGain: GainNode | null = null;
   // speed wind
   private windGain: GainNode | null = null;
   // pad
@@ -86,7 +88,7 @@ export class AudioSystem {
 
   // --- realtime driving ---------------------------------------------------
 
-  update(rpm: number, throttle: number, driftLoad: number) {
+  update(rpm: number, throttle: number, driftLoad: number, burnout = false) {
     if (!this.ctx || !this.engOsc) return;
     const t = this.ctx.currentTime;
     const base = 46 + rpm * 150;
@@ -94,8 +96,12 @@ export class AudioSystem {
     this.engSub!.frequency.setTargetAtTime(base * 0.5, t, 0.05);
     this.engFilter!.frequency.setTargetAtTime(340 + throttle * 2000 + rpm * 900, t, 0.05);
     this.engGain!.gain.setTargetAtTime(0.03 + rpm * 0.07, t, 0.08);
-    this.driftGain!.gain.setTargetAtTime(Math.min(0.16, driftLoad * 0.2), t, 0.05);
+    // stationary burnout borrows the tyre-noise bed at near-full level
+    const tyre = burnout ? 0.15 : Math.min(0.16, driftLoad * 0.2);
+    this.driftGain!.gain.setTargetAtTime(tyre, t, 0.05);
     this.windGain!.gain.setTargetAtTime(Math.max(0, rpm - 0.35) * 0.08, t, 0.12);
+    // idle lump: the wobble fades out as revs climb
+    this.engLfoGain?.gain.setTargetAtTime(0.012 * Math.max(0, (0.3 - rpm) / 0.3), t, 0.15);
   }
 
   setArea(area: AudioLayerConfig) {
@@ -163,6 +169,50 @@ export class AudioSystem {
     src.connect(f).connect(g).connect(this.master);
     src.start(t);
     src.stop(t + 0.32);
+  }
+
+  /** tiny bird/duck chirp */
+  chirp() {
+    this.tone(1560 + Math.random() * 320, 0.09);
+  }
+
+  /** friendly two-tone car horn */
+  horn() {
+    if (!this.ctx || !this.master) return;
+    const t = this.ctx.currentTime;
+    for (const f of [420, 528]) {
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = "square";
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.045, t + 0.02);
+      g.gain.setValueAtTime(0.045, t + 0.18);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      o.connect(g).connect(this.master);
+      o.start(t);
+      o.stop(t + 0.3);
+    }
+  }
+
+  /** one-shot tyre screech for hard braking */
+  screech(intensity = 0.7) {
+    if (!this.ctx || !this.master || !this.noiseBuf) return;
+    const t = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    const f = this.ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.frequency.setValueAtTime(2400, t);
+    f.frequency.exponentialRampToValueAtTime(1500, t + 0.4);
+    f.Q.value = 4;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.14 * intensity, t + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+    src.connect(f).connect(g).connect(this.master);
+    src.start(t);
+    src.stop(t + 0.5);
   }
 
   chord() {
@@ -261,6 +311,16 @@ export class AudioSystem {
     this.engSub = sub;
     this.engFilter = filter;
     this.engGain = gain;
+
+    // slow LFO on the engine gain gives the idle a lumpy character
+    const lfo = ctx.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 4.5;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0;
+    lfo.connect(lfoGain).connect(gain.gain);
+    lfo.start();
+    this.engLfoGain = lfoGain;
   }
 
   private buildDrift(ctx: AudioContext, out: GainNode) {

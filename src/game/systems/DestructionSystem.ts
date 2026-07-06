@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { gameStore } from "../state/gameStore";
+import { TUNING } from "../config/tuning";
 import type { AudioSystem } from "./AudioSystem";
 
 // Reactive-world effects: smashing crates/barrels into debris + dust, leaves
@@ -82,8 +83,16 @@ export class DestructionSystem {
     this.blast.emitParticleAt(x, y, 28);
     this.spawnDebris(x, y, img.rotation);
     this.audio.crash(Math.min(1, impact / 6));
+
+    // crates & barrels pay out a little XP burst — breaking things is rewarded
+    const kind = img.getData("kind");
+    if (kind === "crate" || kind === "barrel") {
+      this.boost.emitParticleAt(x, y - 10, 8);
+      gameStore.addXp(2);
+      this.audio.ding(1.2);
+    }
     if (!gameStore.getState().reducedMotion) {
-      this.scene.cameras.main.shake(120, 0.003 + Math.min(0.004, impact * 0.0008));
+      this.scene.cameras.main.shake(120, Math.min(TUNING.camShakeCrash, 0.003 + impact * 0.0008));
     }
     img.setVisible(false);
     img.setActive(false);
@@ -113,7 +122,8 @@ export class DestructionSystem {
   thud(x: number, y: number, impact: number) {
     this.dust.emitParticleAt(x, y, 6);
     this.audio.crash(Math.min(0.6, impact / 8));
-    if (!gameStore.getState().reducedMotion && impact > 2.2) this.scene.cameras.main.shake(80, 0.0022);
+    if (!gameStore.getState().reducedMotion && impact > 2.2)
+      this.scene.cameras.main.shake(80, TUNING.camShakeCrash * 0.4);
   }
 
   /** continuous drift dust at the rear wheels */

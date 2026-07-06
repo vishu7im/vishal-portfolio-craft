@@ -75,7 +75,10 @@ export const TUNING = {
   // camera
   camLerp: 0.105,
   camZoom: 1.0,
-  camZoomNitro: 0.92,
+  camZoomNitro: 0.88,
+  camZoomSpeedRange: 0.12, // how far the view widens at top speed
+  camZoomNear: 1.1, // slow-roll zoom-in beside a portfolio anchor
+  camTiltDrift: 0.06, // rad (~3.4°) camera lean while drifting
   camShakeCrash: 0.006,
   // drift / marks
   driftMarkThreshold: 1.75, // lateral speed (px/step) before marks/smoke appear

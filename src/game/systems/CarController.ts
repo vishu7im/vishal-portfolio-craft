@@ -22,9 +22,15 @@ export class CarController {
   rpm = 0;
   driftLoad = 0;
   lateralSlip = 0;
+  slipSign = 1; // which side the tail is sliding toward (camera tilt direction)
   drifting = false;
   braking = false;
+  reversing = false;
   nitroActive = false;
+  /** handbrake + throttle at a standstill: wheels spin, car stays put */
+  burnout = false;
+  /** 0..1 extra body shake from rough ground (set by the scene on dirt roads) */
+  surfaceRumble = 0;
 
   private roll = 0;
   private squash = 0;
@@ -194,8 +200,12 @@ export class CarController {
       (this.reverseSmoothed > 0.08 && forwardDot > 0.35) ||
       (this.throttleSmoothed > 0.08 && forwardDot < -0.3);
 
+    // stationary burnout: the handbrake keeps the rear planted while the
+    // throttle spins the wheels — no thrust until the handbrake is released
+    this.burnout = input.handbrake && this.throttleSmoothed > 0.05 && speed < 2.0;
+
     // thrust and braking. Braking intentionally bites harder than acceleration.
-    if (this.throttleSmoothed > 0) {
+    if (this.throttleSmoothed > 0 && !this.burnout) {
       const f =
         (forwardDot < -0.3 ? T.brakeForce : T.driveForce) *
         this.throttleSmoothed *
@@ -228,6 +238,8 @@ export class CarController {
     const fComp = nv.x * fx + nv.y * fy;
     const rComp = nv.x * rx + nv.y * ry;
     this.lateralSlip = Math.abs(rComp);
+    this.slipSign = rComp >= 0 ? 1 : -1;
+    this.reversing = forwardDot < -0.3 && this.reverseSmoothed > 0.08;
 
     this.drifting =
       (input.handbrake && speed > 2.8) ||
@@ -310,13 +322,18 @@ export class CarController {
     const base = 1 / TEX_SS;
     const roadBounce =
       finalSpeed > 2
-        ? Math.sin(this.scene.time.now * 0.022 + this.body.x * 0.018 + this.body.y * 0.011) *
+        ? Math.sin(
+            this.scene.time.now * (0.022 + this.surfaceRumble * 0.012) +
+              this.body.x * 0.018 +
+              this.body.y * 0.011
+          ) *
           this.speedNorm *
-          0.55
-        : 0;
+          (0.55 + this.surfaceRumble * 1.0)
+        : Math.sin(this.scene.time.now * 0.0075) * 0.35; // engine idling — faint rock
+    const idleRoll = finalSpeed <= 2 ? Math.sin(this.scene.time.now * 0.013) * 0.006 : 0;
     const lift = this.hopH + roadBounce;
     this.visual.setPosition(this.body.x, this.body.y - lift);
-    this.visual.setRotation(a + this.roll);
+    this.visual.setRotation(a + this.roll + idleRoll);
     this.visual.setScale(
       base * (1 + this.squash * 0.5 + lift * 0.02),
       base * (1 - this.squash + lift * 0.02)
@@ -352,7 +369,9 @@ export class CarController {
     this.lateralSlip = 0;
     this.drifting = false;
     this.braking = false;
+    this.reversing = false;
     this.nitroActive = false;
+    this.burnout = false;
 
     const base = 1 / TEX_SS;
     const squash = p > 0.82 ? (p - 0.82) * 0.9 : 0;

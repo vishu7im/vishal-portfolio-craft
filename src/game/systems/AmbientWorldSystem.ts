@@ -54,6 +54,15 @@ export class AmbientWorldSystem {
   private spinePoints: Array<{ x: number; y: number }> = [];
   private spineLens: number[] = [];
   private spineTotal = 0;
+  // NPC reactions: walkers wave at a stopped car and jump at the horn
+  private readonly walkerBots: Array<{ node: Phaser.GameObjects.Container; reactAt: number }> = [];
+  private readonly ducks: Array<{
+    node: Phaser.GameObjects.Container;
+    home: { x: number; y: number };
+    fleeAt: number;
+  }> = [];
+  private readonly lampGlows = new Map<Phaser.GameObjects.Image, Phaser.GameObjects.Image>();
+  private stillMs = 0;
 
   private readonly leaves: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly petals: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -137,6 +146,7 @@ export class AmbientWorldSystem {
     this.addButterflies();
     this.addCoffeeRobot();
     this.addWalkers();
+    this.addDucks();
     this.addTraffic();
     this.buildRain();
     this.addAmbientDistrictDetails();
@@ -151,6 +161,8 @@ export class AmbientWorldSystem {
     this.updateNightGlows(time);
     this.updateWeather(time);
     this.emitAmbientParticles(time);
+    this.updateNpcReactions(time, delta);
+    this.updateDucks(time);
 
     if (time > this.nextBirdAt) {
       this.nextBirdAt = time + Phaser.Math.Between(13000, 24000);
@@ -164,6 +176,7 @@ export class AmbientWorldSystem {
   }
 
   destroy() {
+    this.ducks.forEach((d) => d.node.destroy());
     this.serverDots.forEach((o) => o.destroy());
     this.nightGlows.forEach((g) => g.img.destroy());
     this.drones.forEach((d) => d.node.destroy());
@@ -217,6 +230,7 @@ export class AmbientWorldSystem {
           .setAlpha(0.2)
           .setDepth(obj.depth - 1);
         this.serverDots.push(glow);
+        this.lampGlows.set(obj, glow);
         this.scene.tweens.add({
           targets: glow,
           alpha: 0.55,
@@ -347,6 +361,8 @@ export class AmbientWorldSystem {
       ease: "Sine.inOut",
       onUpdate: () => bot.setDepth(10 + bot.y + 80),
     });
+    this.serverDots.push(bot);
+    this.walkerBots.push({ node: bot, reactAt: 0 });
   }
 
   /** two more walkers in the coffee-bot mould, in different districts */
@@ -377,6 +393,159 @@ export class AmbientWorldSystem {
         onUpdate: () => bot.setDepth(10 + bot.y + 80),
       });
       this.serverDots.push(bot); // reuse the misc-cleanup bucket
+      this.walkerBots.push({ node: bot, reactAt: 0 });
+    }
+  }
+
+  /** ducks paddling near the forest pond and the Freelance Bay lagoon */
+  private addDucks() {
+    const spots = [
+      { x: 1150, y: 1980 },
+      { x: 1290, y: 2050 },
+      { x: 1210, y: 1890 },
+      { x: 8820, y: 4440 },
+      { x: 8950, y: 4500 },
+      { x: 9080, y: 4430 },
+    ];
+    for (const s of spots) {
+      const duck = this.scene.add.container(s.x, s.y).setDepth(10 + s.y + 40);
+      duck.add(this.scene.add.ellipse(0, 0, 18, 13, 0xf2e6cf).setStrokeStyle(2, INK));
+      duck.add(this.scene.add.circle(7, -7, 5, 0xf2e6cf).setStrokeStyle(2, INK));
+      duck.add(this.scene.add.triangle(15, -7, 0, -2, 7, 0, 0, 2, 0xf2b843));
+      duck.setScale(Phaser.Math.FloatBetween(0.9, 1.15) * (Math.random() < 0.5 ? -1 : 1), 1);
+      this.scene.tweens.add({
+        targets: duck,
+        y: s.y - 2.5,
+        duration: Phaser.Math.Between(700, 1100),
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.inOut",
+      });
+      this.ducks.push({ node: duck, home: { x: s.x, y: s.y }, fleeAt: 0 });
+    }
+  }
+
+  /** ducks waddle-scatter away from a close car (or the horn), then drift home */
+  private updateDucks(time: number) {
+    for (const d of this.ducks) {
+      if (time < d.fleeAt) continue;
+      const dx = d.node.x - this.car.x;
+      const dy = d.node.y - this.car.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 150) {
+        this.fleeDuck(d, time, dx / (dist || 1), dy / (dist || 1));
+      } else if (dist > 320 && Math.hypot(d.node.x - d.home.x, d.node.y - d.home.y) > 24) {
+        d.fleeAt = time + 4000;
+        this.scene.tweens.add({
+          targets: d.node,
+          x: d.home.x,
+          y: d.home.y,
+          duration: 2600,
+          ease: "Sine.inOut",
+          onUpdate: () => d.node.setDepth(10 + d.node.y + 40),
+        });
+      }
+    }
+  }
+
+  private fleeDuck(d: (typeof this.ducks)[number], time: number, nx: number, ny: number) {
+    d.fleeAt = time + 2600;
+    const jitter = Phaser.Math.FloatBetween(-0.5, 0.5);
+    const fx = nx + jitter * -ny;
+    const fy = ny + jitter * nx;
+    this.audio?.chirp();
+    this.scene.tweens.add({
+      targets: d.node,
+      x: d.node.x + fx * 130,
+      y: d.node.y + fy * 130,
+      duration: 750,
+      ease: "Cubic.out",
+      onUpdate: () => d.node.setDepth(10 + d.node.y + 40),
+    });
+  }
+
+  /** floating reaction bubble above an NPC */
+  private bubble(node: Phaser.GameObjects.Container, text: string) {
+    const t = this.scene.add
+      .text(node.x, node.y - 48, text, {
+        fontFamily: "ui-monospace, monospace",
+        fontSize: "18px",
+        color: "#20242c",
+        stroke: "#f4ede0",
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(99995);
+    this.scene.tweens.add({
+      targets: t,
+      y: t.y - 26,
+      alpha: 0,
+      duration: 1300,
+      ease: "Cubic.out",
+      onComplete: () => t.destroy(),
+    });
+  }
+
+  /** the horn startles nearby walkers and ducks */
+  onHorn(x: number, y: number) {
+    const now = this.scene.time.now;
+    for (const w of this.walkerBots) {
+      if (now < w.reactAt) continue;
+      if (Math.hypot(w.node.x - x, w.node.y - y) > 260) continue;
+      w.reactAt = now + 4000;
+      this.bubble(w.node, "!");
+      this.scene.tweens.add({
+        targets: w.node,
+        scaleY: 1.18,
+        duration: 130,
+        yoyo: true,
+        repeat: 1,
+        ease: "Sine.inOut",
+      });
+    }
+    for (const d of this.ducks) {
+      if (now < d.fleeAt) continue;
+      const dx = d.node.x - x;
+      const dy = d.node.y - y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 340) this.fleeDuck(d, now, dx / (dist || 1), dy / (dist || 1));
+    }
+  }
+
+  /** walkers wave when the car sits still next to them for a beat */
+  private updateNpcReactions(time: number, delta: number) {
+    if (this.car.speedNorm < 0.05) this.stillMs += delta;
+    else this.stillMs = 0;
+    if (this.stillMs < 1000) return;
+    for (const w of this.walkerBots) {
+      if (time < w.reactAt) continue;
+      if (Math.hypot(w.node.x - this.car.x, w.node.y - this.car.y) > 190) continue;
+      w.reactAt = time + 9000;
+      this.bubble(w.node, "👋");
+    }
+  }
+
+  /** a hard hit makes a lamp lean, spark and flicker */
+  onLampHit(img: Phaser.GameObjects.Image) {
+    const base = this.props.find((p) => p.img === img)?.rotation ?? 0;
+    this.sparks.emitParticleAt(img.x, img.y - 34, 6);
+    this.scene.tweens.add({
+      targets: img,
+      rotation: base + (Math.random() < 0.5 ? -0.18 : 0.18),
+      duration: 110,
+      yoyo: true,
+      ease: "Sine.out",
+      onComplete: () => img.setRotation(base),
+    });
+    const glow = this.lampGlows.get(img);
+    if (glow) {
+      this.scene.tweens.add({
+        targets: glow,
+        alpha: 0.05,
+        duration: 90,
+        yoyo: true,
+        repeat: 5,
+      });
     }
   }
 
@@ -475,8 +644,9 @@ export class AmbientWorldSystem {
     this.rain = this.scene.add
       .particles(0, 0, "soft", {
         tint: 0x9fc4e2,
-        // generous fixed span — the emitter is repositioned to the view each frame
-        x: { min: -200, max: 2800 },
+        // generous fixed span — the emitter is repositioned to the view each
+        // frame; extra margin keeps corners covered under the drift camera tilt
+        x: { min: -600, max: 3400 },
         y: -30,
         lifespan: 900,
         speedY: { min: 640, max: 820 },

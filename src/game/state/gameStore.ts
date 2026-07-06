@@ -276,6 +276,10 @@ export const frame = {
   rpm: 0, // 0..1 normalized (for engine audio + speedo)
   driftLoad: 0, // 0..1
   nitro: false,
+  drifting: false,
+  braking: false,
+  reversing: false,
+  onDirt: false, // car is on a dirt shortcut (dust tint, rumble)
   /** 0..1 position in the day/night cycle (0 = noon) */
   timeOfDay: 0,
   /** command flags React -> Phaser */

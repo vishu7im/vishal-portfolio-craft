@@ -80,10 +80,12 @@ export class DayNightSystem {
     this.tint.setFillStyle(Phaser.Display.Color.GetColor(mix(r), mix(g), mix(bl)), 1);
     this.tint.setAlpha(alpha > 0.01 ? 1 : 0);
 
-    // keep the rect covering the view despite camera zoom
+    // oversize + centre the rect so camera zoom AND the drift tilt never expose corners
     const cam = this.scene.cameras.main;
     const z = cam.zoom;
-    this.tint.setPosition((0 - cam.width / 2) / z + cam.width / 2, (0 - cam.height / 2) / z + cam.height / 2);
-    this.tint.setSize(cam.width / z + 4, cam.height / z + 4);
+    const w = (cam.width / z) * 1.45;
+    const h = (cam.height / z) * 1.45;
+    this.tint.setPosition(cam.width / 2 - w / 2, cam.height / 2 - h / 2);
+    this.tint.setSize(w, h);
   }
 }

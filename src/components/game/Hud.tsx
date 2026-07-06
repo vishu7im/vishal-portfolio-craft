@@ -40,26 +40,31 @@ export function Hud() {
           </span>
           <span className="tabular-nums text-xs font-medium text-white/70">{xp} XP</span>
         </button>
-        <button
-          onClick={() => gameStore.toggleGarage()}
-          className="glass pointer-events-auto grid h-10 place-items-center rounded-full px-4 text-xs font-medium text-white/80 transition hover:text-white"
-          aria-label="Open garage"
-        >
-          🚗 Garage
-        </button>
-        <button
-          onClick={() => gameStore.toggleMute()}
-          className="glass pointer-events-auto grid h-10 w-10 place-items-center rounded-full text-white/80 transition hover:text-white"
-          aria-label={muted ? "Unmute" : "Mute"}
-        >
-          {muted ? "🔇" : "🔊"}
-        </button>
-        <Link
-          to="/classic"
-          className="glass pointer-events-auto grid h-10 place-items-center rounded-full px-4 text-xs font-medium text-white/80 transition hover:text-white"
-        >
-          Résumé view
-        </Link>
+        {/* one compact strip: garage · mute · résumé */}
+        <div className="glass pointer-events-auto flex h-10 items-center overflow-hidden rounded-full">
+          <button
+            onClick={() => gameStore.toggleGarage()}
+            className="grid h-full place-items-center px-3.5 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+            aria-label="Open garage"
+          >
+            🚗 Garage
+          </button>
+          <span className="h-5 w-px bg-white/15" />
+          <button
+            onClick={() => gameStore.toggleMute()}
+            className="grid h-full place-items-center px-3 text-white/80 transition hover:bg-white/10 hover:text-white"
+            aria-label={muted ? "Unmute" : "Mute"}
+          >
+            {muted ? "🔇" : "🔊"}
+          </button>
+          <span className="h-5 w-px bg-white/15" />
+          <Link
+            to="/classic"
+            className="grid h-full place-items-center px-3.5 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+          >
+            Résumé
+          </Link>
+        </div>
       </div>
     </>
   );

@@ -7,10 +7,13 @@ import { TUNING, VEHICLES, DEFAULT_VEHICLE } from "../config/tuning";
 import { DEV_JOKES } from "../content/narrative";
 import type { PropInstance, PortfolioAnchor } from "../types";
 import { carInput, installInputListeners } from "../state/input";
+import { mulberry32 } from "../world/scatter";
 import { gameStore, frame } from "../state/gameStore";
 import { CarController } from "../systems/CarController";
 import { CameraRig } from "../systems/CameraRig";
 import { TireMarks } from "../systems/TireMarks";
+import { CarFxSystem } from "../systems/CarFxSystem";
+import { isOnDirt } from "../world/roads";
 import { ProximitySystem } from "../systems/ProximitySystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { MissionManager } from "../systems/MissionManager";
@@ -29,6 +32,7 @@ export class WorldScene extends Phaser.Scene {
   private car!: CarController;
   private rig!: CameraRig;
   private tire!: TireMarks;
+  private carFx!: CarFxSystem;
   private proximity!: ProximitySystem;
   private collectibles!: CollectibleSystem;
   private mission!: MissionManager;
@@ -49,6 +53,7 @@ export class WorldScene extends Phaser.Scene {
   private lastArea: AreaId | null = null;
   private jokeIx = 0;
   private gateZoomed = false;
+  private screechAt = 0;
 
   constructor() {
     super("World");
@@ -107,6 +112,7 @@ export class WorldScene extends Phaser.Scene {
 
     // --- systems that depend on car ---
     this.tire = new TireMarks(this);
+    this.carFx = new CarFxSystem(this, this.car, this.rig, this.tire, this.dayNight);
     this.proximity = new ProximitySystem(WORLD.anchors);
     this.collectibles = new CollectibleSystem(this, WORLD.collectibles, this.audio);
     this.mission = new MissionManager(this, this.car, this.audio);
@@ -179,7 +185,7 @@ export class WorldScene extends Phaser.Scene {
         frictionAir: 0.1,
         friction: 0.15,
         restitution: 0.35,
-        mass: inst.physics === "pushable" ? 0.5 : 3,
+        mass: inst.physics === "pushable" ? (inst.kind === "cone" ? 0.25 : 0.5) : 3,
       });
     }
 
@@ -205,13 +211,33 @@ export class WorldScene extends Phaser.Scene {
   private drawRoads() {
     const g = this.add.graphics().setDepth(2);
     const surfaceOf = (kind: string) =>
-      kind === "dirt" ? 0xb79366 : kind === "boardwalk" ? 0xc39a63 : hex(PALETTE.road);
+      kind === "dirt"
+        ? 0xb79366
+        : kind === "boardwalk"
+          ? 0xc39a63
+          : kind === "bridge"
+            ? 0xcfae7c
+            : kind === "neon"
+              ? 0x2a303b
+              : hex(PALETTE.road);
     for (const road of WORLD.roads) {
       const surface = surfaceOf(road.kind);
       const half = road.width / 2;
+      const pts = road.points;
+
+      // bridges cast a soft shadow onto the water below the deck
+      if (road.kind === "bridge") {
+        g.lineStyle(road.width + 22, 0x20242c, 0.16);
+        for (let i = 0; i < pts.length - 1; i++) {
+          g.beginPath();
+          g.moveTo(pts[i].x, pts[i].y + 12);
+          g.lineTo(pts[i + 1].x, pts[i + 1].y + 12);
+          g.strokePath();
+        }
+      }
+
       g.fillStyle(surface, 1);
       g.lineStyle(road.width, surface, 1);
-      const pts = road.points;
       for (let i = 0; i < pts.length - 1; i++) {
         g.beginPath();
         g.moveTo(pts[i].x, pts[i].y);
@@ -221,11 +247,72 @@ export class WorldScene extends Phaser.Scene {
       // round the joints
       for (const p of pts) g.fillCircle(p.x, p.y, half);
 
-      // dashed centre line (paved roads only) — gold on the Career Road spine
+      // per-kind markings — gold centre dashes on the Career Road spine
       if (road.kind === "asphalt") {
         this.dashLine(g, pts, road.spine ? 0xf2b843 : hex(PALETTE.roadLine));
+        this.edgeLines(g, pts, road.width, hex(PALETTE.roadLine), 4, 0.5, 10);
       } else if (road.kind === "boardwalk") {
         this.plankLines(g, pts, road.width);
+      } else if (road.kind === "bridge") {
+        this.plankLines(g, pts, road.width);
+        this.edgeLines(g, pts, road.width, 0x6e4a2f, 5, 0.9, 4); // railings
+      } else if (road.kind === "neon") {
+        this.dashLine(g, pts, 0x67e8f9);
+        this.edgeLines(g, pts, road.width, 0x8c7cff, 4, 0.75, 8);
+      } else if (road.kind === "dirt") {
+        this.dirtSpecks(g, pts, road.width);
+      }
+    }
+  }
+
+  /** two thin lines inset from each road edge (highway edges / bridge rails) */
+  private edgeLines(
+    g: Phaser.GameObjects.Graphics,
+    pts: Array<{ x: number; y: number }>,
+    width: number,
+    color: number,
+    lineW: number,
+    alpha: number,
+    inset: number
+  ) {
+    g.lineStyle(lineW, color, alpha);
+    const half = width / 2 - inset;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const nx = -(b.y - a.y) / len;
+      const ny = (b.x - a.x) / len;
+      for (const s of [-1, 1]) {
+        g.beginPath();
+        g.moveTo(a.x + nx * half * s, a.y + ny * half * s);
+        g.lineTo(b.x + nx * half * s, b.y + ny * half * s);
+        g.strokePath();
+      }
+    }
+  }
+
+  /** scattered darker specks + short ruts so dirt reads as dirt at speed */
+  private dirtSpecks(
+    g: Phaser.GameObjects.Graphics,
+    pts: Array<{ x: number; y: number }>,
+    width: number
+  ) {
+    const rng = mulberry32(Math.round(pts[0].x + pts[0].y * 7));
+    g.fillStyle(0x9a7a50, 0.5);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i];
+      const b = pts[i + 1];
+      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const ux = (b.x - a.x) / len;
+      const uy = (b.y - a.y) / len;
+      const nx = -uy;
+      const ny = ux;
+      for (let d = 14; d < len; d += 26) {
+        const lat = (rng() - 0.5) * width * 0.66;
+        const x = a.x + ux * d + nx * lat;
+        const y = a.y + uy * d + ny * lat;
+        g.fillCircle(x, y, 1.5 + rng() * 1.6);
       }
     }
   }
@@ -319,6 +406,7 @@ export class WorldScene extends Phaser.Scene {
         continue;
       }
       // solid static
+      if (kind === "lamp" && impact > 1.6) this.ambient.onLampHit(other as Phaser.GameObjects.Image);
       if (impact > TUNING.crashSpeedThreshold) {
         this.destruction.thud(other.x, other.y, impact);
         this.car.onCollision(impact, other.x, other.y);
@@ -329,17 +417,20 @@ export class WorldScene extends Phaser.Scene {
   update(time: number, delta: number) {
     if (!this.car) return;
 
+    frame.onDirt = isOnDirt(this.car.x, this.car.y);
+    this.car.surfaceRumble = frame.onDirt ? 1 : 0;
     this.car.update(carInput, delta);
     this.rig.update(delta);
     this.tire.update(this.car);
-
-    // drift dust
-    if (this.car.lateralSlip > TUNING.driftMarkThreshold && this.car.drifting) {
-      const [x1, y1] = this.car.rearWheels();
-      this.destruction.driftPuff(x1, y1);
-    }
+    this.carFx.update(time, delta);
 
     this.proximity.update(this.car.x, this.car.y);
+    const nearAnchor = this.proximity.near;
+    this.rig.setNearness(
+      nearAnchor
+        ? 1 - Math.hypot(this.car.x - nearAnchor.x, this.car.y - nearAnchor.y) / nearAnchor.radius
+        : 0
+    );
 
     // interact / dismiss
     if (carInput.interact) {
@@ -350,6 +441,18 @@ export class WorldScene extends Phaser.Scene {
       carInput.dismiss = false;
       if (gameStore.getState().focusedId) gameStore.focus(null);
       else if (gameStore.getState().achievementsOpen) gameStore.set({ achievementsOpen: false });
+    }
+    if (carInput.horn) {
+      carInput.horn = false;
+      this.ensureAudio();
+      this.audio.horn();
+      this.ambient.onHorn(this.car.x, this.car.y);
+    }
+
+    // hard-braking tyre screech (one-shot, cooldown so it never machine-guns)
+    if (this.car.braking && this.car.speedNorm > 0.55 && time > this.screechAt) {
+      this.screechAt = time + 900;
+      this.audio.screech(0.5 + this.car.speedNorm * 0.5);
     }
 
     this.collectibles.update(this.car.x, this.car.y);
@@ -404,9 +507,12 @@ export class WorldScene extends Phaser.Scene {
     frame.rpm = this.car.rpm;
     frame.driftLoad = this.car.driftLoad;
     frame.nitro = this.car.nitroActive;
+    frame.drifting = this.car.drifting;
+    frame.braking = this.car.braking;
+    frame.reversing = this.car.reversing;
 
     if (gameStore.getState().audioStarted) {
-      this.audio.update(this.car.rpm, carInput.throttle, this.car.driftLoad);
+      this.audio.update(this.car.rpm, carInput.throttle, this.car.driftLoad, this.carFx.burnoutActive);
     }
   }
 
@@ -414,6 +520,7 @@ export class WorldScene extends Phaser.Scene {
     this.removeInput();
     this.unsub();
     this.matter.world.off("collisionstart", this.onCollisionStart, this);
+    this.carFx?.destroy();
     this.ambient?.destroy();
     this.vignettes?.destroy();
     this.achievements?.destroy();

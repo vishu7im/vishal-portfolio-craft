@@ -11,6 +11,7 @@ import { TUNING } from "../config/tuning";
 interface Entry {
   anchor: PortfolioAnchor;
   glow: Phaser.GameObjects.Image;
+  door: Phaser.GameObjects.Image; // warm doorway light when you pull right up
   accentColor: number;
   reaction: string;
   base: number; // glow base scale
@@ -44,9 +45,19 @@ export class ReactivitySystem {
         .setAlpha(0)
         .setScale(size)
         .setDepth(10 + anchor.y - 6);
+      // "the building opens for you": a warm pool of light spilling from the
+      // entrance once the car pulls right up (our stand-in for interiors)
+      const door = scene.add
+        .image(anchor.x, anchor.y + 64, "glow")
+        .setTint(locked ? 0xe04f3f : 0xffe9a8)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setScale(1.2, 0.45)
+        .setAlpha(0)
+        .setDepth(10 + anchor.y - 5);
       this.entries.push({
         anchor,
         glow,
+        door,
         accentColor,
         reaction: locked ? "locked" : anchor.building.reaction,
         base: size,
@@ -68,6 +79,10 @@ export class ReactivitySystem {
       const pulse = e.reaction === "hologram" || e.reaction === "screens-on" ? 0.12 * Math.sin(time * 0.006) : 0;
       e.glow.setAlpha(t * (0.75 + pulse));
       e.glow.setScale(e.base * (0.85 + t * 0.35 + pulse));
+
+      const openT = Phaser.Math.Clamp((t - 0.7) / 0.3, 0, 1);
+      e.door.setAlpha(openT * 0.5);
+      e.door.setScale(1.2 + openT * 0.5, 0.45 + openT * 0.2);
     }
   }
 }
