@@ -1,56 +1,43 @@
 import type { RoadSegment } from "../types";
 
-// A 3x3 grid of areas stitched by row + column roads, two dirt shortcuts, and a
-// beach boardwalk spur over the lagoon.
+// The Career Road: one serpentine spine that visits every life chapter in
+// order — top row L→R, down the right edge, mid row R→L, down the left edge,
+// bottom row L→R. Connector roads keep free-roam shortcuts alive.
 //   cols x: 1500 / 4800 / 8100      rows y: 1400 / 3700 / 6000
 
 export const roads: RoadSegment[] = [
-  // --- rows (horizontal) ---
+  // --- the chronological spine (Ch1 home → Ch13 future gate) ---
   {
-    id: "row-top",
+    id: "career-road",
     kind: "asphalt",
-    width: 170,
+    width: 190,
+    spine: true,
     points: [
-      { x: 1500, y: 1400 },
-      { x: 4800, y: 1400 },
-      { x: 8100, y: 1500 },
+      { x: 1500, y: 1400 }, // Ch1 home
+      { x: 4800, y: 1400 }, // Ch2 school
+      { x: 8100, y: 1500 }, // Ch3-4 polytechnic / first code
+      { x: 8100, y: 3700 }, // Ch5 freelance bay
+      { x: 4800, y: 3700 }, // Ch6 first office
+      { x: 1500, y: 3700 }, // Ch7 backend city
+      { x: 1500, y: 6000 }, // Ch8 AI lab
+      { x: 4800, y: 6000 }, // Ch9-10 startup district
+      { x: 8100, y: 6000 }, // Ch11-13 summit & future
     ],
   },
+  // --- connectors (free-roam shortcuts off the spine) ---
   {
-    id: "row-mid",
+    id: "conn-left-top",
     kind: "asphalt",
-    width: 176,
-    points: [
-      { x: 1500, y: 3700 },
-      { x: 4800, y: 3700 },
-      { x: 8100, y: 3700 },
-    ],
-  },
-  {
-    id: "row-bot",
-    kind: "asphalt",
-    width: 170,
-    points: [
-      { x: 1500, y: 6000 },
-      { x: 4800, y: 6000 },
-      { x: 8100, y: 6000 },
-    ],
-  },
-  // --- columns (vertical) ---
-  {
-    id: "col-left",
-    kind: "asphalt",
-    width: 170,
+    width: 150,
     points: [
       { x: 1500, y: 1400 },
       { x: 1500, y: 3700 },
-      { x: 1500, y: 6000 },
     ],
   },
   {
-    id: "col-mid",
+    id: "conn-mid",
     kind: "asphalt",
-    width: 176,
+    width: 150,
     points: [
       { x: 4800, y: 1400 },
       { x: 4800, y: 3700 },
@@ -58,18 +45,17 @@ export const roads: RoadSegment[] = [
     ],
   },
   {
-    id: "col-right",
+    id: "conn-right-bottom",
     kind: "asphalt",
-    width: 170,
+    width: 150,
     points: [
-      { x: 8100, y: 1500 },
       { x: 8100, y: 3700 },
       { x: 8100, y: 6000 },
     ],
   },
   // --- dirt shortcuts (diagonal) ---
   {
-    id: "shortcut-forest-beach",
+    id: "shortcut-home-office",
     kind: "dirt",
     width: 120,
     shortcut: true,
@@ -80,7 +66,7 @@ export const roads: RoadSegment[] = [
     ],
   },
   {
-    id: "shortcut-lab-industrial",
+    id: "shortcut-bay-startup",
     kind: "dirt",
     width: 120,
     shortcut: true,
@@ -90,14 +76,14 @@ export const roads: RoadSegment[] = [
       { x: 4950, y: 5850 },
     ],
   },
-  // --- beach boardwalk over the lagoon (leads to a secret) ---
+  // --- boardwalk over the Freelance Bay lagoon (leads to a secret) ---
   {
     id: "beach-boardwalk",
     kind: "boardwalk",
     width: 108,
     points: [
-      { x: 5300, y: 4250 },
-      { x: 6500, y: 4250 },
+      { x: 8600, y: 4250 },
+      { x: 9400, y: 4250 },
     ],
   },
 ];

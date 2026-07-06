@@ -1,15 +1,18 @@
 import Phaser from "phaser";
 import toast from "react-hot-toast";
-import type { MissionDef } from "../types";
+import type { MissionDef, RandomEventDef } from "../types";
 import { WORLD } from "../world";
 import { gameStore } from "../state/gameStore";
 import { TEX_SS } from "../art/textureFactory";
 import type { CarController } from "./CarController";
 import type { AudioSystem } from "./AudioSystem";
+import type { CameraRig } from "./CameraRig";
 
 // Runs all missions: delivery (carry a package to a drop), race (hit checkpoints
-// before the clock), and escape (outrun the memory-leak monster). Missions start
-// by driving into their beacon; only one runs at a time; each explains a project.
+// before the clock), escape (outrun the memory-leak monster), and the boss
+// production incident (hit fix stations before CPU maxes out). Missions start by
+// driving into their beacon — or dynamically from a phone-call event. Only one
+// runs at a time: beacons and phone calls both funnel through `this.active`.
 
 interface Beacon {
   mission: MissionDef;
@@ -21,16 +24,32 @@ export class MissionManager {
   private scene: Phaser.Scene;
   private car: CarController;
   private audio: AudioSystem;
+  private rig?: CameraRig;
   private beacons = new Map<string, Beacon>();
 
   private active: MissionDef | null = null;
+  /** true while the active mission came from a phone call (no beacon respawn) */
+  private dynamic = false;
+  private dynamicEvent: RandomEventDef | null = null;
   private pkg?: Phaser.GameObjects.Image;
   private markers: Phaser.GameObjects.Image[] = [];
   private chaser?: Phaser.GameObjects.Container;
+  private chasers: Phaser.GameObjects.Container[] = [];
   private fireworks: Phaser.GameObjects.Particles.ParticleEmitter;
   private cpIndex = 0;
   private timer = 0;
+  private cpu = 0; // boss CPU meter 0..1
+  private cpuBar?: Phaser.GameObjects.Graphics;
+  private redPulse?: Phaser.GameObjects.Rectangle;
   private lastObjective = "";
+
+  get isActive() {
+    return this.active !== null;
+  }
+
+  setCameraRig(rig: CameraRig) {
+    this.rig = rig;
+  }
 
   constructor(scene: Phaser.Scene, car: CarController, audio: AudioSystem) {
     this.scene = scene;
@@ -109,15 +128,63 @@ export class MissionManager {
     this.markers = [];
     this.chaser?.destroy();
     this.chaser = undefined;
+    this.chasers.forEach((c) => c.destroy());
+    this.chasers = [];
+    this.cpuBar?.destroy();
+    this.cpuBar = undefined;
+    this.redPulse?.destroy();
+    this.redPulse = undefined;
+    this.rig?.zoomTo(null);
+    this.dynamic = false;
+    this.dynamicEvent = null;
+  }
+
+  /** start a timed delivery offered by a phone-call event (no beacon involved) */
+  startDynamic(ev: RandomEventDef) {
+    if (this.active) return;
+    const m: MissionDef = {
+      id: `dyn-${ev.id}`,
+      title: `📞 ${ev.caller}`,
+      brief: ev.pitch,
+      areaId: gameStore.getState().currentArea,
+      type: "delivery",
+      giver: { x: this.car.x, y: this.car.y, radius: 0, label: "" },
+      deliver: { ...ev.destination, radius: 210 },
+      rewardCoins: ev.rewardXp,
+      rewardText: `Client happy — job done in time. +${ev.rewardXp} XP`,
+    };
+    this.dynamic = true;
+    this.dynamicEvent = ev;
+    this.timer = ev.timeLimitMs;
+    this.startCore(m);
   }
 
   private start(m: MissionDef) {
+    this.startCore(m);
+  }
+
+  private startCore(m: MissionDef) {
     this.active = m;
     this.removeBeacon(m.id);
     gameStore.startMission(m.id, m.title);
     this.lastObjective = m.title;
     this.audio.ding(0.9);
     toast(`🎯 ${m.title}: ${m.brief}`);
+
+    if (m.type === "boss" && m.stations) {
+      this.cpIndex = 0;
+      this.cpu = 0.85;
+      this.timer = m.cpuRampMs ?? 25000;
+      m.stations.forEach((s) => this.ring(s.x, s.y, 0xe04f3f));
+      this.markers.forEach((mk, i) => mk.setAlpha(i === 0 ? 1 : 0.25));
+      this.spawnRequestBlobs(m);
+      this.buildBossOverlay();
+      this.rig?.zoomTo(1.22);
+      this.rig?.shake(0.004, 500);
+      this.audio.alarm();
+      toast("🔥 TRAFFIC SPIKE — CPU 95%", { duration: 3200 });
+      return;
+    }
 
     if (m.type === "delivery" && m.deliver) {
       this.pkg = this.scene.add.image(this.car.x, this.car.y, "prop-crate").setScale(0.7 / TEX_SS);
@@ -144,10 +211,79 @@ export class MissionManager {
     }
   }
 
+  /** boss: slow "request" blobs that chase the car and add CPU load on touch */
+  private spawnRequestBlobs(m: MissionDef) {
+    const labels = ["GET /orders", "POST /checkout", "GET /search"];
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
+      const glow = this.scene.add.image(0, 0, "glow").setTint(0xf0813a).setBlendMode(Phaser.BlendModes.ADD).setScale(1.7);
+      const core = this.scene.add.image(0, 0, "soft").setTint(0xa14b12).setScale(1.4);
+      const tag = this.scene.add
+        .text(0, -36, labels[i], { fontFamily: "ui-monospace, monospace", fontSize: "10px", color: "#ffe3c9", backgroundColor: "rgba(161,75,18,0.85)" })
+        .setOrigin(0.5)
+        .setPadding(4, 2, 4, 2);
+      const blob = this.scene.add
+        .container(m.giver.x + Math.cos(a) * 460, m.giver.y + Math.sin(a) * 460, [glow, core, tag])
+        .setDepth(99995);
+      this.chasers.push(blob);
+    }
+  }
+
+  /** screen-fixed CPU meter + red edge pulse for the boss fight */
+  private buildBossOverlay() {
+    this.cpuBar = this.scene.add.graphics().setScrollFactor(0).setDepth(99998);
+    this.redPulse = this.scene.add
+      .rectangle(0, 0, 4, 4, 0xe04f3f, 0.16)
+      .setOrigin(0)
+      .setScrollFactor(0)
+      .setBlendMode(Phaser.BlendModes.MULTIPLY)
+      .setDepth(99990);
+  }
+
+  private drawBossOverlay(time: number) {
+    if (!this.cpuBar) return;
+    const cam = this.scene.cameras.main;
+    // scrollFactor(0) objects are still zoom-scaled around the camera centre —
+    // map desired screen coords back into that space so the bar stays put
+    const z = cam.zoom;
+    const toX = (sx: number) => (sx - cam.width / 2) / z + cam.width / 2;
+    const toY = (sy: number) => (sy - cam.height / 2) / z + cam.height / 2;
+    const barW = Math.min(360, cam.width - 48) / z;
+    const barH = 18 / z;
+    const x = toX((cam.width - Math.min(360, cam.width - 48)) / 2);
+    const y = toY(66);
+    const g = this.cpuBar;
+    g.clear();
+    g.fillStyle(0x151922, 0.72);
+    g.fillRoundedRect(x - 8 / z, y - 8 / z, barW + 16 / z, barH + 16 / z, 10 / z);
+    g.fillStyle(0x2a303b, 1);
+    g.fillRoundedRect(x, y, barW, barH, 6 / z);
+    const hot = this.cpu > 0.92;
+    g.fillStyle(hot ? 0xe04f3f : 0xf0813a, 1);
+    g.fillRoundedRect(x, y, Math.max(12 / z, barW * this.cpu), barH, 6 / z);
+    if (this.redPulse) {
+      this.redPulse.setPosition(toX(0), toY(0));
+      this.redPulse.setSize(cam.width / z, cam.height / z);
+      this.redPulse.setAlpha(0.08 + 0.1 * Math.abs(Math.sin(time * 0.005)) + (hot ? 0.1 : 0));
+    }
+  }
+
   private complete(m: MissionDef) {
+    const wasDynamic = this.dynamic;
     this.cleanup();
     this.active = null;
+    if (wasDynamic) {
+      // dynamic jobs are repeatable: XP only, no missionsDone entry
+      gameStore.set({ activeMissionId: null, objective: null });
+      this.lastObjective = "";
+      gameStore.addXp(m.rewardCoins);
+      this.audio.chord();
+      this.fireworks.emitParticleAt(this.car.x, this.car.y - 70, 42);
+      toast.success(m.rewardText);
+      return;
+    }
     gameStore.completeMission(m.id, m.rewardCoins);
+    for (const ach of m.rewardAchievements ?? []) gameStore.award(ach);
     if (m.projectRef) {
       const anchor = WORLD.anchors.find((a) => a.content.ref === m.projectRef && a.content.contentKind === "project");
       const st = gameStore.getState();
@@ -179,16 +315,17 @@ export class MissionManager {
   }
 
   private fail(m: MissionDef, reason: string) {
+    const wasDynamic = this.dynamic;
     this.cleanup();
     this.active = null;
     gameStore.set({ activeMissionId: null, objective: null });
     this.lastObjective = "";
     this.audio.crash(0.5);
     toast(reason);
-    this.addBeacon(m); // let the player retry
+    if (!wasDynamic) this.addBeacon(m); // beacon missions retry; phone jobs return to the pool
   }
 
-  update(dt: number) {
+  update(dt: number, time = 0) {
     if (!this.active) {
       for (const { mission } of this.beacons.values()) {
         if (Math.hypot(this.car.x - mission.giver.x, this.car.y - mission.giver.y) < mission.giver.radius) {
@@ -200,8 +337,15 @@ export class MissionManager {
     }
 
     const m = this.active;
-    if (m.type === "delivery" && m.deliver) {
+    if (m.type === "boss" && m.stations) {
+      this.updateBoss(m, dt, time);
+    } else if (m.type === "delivery" && m.deliver) {
       if (this.pkg) this.pkg.setPosition(this.car.x, this.car.y - 4).setDepth(10 + this.car.y + 1);
+      if (this.dynamic) {
+        this.timer -= dt;
+        if (this.timer <= 0) return this.fail(m, "⏱️ The client went with someone else. Next time!");
+        this.setObjective(`${m.deliver.label} — ${(this.timer / 1000).toFixed(1)}s`);
+      }
       if (Math.hypot(this.car.x - m.deliver.x, this.car.y - m.deliver.y) < m.deliver.radius) this.complete(m);
     } else if (m.type === "race" && m.checkpoints) {
       this.timer -= dt;
@@ -227,6 +371,51 @@ export class MissionManager {
       this.chaser.setDepth(10 + this.chaser.y);
       if (d < 62) return this.fail(m, "🐛 The memory leak got you! Respawning the mission…");
       if (this.timer <= 0) this.complete(m);
+    }
+  }
+
+  private updateBoss(m: MissionDef, dt: number, time: number) {
+    const stations = m.stations!;
+    const ramp = m.cpuRampMs ?? 25000;
+    // CPU climbs from 85% to 100% over the ramp
+    this.cpu += (0.15 * dt) / ramp;
+
+    // request blobs chase slowly and add load on touch
+    for (const blob of this.chasers) {
+      const dx = this.car.x - blob.x;
+      const dy = this.car.y - blob.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const speed = 3.4 * (dt / 16.7);
+      blob.x += (dx / d) * speed;
+      blob.y += (dy / d) * speed;
+      blob.setDepth(10 + blob.y);
+      if (d < 70) {
+        this.cpu = Math.min(1, this.cpu + 0.05);
+        this.rig?.shake(0.003, 160);
+        blob.setPosition(blob.x - (dx / d) * 380, blob.y - (dy / d) * 380); // knocked back
+      }
+    }
+
+    if (this.cpu >= 1) {
+      return this.fail(m, "📟 PagerDuty… CPU hit 100%. Rollback deployed — try again.");
+    }
+
+    const st = stations[this.cpIndex];
+    this.setObjective(`Apply fix ${this.cpIndex + 1}/${stations.length}: ${st.label}`);
+    this.drawBossOverlay(time);
+
+    if (Math.hypot(this.car.x - st.x, this.car.y - st.y) < st.radius) {
+      this.cpu = Math.max(0.2, this.cpu - 0.15);
+      this.markers[this.cpIndex]?.destroy();
+      this.cpIndex++;
+      this.audio.ding(1.3);
+      this.fireworks.emitParticleAt(st.x, st.y, 14);
+      toast(`✔ ${st.label} applied — CPU −15%`, { duration: 1800 });
+      if (this.cpIndex >= stations.length) {
+        this.rig?.shake(0.005, 400);
+        return this.complete(m);
+      }
+      this.markers[this.cpIndex]?.setAlpha(1);
     }
   }
 }

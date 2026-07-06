@@ -16,7 +16,8 @@ export type ContentKind =
   | "skillCluster"
   | "achievement"
   | "goal"
-  | "testimonial";
+  | "testimonial"
+  | "chat"; // live NPC conversation (ChatPanel, not PortfolioPanel)
 
 export interface InteractableContent {
   contentKind: ContentKind;
@@ -56,7 +57,18 @@ export type PropKind =
   | "server"
   | "silo"
   | "tent"
-  | "flag";
+  | "flag"
+  // significance-tiered buildings (art/buildings.ts)
+  | "house"
+  | "school"
+  | "office"
+  | "loft"
+  | "factory"
+  | "hq"
+  | "aiLab"
+  | "futureGate"
+  | "cafe"
+  | "billboard";
 
 export type PropPhysics = "static" | "destructible" | "pushable" | "decor";
 
@@ -95,6 +107,8 @@ export interface RoadSegment {
   width: number;
   kind: RoadKind;
   shortcut?: boolean;
+  /** part of the chronological Career Road — drawn emphasized on map + minimap */
+  spine?: boolean;
 }
 
 export type ReactionKind =
@@ -128,7 +142,7 @@ export interface AreaDef {
   careerTheme: string;
 }
 
-export type MissionType = "delivery" | "race" | "escape";
+export type MissionType = "delivery" | "race" | "escape" | "boss";
 
 export interface MissionDef {
   id: string;
@@ -150,6 +164,20 @@ export interface MissionDef {
   // escape
   surviveMs?: number;
   chaserSpeed?: number;
+  // boss: sequential fix stations + a CPU meter that ramps to 100%
+  stations?: Array<{ x: number; y: number; radius: number; label: string }>;
+  cpuRampMs?: number;
+  rewardAchievements?: string[];
+}
+
+/** A "client calling" random event: a timed delivery offered while driving. */
+export interface RandomEventDef {
+  id: string;
+  caller: string;
+  pitch: string;
+  timeLimitMs: number;
+  rewardXp: number;
+  destination: { x: number; y: number; label: string };
 }
 
 export interface FastTravelNode {
@@ -160,10 +188,43 @@ export interface FastTravelNode {
   label: string;
 }
 
+// --- game achievements (the ledger, distinct from portfolio "achievement" content) ---
+
+export type AchievementTrigger =
+  | { kind: "chapter"; areaId: AreaId } // drive into a specific life chapter
+  | { kind: "chapters"; count: number } // visit N chapters
+  | { kind: "mission"; missionId: string }
+  | { kind: "xp"; amount: number }
+  | { kind: "collectSet"; ids: string[] } // all of these collectible ids picked up
+  | { kind: "discoverSet"; ids: string[] } // all of these anchors opened
+  | { kind: "custom" }; // awarded imperatively (boss fight, vignettes, chat)
+
+export interface AchievementDef {
+  id: string;
+  title: string;
+  detail: string;
+  icon: string;
+  /** hidden entries render as "???" until unlocked */
+  hidden?: boolean;
+  trigger: AchievementTrigger;
+}
+
+/** One life chapter of the chronological career map; each area hosts one. */
+export interface ChapterDef {
+  id: string;
+  /** 1-based position along the Career Road */
+  order: number;
+  areaId: AreaId;
+  title: string;
+  years: string;
+  line: string;
+}
+
 export interface WorldDef {
   bounds: { w: number; h: number };
   spawn: { x: number; y: number; angle: number };
   areas: AreaDef[];
+  chapters: ChapterDef[];
   roads: RoadSegment[];
   props: PropInstance[];
   anchors: PortfolioAnchor[];

@@ -20,6 +20,10 @@ import { DestructionSystem } from "../systems/DestructionSystem";
 import { AudioSystem } from "../systems/AudioSystem";
 import { WorldVignetteSystem } from "../systems/WorldVignetteSystem";
 import { AmbientWorldSystem } from "../systems/AmbientWorldSystem";
+import { AchievementSystem } from "../systems/AchievementSystem";
+import { PhoneCallSystem } from "../systems/PhoneCallSystem";
+import { DayNightSystem } from "../systems/DayNightSystem";
+import { ScreenDisplaySystem } from "../systems/ScreenDisplaySystem";
 
 export class WorldScene extends Phaser.Scene {
   private car!: CarController;
@@ -33,6 +37,10 @@ export class WorldScene extends Phaser.Scene {
   private destruction!: DestructionSystem;
   private vignettes!: WorldVignetteSystem;
   private ambient!: AmbientWorldSystem;
+  private achievements!: AchievementSystem;
+  private phoneCalls!: PhoneCallSystem;
+  private dayNight!: DayNightSystem;
+  private opsScreens!: ScreenDisplaySystem;
   private audio!: AudioSystem;
 
   private removeInput: () => void = () => {};
@@ -40,6 +48,7 @@ export class WorldScene extends Phaser.Scene {
   private lastMuted = gameStore.getState().muted;
   private lastArea: AreaId | null = null;
   private jokeIx = 0;
+  private gateZoomed = false;
 
   constructor() {
     super("World");
@@ -87,19 +96,24 @@ export class WorldScene extends Phaser.Scene {
       WORLD.areas.find((ar) => ar.id === a.areaId)?.palette.accent ?? PALETTE.area.city.accent;
     this.reactivity = new ReactivitySystem(this, WORLD.anchors, accentFor);
     this.vignettes = new WorldVignetteSystem(this);
+    this.opsScreens = new ScreenDisplaySystem(this);
 
     // --- car + camera ---
     const s = WORLD.spawn;
     this.car = new CarController(this, s.x, s.y, s.angle, VEHICLES[DEFAULT_VEHICLE]);
     this.rig = new CameraRig(this, this.car, W, H);
-    this.ambient = new AmbientWorldSystem(this, this.car);
+    this.dayNight = new DayNightSystem(this);
+    this.ambient = new AmbientWorldSystem(this, this.car, this.dayNight, this.audio);
 
     // --- systems that depend on car ---
     this.tire = new TireMarks(this);
     this.proximity = new ProximitySystem(WORLD.anchors);
     this.collectibles = new CollectibleSystem(this, WORLD.collectibles, this.audio);
     this.mission = new MissionManager(this, this.car, this.audio);
+    this.mission.setCameraRig(this.rig);
     this.progression = new ProgressionSystem(this.car);
+    this.achievements = new AchievementSystem(this, this.car, this.audio);
+    this.phoneCalls = new PhoneCallSystem(this.car, this.mission, this.audio);
 
     // --- input + collisions ---
     this.removeInput = installInputListeners();
@@ -207,9 +221,9 @@ export class WorldScene extends Phaser.Scene {
       // round the joints
       for (const p of pts) g.fillCircle(p.x, p.y, half);
 
-      // dashed centre line (paved roads only)
+      // dashed centre line (paved roads only) — gold on the Career Road spine
       if (road.kind === "asphalt") {
-        this.dashLine(g, pts, hex(PALETTE.roadLine));
+        this.dashLine(g, pts, road.spine ? 0xf2b843 : hex(PALETTE.roadLine));
       } else if (road.kind === "boardwalk") {
         this.plankLines(g, pts, road.width);
       }
@@ -335,14 +349,18 @@ export class WorldScene extends Phaser.Scene {
     if (carInput.dismiss) {
       carInput.dismiss = false;
       if (gameStore.getState().focusedId) gameStore.focus(null);
+      else if (gameStore.getState().achievementsOpen) gameStore.set({ achievementsOpen: false });
     }
 
     this.collectibles.update(this.car.x, this.car.y);
-    this.mission.update(delta);
+    this.mission.update(delta, time);
+    this.phoneCalls.update(time);
     this.progression.update();
     this.reactivity.update(this.car.x, this.car.y, time);
     this.vignettes.update(this.car.x, this.car.y, time, delta);
     this.ambient.update(time, delta);
+    this.dayNight.update(delta);
+    this.opsScreens.update(time);
 
     // area transitions
     const area = areaAt(this.car.x, this.car.y);
@@ -350,6 +368,23 @@ export class WorldScene extends Phaser.Scene {
       this.lastArea = area.id;
       gameStore.setArea(area.id);
       if (gameStore.getState().audioStarted) this.audio.setArea(area.audio);
+      // cinematic: first time entering the AI Research Lab
+      if (area.id === "research-lab" && !gameStore.isCollected("cine-ai-lab")) {
+        gameStore.collect("cine-ai-lab", 0);
+        this.rig.zoomTo(1.18);
+        this.audio.chord();
+        this.time.delayedCall(2400, () => this.rig.zoomTo(null));
+      }
+    }
+
+    // cinematic: the locked Future City gate pulls the camera in on approach
+    const gateD = Math.hypot(this.car.x - 8900, this.car.y - 6600);
+    if (gateD < 620 && !this.gateZoomed) {
+      this.gateZoomed = true;
+      this.rig.zoomTo(1.12);
+    } else if (gateD >= 700 && this.gateZoomed) {
+      this.gateZoomed = false;
+      this.rig.zoomTo(null);
     }
 
     // fast-travel request from the minimap
@@ -381,6 +416,9 @@ export class WorldScene extends Phaser.Scene {
     this.matter.world.off("collisionstart", this.onCollisionStart, this);
     this.ambient?.destroy();
     this.vignettes?.destroy();
+    this.achievements?.destroy();
+    this.dayNight?.destroy();
+    this.opsScreens?.destroy();
     this.audio?.dispose();
   }
 }

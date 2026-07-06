@@ -3,6 +3,28 @@ import { gameStore, useGameStore } from "@/game/state/gameStore";
 import { WORLD } from "@/game/world";
 import { resolveContent, type ResolvedPanel } from "@/game/content/portfolioBindings";
 
+const BODY_LIMIT = 220;
+
+/** Long copy collapses to ~2 sentences with a "read more" expander. */
+function PanelBody({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const long = text.length > BODY_LIMIT + 60;
+  const shown = !long || expanded ? text : `${text.slice(0, BODY_LIMIT).trimEnd()}…`;
+  return (
+    <p className="mt-5 text-[15px] leading-relaxed text-white/80">
+      {shown}
+      {long && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="ml-2 text-sm font-medium text-amber-300/90 underline-offset-2 hover:underline"
+        >
+          {expanded ? "less" : "read more"}
+        </button>
+      )}
+    </p>
+  );
+}
+
 /**
  * Glass side panel that slides in from the edge when an anchor is focused.
  * Non-blocking: the car keeps driving, the world never pauses; closing just
@@ -12,7 +34,11 @@ export function PortfolioPanel() {
   const focusedId = useGameStore((s) => s.focusedId);
   const [shown, setShown] = useState<ResolvedPanel | null>(null);
 
-  const open = !!focusedId;
+  // chat anchors are rendered by ChatPanel instead
+  const isChat =
+    !!focusedId &&
+    WORLD.anchors.find((a) => a.id === focusedId)?.content.contentKind === "chat";
+  const open = !!focusedId && !isChat;
 
   const resolved = useMemo(() => {
     if (!focusedId) return null;
@@ -66,7 +92,7 @@ export function PortfolioPanel() {
               </div>
             )}
 
-            {data.body && <p className="mt-5 text-[15px] leading-relaxed text-white/80">{data.body}</p>}
+            {data.body && <PanelBody key={data.title} text={data.body} />}
 
             {data.tags && data.tags.length > 0 && (
               <div className="mt-5 flex flex-wrap gap-1.5">

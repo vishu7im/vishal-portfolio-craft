@@ -27,6 +27,12 @@ export class CameraRig {
     this.cam.shake(durationMs, intensity);
   }
 
+  /** temporary cinematic zoom override; pass null to release back to normal */
+  private cinematicZoom: number | null = null;
+  zoomTo(zoom: number | null) {
+    this.cinematicZoom = zoom;
+  }
+
   update(deltaMs: number) {
     const v = this.car.body.body.velocity;
     const lookahead = 4 + this.car.speedNorm * 8;
@@ -40,7 +46,7 @@ export class CameraRig {
 
     // speed + nitro widen the view a touch for a sense of pace
     const zoomOut = this.car.nitroActive ? TUNING.camZoomNitro : TUNING.camZoom - this.car.speedNorm * 0.04;
-    this.targetZoom = zoomOut;
+    this.targetZoom = this.cinematicZoom ?? zoomOut;
     const z = this.cam.zoom;
     this.cam.setZoom(z + (this.targetZoom - z) * Math.min(1, deltaMs * 0.006));
   }

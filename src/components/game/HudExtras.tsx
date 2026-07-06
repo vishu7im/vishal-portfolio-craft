@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useGameStore } from "@/game/state/gameStore";
 import { frame } from "@/game/state/gameStore";
-import { WORLD } from "@/game/world";
-import { AREA_INTRO } from "@/game/content/narrative";
+import { WORLD, chapterFor } from "@/game/world";
+import { LEVEL_TITLES } from "@/game/content/achievements";
 
 /** Full-screen veil shown until the world scene has committed its first frame. */
 export function LoadingVeil() {
@@ -30,7 +30,7 @@ export function LoadingVeil() {
   );
 }
 
-/** Cozy title card whenever you cross into a new area. */
+/** Chapter title card whenever you cross into a new life chapter. */
 export function AreaIntro() {
   const areaId = useGameStore((s) => s.currentArea);
   const ready = useGameStore((s) => s.ready);
@@ -40,24 +40,86 @@ export function AreaIntro() {
   useEffect(() => {
     if (!ready) return;
     setVisible(true);
-    const t = setTimeout(() => setVisible(false), first.current ? 3200 : 2400);
+    const t = setTimeout(() => setVisible(false), first.current ? 3600 : 2800);
     first.current = false;
     return () => clearTimeout(t);
   }, [areaId, ready]);
 
-  const intro = AREA_INTRO[areaId];
+  const chapter = chapterFor(areaId);
   const area = WORLD.areas.find((a) => a.id === areaId);
-  if (!intro && !area) return null;
+  if (!chapter && !area) return null;
 
   return (
     <div
       className="pointer-events-none absolute left-1/2 top-[18%] -translate-x-1/2 text-center transition-all duration-500"
       style={{ opacity: visible ? 1 : 0, transform: `translate(-50%, ${visible ? 0 : -10}px)` }}
     >
-      <p className="text-2xl font-semibold tracking-tight text-[#20242c] drop-shadow-sm">
-        {intro?.title ?? area?.name}
+      {chapter && (
+        <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-[#8a7a5e]">
+          Chapter {chapter.order} · {chapter.years}
+        </p>
+      )}
+      <p className="mt-1 text-2xl font-semibold tracking-tight text-[#20242c] drop-shadow-sm">
+        {chapter?.title ?? area?.name}
       </p>
-      {intro?.line && <p className="mt-1 text-sm text-[#5b5346]">{intro.line}</p>}
+      {chapter?.line && <p className="mt-1 text-sm text-[#5b5346]">{chapter.line}</p>}
+    </div>
+  );
+}
+
+/** Big centre flash when the XP curve crosses a level threshold. */
+export function LevelUp() {
+  const levelUp = useGameStore((s) => s.lastLevelUp);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!levelUp) return;
+    setVisible(true);
+    const t = setTimeout(() => setVisible(false), 3000);
+    return () => clearTimeout(t);
+  }, [levelUp]);
+
+  if (!levelUp) return null;
+  const title = LEVEL_TITLES[levelUp.level - 1] ?? "";
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 text-center transition-all duration-500"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: `translate(-50%, ${visible ? 0 : 8}px) scale(${visible ? 1 : 0.94})`,
+      }}
+    >
+      <p className="font-mono text-[11px] uppercase tracking-[0.5em] text-amber-500">
+        Level up
+      </p>
+      <p className="mt-1 text-4xl font-bold tracking-tight text-[#20242c] drop-shadow-sm">
+        Level {levelUp.level}
+      </p>
+      <p className="mt-1 text-base font-medium text-[#5b5346]">{title}</p>
+    </div>
+  );
+}
+
+/** Tiny day/night indicator driven by frame.timeOfDay (no React re-render). */
+export function ClockChip() {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      if (ref.current) {
+        const t = frame.timeOfDay; // 0 = noon, 0.45–0.62 = night
+        const icon = t > 0.38 && t < 0.7 ? "🌙" : t > 0.28 && t < 0.8 ? "🌇" : "☀️";
+        if (ref.current.textContent !== icon) ref.current.textContent = icon;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div className="glass pointer-events-none absolute bottom-4 left-52 grid h-10 w-10 place-items-center rounded-full">
+      <span ref={ref} className="text-base" aria-label="time of day" />
     </div>
   );
 }

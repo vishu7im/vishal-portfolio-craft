@@ -7,7 +7,10 @@ import { Minimap } from "@/components/game/Minimap";
 import { ObjectiveTracker } from "@/components/game/ObjectiveTracker";
 import { GarageMenu } from "@/components/game/GarageMenu";
 import { TouchControls } from "@/components/game/TouchControls";
-import { AreaIntro, ControlsCard, LoadingVeil, Speedometer } from "@/components/game/HudExtras";
+import { AreaIntro, ClockChip, ControlsCard, LevelUp, LoadingVeil, Speedometer } from "@/components/game/HudExtras";
+import { AchievementsPanel } from "@/components/game/AchievementsPanel";
+import { PhoneCallCard } from "@/components/game/PhoneCallCard";
+import { ChatPanel } from "@/components/game/ChatPanel";
 import { Seo } from "@/components/Seo";
 
 // Hosts the Phaser canvas with the React HUD/panel/minimap overlaid on top.
@@ -49,9 +52,14 @@ export default function Game() {
         <AreaIntro />
         <InteractHint />
         <Speedometer />
+        <ClockChip />
         <Minimap />
         <ControlsCard />
+        <LevelUp />
+        <PhoneCallCard />
         <PortfolioPanel />
+        <ChatPanel />
+        <AchievementsPanel />
         <GarageMenu />
         <TouchControls />
         <LoadingVeil />

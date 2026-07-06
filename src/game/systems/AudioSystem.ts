@@ -11,6 +11,9 @@ export class AudioSystem {
   private started = false;
   private noiseBuf: AudioBuffer | null = null;
 
+  // rain
+  private rainGain: GainNode | null = null;
+  private rainSrc: AudioBufferSourceNode | null = null;
   // engine
   private engOsc: OscillatorNode | null = null;
   private engSub: OscillatorNode | null = null;
@@ -72,6 +75,7 @@ export class AudioSystem {
     try {
       this.engOsc?.stop();
       this.engSub?.stop();
+      this.rainSrc?.stop();
     } catch {
       /* noop */
     }
@@ -165,6 +169,45 @@ export class AudioSystem {
     [523.25, 659.25, 783.99].forEach((f, i) => {
       window.setTimeout(() => this.tone(f, 0.5), i * 70);
     });
+  }
+
+  /** phone ringtone: two quick tone pairs, like an old handset */
+  ring() {
+    [0, 90, 420, 510].forEach((delay, i) => {
+      window.setTimeout(() => this.tone(i % 2 ? 1174.66 : 987.77, 0.16), delay);
+    });
+  }
+
+  /** pager-style incident alarm: descending urgent beeps */
+  alarm() {
+    [880, 698.46, 880, 698.46, 587.33].forEach((f, i) => {
+      window.setTimeout(() => this.tone(f, 0.22), i * 160);
+    });
+  }
+
+  /** looping filtered-noise rain bed; level 0 stops it */
+  setRain(level: number) {
+    if (!this.ctx || !this.master || !this.noiseBuf) return;
+    const t = this.ctx.currentTime;
+    if (level <= 0) {
+      if (this.rainGain) this.rainGain.gain.setTargetAtTime(0.0001, t, 0.8);
+      return;
+    }
+    if (!this.rainSrc) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      src.loop = true;
+      const f = this.ctx.createBiquadFilter();
+      f.type = "highpass";
+      f.frequency.value = 900;
+      const g = this.ctx.createGain();
+      g.gain.value = 0.0001;
+      src.connect(f).connect(g).connect(this.master);
+      src.start();
+      this.rainSrc = src;
+      this.rainGain = g;
+    }
+    this.rainGain!.gain.setTargetAtTime(0.05 * level, t, 1.2);
   }
 
   private tone(freq: number, dur: number) {

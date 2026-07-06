@@ -1,50 +1,9 @@
-import type { AreaId } from "../types";
-
 // Authored copy that isn't (or can't be) derived from db.json:
-//   * area intro lines (title cards / minimap labels)
 //   * achievements (no db field)
 //   * future goals (no db field)
 //   * developer jokes hidden on signs across the world
+// Chapter title-card copy lives with the chapters themselves (world/index.ts).
 // Edit freely — this is the human voice of the world.
-
-export const AREA_INTRO: Partial<Record<AreaId, { title: string; line: string }>> = {
-  forest: {
-    title: "The Whispering Woods",
-    line: "Where it all began — quiet roots beneath an old canopy.",
-  },
-  city: {
-    title: "Shipping District",
-    line: "Skylines raised from real, shipped work.",
-  },
-  garage: {
-    title: "The Garage",
-    line: "Tools, tuning, and every ride in the collection.",
-  },
-  "research-lab": {
-    title: "The AI Lab",
-    line: "Where language learns to think — and speak — aloud.",
-  },
-  "tech-campus": {
-    title: "Tech Campus",
-    line: "Lecture halls, first commits, and long apprenticeships.",
-  },
-  mountain: {
-    title: "Summit Trail",
-    line: "Cold air, high systems, and what's still to come.",
-  },
-  beach: {
-    title: "The Boardwalk",
-    line: "Side quests, clones, and code written just for fun.",
-  },
-  industrial: {
-    title: "The Works",
-    line: "Pipes, ledgers, and backends that carry real weight.",
-  },
-  "cloud-datacenter": {
-    title: "Cloud Datacenter",
-    line: "Racks humming in the dark, holding everything up.",
-  },
-};
 
 export interface Achievement {
   id: string;
@@ -96,6 +55,12 @@ export const GOALS: Goal[] = [
     title: "Open-Source & Scale",
     detail:
       "Contribute back, and build systems that serve at ever-larger scale with calm reliability.",
+  },
+  {
+    id: "goal-future",
+    title: "Future City — Coming Soon",
+    detail:
+      "The road doesn't end here. AI products, a startup, open source at global scale — the next district is under construction.",
   },
 ];
 

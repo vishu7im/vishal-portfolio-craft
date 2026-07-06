@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import type { PropKind } from "../types";
 import { bakeSvg } from "./textureFactory";
+import { BUILDING_SPECS } from "./buildings";
 
 // Hand-picked, fixed-colour prop art (regional colour comes from the ground
 // blobs, not from tinting these). Each spec carries its logical size and a
@@ -26,7 +27,7 @@ export interface PropSpec {
 const shadow = (cx: number, cy: number, rx: number, ry: number) =>
   `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="rgba(22,26,34,0.16)"/>`;
 
-const S: Record<PropKind, PropSpec> = {
+const S = {
   tree: {
     kind: "tree",
     w: 88,
@@ -299,10 +300,10 @@ const S: Record<PropKind, PropSpec> = {
   },
 };
 
-export const PROP_SPECS = S;
+export const PROP_SPECS: Record<PropKind, PropSpec> = { ...S, ...BUILDING_SPECS };
 
 export async function buildPropTextures(scene: Phaser.Scene): Promise<void> {
   await Promise.all(
-    Object.values(S).map((s) => bakeSvg(scene, `prop-${s.kind}`, s.svg, s.w, s.h))
+    Object.values(PROP_SPECS).map((s) => bakeSvg(scene, `prop-${s.kind}`, s.svg, s.w, s.h))
   );
 }

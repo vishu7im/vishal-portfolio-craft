@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import type { AreaId } from "../types";
+import type { AreaId, RandomEventDef } from "../types";
+import { levelForXp } from "../content/achievements";
 
 // ---------------------------------------------------------------------------
 // Two channels of state (ported from the old worldStore):
@@ -9,7 +10,8 @@ import type { AreaId } from "../types";
 //                triggers a React render.
 // ---------------------------------------------------------------------------
 
-const SAVE_KEY = "vishal-drive-save-v2";
+const SAVE_KEY = "vishal-drive-save-v3";
+const SAVE_KEY_V2 = "vishal-drive-save-v2"; // read-only fallback for migration
 
 export interface GameUIState {
   audioStarted: boolean;
@@ -22,10 +24,17 @@ export interface GameUIState {
   nearLabel: string | null;
   discovered: string[]; // anchors ever opened
   collected: string[]; // collectible ids picked up
+  chaptersVisited: AreaId[]; // life chapters the player has driven into
   coins: number;
+  xp: number; // lifetime XP — accumulates with coins but is never spent
+  achievementsUnlocked: string[];
+  lastAchievement: string | null; // most recent unlock (AchievementSystem toasts it)
+  lastLevelUp: { level: number; at: number } | null;
+  achievementsOpen: boolean;
   missionsDone: string[];
   activeMissionId: string | null;
   objective: string | null; // current objective line for the tracker
+  phoneCall: RandomEventDef | null; // incoming "client calling" offer (PhoneCallCard)
   vehiclesUnlocked: string[];
   selectedVehicle: string;
   garageOpen: boolean;
@@ -36,6 +45,9 @@ interface SaveBlob {
   discovered: string[];
   collected: string[];
   coins: number;
+  xp: number;
+  achievements: string[];
+  chaptersVisited: string[];
   missionsDone: string[];
   muted: boolean;
   vehiclesUnlocked: string[];
@@ -46,6 +58,12 @@ function loadSave(): Partial<SaveBlob> {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) return JSON.parse(raw) as SaveBlob;
+    // migrate a v2 save: coins seed the new xp track; keep the v2 key for rollback
+    const rawV2 = localStorage.getItem(SAVE_KEY_V2);
+    if (rawV2) {
+      const v2 = JSON.parse(rawV2) as Partial<SaveBlob>;
+      return { ...v2, xp: v2.coins ?? 0, achievements: [], chaptersVisited: [] };
+    }
   } catch {
     /* ignore */
   }
@@ -61,16 +79,23 @@ let state: GameUIState = {
     typeof window !== "undefined" &&
     !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
   ready: false,
-  currentArea: "garage",
+  currentArea: "forest",
   focusedId: null,
   nearId: null,
   nearLabel: null,
   discovered: saved.discovered ?? [],
   collected: saved.collected ?? [],
+  chaptersVisited: (saved.chaptersVisited ?? []) as AreaId[],
   coins: saved.coins ?? 0,
+  xp: saved.xp ?? saved.coins ?? 0,
+  achievementsUnlocked: saved.achievements ?? [],
+  lastAchievement: null,
+  lastLevelUp: null,
+  achievementsOpen: false,
   missionsDone: saved.missionsDone ?? [],
   activeMissionId: null,
   objective: null,
+  phoneCall: null,
   vehiclesUnlocked: saved.vehiclesUnlocked?.length ? saved.vehiclesUnlocked : ["sports"],
   selectedVehicle: saved.selectedVehicle ?? "sports",
   garageOpen: false,
@@ -79,10 +104,13 @@ let state: GameUIState = {
 function persist() {
   try {
     const blob: SaveBlob = {
-      version: 2,
+      version: 3,
       discovered: state.discovered,
       collected: state.collected,
       coins: state.coins,
+      xp: state.xp,
+      achievements: state.achievementsUnlocked,
+      chaptersVisited: state.chaptersVisited,
       missionsDone: state.missionsDone,
       muted: state.muted,
       vehiclesUnlocked: state.vehiclesUnlocked,
@@ -92,6 +120,18 @@ function persist() {
   } catch {
     /* ignore */
   }
+}
+
+/** xp bump + level-up detection shared by collect/completeMission/addXp */
+function gainXp(patch: Partial<GameUIState>, amount: number): Partial<GameUIState> {
+  const before = levelForXp(state.xp).level;
+  const xp = state.xp + amount;
+  const after = levelForXp(xp).level;
+  return {
+    ...patch,
+    xp,
+    ...(after > before ? { lastLevelUp: { level: after, at: Date.now() } } : {}),
+  };
 }
 
 const listeners = new Set<() => void>();
@@ -126,11 +166,34 @@ export const gameStore = {
     if (state.collected.includes(id)) return;
     state = {
       ...state,
+      ...gainXp({}, value),
       collected: [...state.collected, id],
       coins: state.coins + value,
     };
     persist();
     emit();
+  },
+  /** grant XP without a collectible (missions, boss fight, events) */
+  addXp(amount: number) {
+    if (amount <= 0) return;
+    state = { ...state, ...gainXp({}, amount) };
+    persist();
+    emit();
+  },
+  /** unlock an achievement; returns true if newly unlocked */
+  award(id: string): boolean {
+    if (state.achievementsUnlocked.includes(id)) return false;
+    state = {
+      ...state,
+      achievementsUnlocked: [...state.achievementsUnlocked, id],
+      lastAchievement: id,
+    };
+    persist();
+    emit();
+    return true;
+  },
+  toggleAchievements() {
+    set({ achievementsOpen: !state.achievementsOpen });
   },
   isCollected(id: string) {
     return state.collected.includes(id);
@@ -143,7 +206,14 @@ export const gameStore = {
     if (!state.audioStarted) set({ audioStarted: true });
   },
   setArea(id: AreaId) {
-    if (id !== state.currentArea) set({ currentArea: id });
+    // still records the very first chapter even though currentArea starts there
+    if (id === state.currentArea && state.chaptersVisited.includes(id)) return;
+    const newChapter = !state.chaptersVisited.includes(id);
+    set({
+      currentArea: id,
+      chaptersVisited: newChapter ? [...state.chaptersVisited, id] : state.chaptersVisited,
+    });
+    if (newChapter) persist();
   },
   setReady() {
     if (!state.ready) set({ ready: true });
@@ -158,6 +228,7 @@ export const gameStore = {
     if (state.missionsDone.includes(id)) return;
     state = {
       ...state,
+      ...gainXp({}, coins),
       missionsDone: [...state.missionsDone, id],
       activeMissionId: state.activeMissionId === id ? null : state.activeMissionId,
       objective: null,
@@ -205,6 +276,9 @@ export const frame = {
   rpm: 0, // 0..1 normalized (for engine audio + speedo)
   driftLoad: 0, // 0..1
   nitro: false,
+  /** 0..1 position in the day/night cycle (0 = noon) */
+  timeOfDay: 0,
   /** command flags React -> Phaser */
   requestTravel: null as { x: number; y: number } | null,
+  phoneAnswer: null as "accept" | "decline" | null,
 };

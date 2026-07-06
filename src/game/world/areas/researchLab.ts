@@ -2,17 +2,17 @@ import type { AreaDef, CollectibleDef, PortfolioAnchor, PropInstance } from "../
 import { areaPalette } from "../../config/palette";
 import { mulberry32, roadCross, scatter } from "../scatter";
 
-// The AI Lab — RAG & real-time voice. Holographic labs boot up as you approach
-// (VoxAI, Kiki) plus the two AI achievements. Drop-off for the first mission.
+// Chapter 8 — The AI Research Lab. RAG & real-time voice: holographic labs
+// boot up as you approach (VoxAI, Kiki) plus the two AI achievements.
 
-const C = { x: 8100, y: 3700 };
+const C = { x: 1500, y: 6000 };
 const keepOut = roadCross(C.x, C.y, 150);
 
 export const researchLabArea: AreaDef = {
   id: "research-lab",
-  name: "The AI Lab",
-  subtitle: "Language, thinking aloud",
-  order: 5,
+  name: "The AI Research Lab",
+  subtitle: "Chapter 8 — language, thinking aloud",
+  order: 6,
   center: C,
   footprint: { w: 2300, h: 2000 },
   palette: areaPalette("research-lab"),
@@ -27,46 +27,59 @@ export const researchLabArea: AreaDef = {
 
 const rng = mulberry32(404);
 const anchorAvoid = [
-  { x: 7500, y: 3150, r: 220 },
-  { x: 8750, y: 3150, r: 220 },
-  { x: 7550, y: 4250, r: 200 },
-  { x: 8700, y: 4250, r: 200 },
+  { x: C.x - 600, y: C.y - 550, r: 220 },
+  { x: C.x + 650, y: C.y - 550, r: 220 },
+  { x: C.x - 550, y: C.y + 550, r: 200 },
+  { x: C.x + 600, y: C.y + 550, r: 200 },
+  { x: C.x, y: C.y - 750, r: 220 }, // V.I.S.H. chat desk
 ];
 
 export const researchLabProps: PropInstance[] = [
   ...scatter("server", 10, { x: C.x, y: C.y, w: 2000, h: 1700 }, rng, { keepOut, avoid: anchorAvoid, scale: [0.7, 1] }),
   ...scatter("lamp", 8, { x: C.x, y: C.y, w: 2000, h: 1600 }, rng, { keepOut, avoid: anchorAvoid }),
   ...scatter("cone", 10, { x: C.x, y: C.y, w: 1700, h: 1300 }, rng, { physics: "pushable", keepOut }),
-  ...scatter("crate", 6, { x: 7500, y: 4200, w: 700, h: 400 }, rng, { physics: "destructible", keepOut }),
-  { id: "lab-sign", kind: "sign", x: 7450, y: 3700, physics: "pushable" },
+  ...scatter("crate", 6, { x: C.x - 600, y: C.y + 500, w: 700, h: 400 }, rng, { physics: "destructible", keepOut }),
+  { id: "lab-sign", kind: "sign", x: C.x - 650, y: C.y, physics: "pushable" },
 ];
 
 export const researchLabAnchors: PortfolioAnchor[] = [
   {
     id: "anchor-proj-voxai",
     areaId: "research-lab",
-    x: 7500,
-    y: 3150,
+    x: C.x - 600,
+    y: C.y - 550,
     radius: 175,
     label: "Boot the VoxAI Lab",
     content: { contentKind: "project", ref: "12" },
+    // the animated lab vignette lives here — keep the facade modest
     building: { kind: "building", scale: 1.05, reaction: "hologram" },
   },
   {
     id: "anchor-proj-kiki",
     areaId: "research-lab",
-    x: 8750,
-    y: 3150,
+    x: C.x + 650,
+    y: C.y - 550,
     radius: 165,
     label: "Boot the Kiki Lab",
     content: { contentKind: "project", ref: "3" },
-    building: { kind: "building", scale: 0.95, reaction: "hologram" },
+    // the flagship neon mega-lab — visible from a district away
+    building: { kind: "aiLab", scale: 1.0, reaction: "hologram" },
+  },
+  {
+    id: "anchor-chat-vish",
+    areaId: "research-lab",
+    x: C.x,
+    y: C.y - 750,
+    radius: 175,
+    label: "Talk to V.I.S.H. — Lab Assistant",
+    content: { contentKind: "chat" },
+    building: { kind: "server", scale: 1.25, reaction: "hologram" },
   },
   {
     id: "anchor-ach-rag",
     areaId: "research-lab",
-    x: 7550,
-    y: 4250,
+    x: C.x - 550,
+    y: C.y + 550,
     radius: 160,
     label: "RAG systems monument",
     content: { contentKind: "achievement", ref: "ach-rag" },
@@ -75,8 +88,8 @@ export const researchLabAnchors: PortfolioAnchor[] = [
   {
     id: "anchor-ach-voice",
     areaId: "research-lab",
-    x: 8700,
-    y: 4250,
+    x: C.x + 600,
+    y: C.y + 550,
     radius: 160,
     label: "Voice AI monument",
     content: { contentKind: "achievement", ref: "ach-voice" },
@@ -85,8 +98,8 @@ export const researchLabAnchors: PortfolioAnchor[] = [
 ];
 
 export const researchLabCollectibles: CollectibleDef[] = [
-  { id: "c-lab-1", kind: "coin", x: 7950, y: 3700, value: 5 },
-  { id: "c-lab-2", kind: "coin", x: 8250, y: 3700, value: 5 },
-  { id: "c-lab-core", kind: "ai-core", x: 8100, y: 4300, value: 30 },
-  { id: "c-lab-keyboard", kind: "keyboard", x: 8850, y: 3700, value: 25, secret: true },
+  { id: "c-lab-1", kind: "coin", x: C.x - 150, y: C.y, value: 5 },
+  { id: "c-lab-2", kind: "coin", x: C.x + 150, y: C.y, value: 5 },
+  { id: "c-lab-core", kind: "ai-core", x: C.x, y: C.y + 600, value: 30 },
+  { id: "c-lab-keyboard", kind: "keyboard", x: C.x + 750, y: C.y, value: 25, secret: true },
 ];

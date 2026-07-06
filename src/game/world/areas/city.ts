@@ -2,21 +2,21 @@ import type { AreaDef, CollectibleDef, PortfolioAnchor, PropInstance } from "../
 import { areaPalette } from "../../config/palette";
 import { mulberry32, roadCross, scatter } from "../scatter";
 
-// Shipping District — current work & shipped SaaS. Towers whose screens light up
-// (FabricatorOS, MetaOS) and the current role HQ (Edgenroots).
+// Chapter 6 — First Office District (iComply, 2022–2024). The first badge,
+// the first standups, and the tools built along the way.
 
-const C = { x: 8100, y: 1500 };
+const C = { x: 4800, y: 3700 };
 const keepOut = roadCross(C.x, C.y, 150);
 
 export const cityArea: AreaDef = {
   id: "city",
-  name: "Shipping District",
-  subtitle: "Real, shipped work",
-  order: 2,
+  name: "First Office District",
+  subtitle: "Chapter 6 — the first job",
+  order: 4,
   center: C,
   footprint: { w: 2400, h: 2100 },
   palette: areaPalette("city"),
-  careerTheme: "Current role & SaaS platforms",
+  careerTheme: "First job — iComply (2022–2024)",
   audio: {
     pad: [146.83, 220.0, 293.66],
     ambience: ["machinery", "drone"],
@@ -26,63 +26,55 @@ export const cityArea: AreaDef = {
 
 const rng = mulberry32(202);
 const anchorAvoid = [
-  { x: 7500, y: 900, r: 240 },
-  { x: 8750, y: 950, r: 240 },
-  { x: 8100, y: 2200, r: 220 },
+  { x: C.x - 650, y: C.y - 600, r: 240 },
+  { x: C.x + 650, y: C.y - 550, r: 240 },
+  { x: C.x, y: C.y + 700, r: 220 },
 ];
 
 export const cityProps: PropInstance[] = [
   ...scatter("lamp", 12, { x: C.x, y: C.y, w: 2200, h: 1900 }, rng, { keepOut, avoid: anchorAvoid }),
   ...scatter("cone", 14, { x: C.x, y: C.y, w: 2000, h: 1600 }, rng, { physics: "pushable", keepOut }),
-  ...scatter("crate", 10, { x: 7500, y: 2050, w: 800, h: 500 }, rng, { physics: "destructible", keepOut }),
-  ...scatter("barrel", 8, { x: 8700, y: 900, w: 700, h: 500 }, rng, { physics: "destructible", keepOut }),
-  { id: "city-sign", kind: "sign", x: 7450, y: 1550, physics: "pushable" },
+  ...scatter("crate", 10, { x: C.x - 600, y: C.y + 550, w: 800, h: 500 }, rng, { physics: "destructible", keepOut }),
+  ...scatter("barrel", 8, { x: C.x + 600, y: C.y + 600, w: 700, h: 500 }, rng, { physics: "destructible", keepOut }),
+  { id: "city-sign", kind: "sign", x: C.x - 650, y: C.y + 50, physics: "pushable" },
+  { id: "city-cafe", kind: "cafe", x: C.x - 200, y: C.y + 650, physics: "static" },
+  { id: "city-billboard", kind: "billboard", x: C.x + 1050, y: C.y - 300, physics: "static" },
   // a cone slalom along the western approach — weave through for style
   ...Array.from({ length: 7 }, (_, i) => ({
     id: `city-slalom-${i}`,
     kind: "cone" as const,
-    x: 7050 + i * 150,
-    y: 1500 + (i % 2 === 0 ? -70 : 70),
+    x: C.x - 1050 + i * 150,
+    y: C.y + (i % 2 === 0 ? -70 : 70),
     physics: "pushable" as const,
   })),
 ];
 
 export const cityAnchors: PortfolioAnchor[] = [
   {
-    id: "anchor-proj-fabricator",
+    id: "anchor-exp-icomply",
     areaId: "city",
-    x: 7500,
-    y: 900,
+    x: C.x - 650,
+    y: C.y - 600,
     radius: 175,
-    label: "Enter FabricatorOS Tower",
-    content: { contentKind: "project", ref: "10" },
-    building: { kind: "building", scale: 1.15, reaction: "screens-on" },
+    label: "iComply Office — the first badge",
+    content: { contentKind: "experience", ref: "2" },
+    building: { kind: "office", scale: 1.0, reaction: "lights-up" },
   },
   {
-    id: "anchor-proj-metaos",
+    id: "anchor-proj-taskexpense",
     areaId: "city",
-    x: 8750,
-    y: 950,
-    radius: 175,
-    label: "Enter MetaOS Tower",
-    content: { contentKind: "project", ref: "11" },
-    building: { kind: "building", scale: 1.1, reaction: "screens-on" },
-  },
-  {
-    id: "anchor-exp-edgenroots",
-    areaId: "city",
-    x: 8100,
-    y: 2200,
+    x: C.x + 650,
+    y: C.y - 550,
     radius: 165,
-    label: "Edgenroots HQ",
-    content: { contentKind: "experience", ref: "1" },
-    building: { kind: "building", scale: 0.95, reaction: "lights-up" },
+    label: "Task & Expense tracker",
+    content: { contentKind: "project", ref: "9" },
+    building: { kind: "building", scale: 0.9, reaction: "screens-on" },
   },
 ];
 
 export const cityCollectibles: CollectibleDef[] = [
-  { id: "c-city-1", kind: "coin", x: 7950, y: 1500, value: 5 },
-  { id: "c-city-2", kind: "coin", x: 8100, y: 1500, value: 5 },
-  { id: "c-city-3", kind: "coin", x: 8250, y: 1500, value: 5 },
-  { id: "c-city-core", kind: "ai-core", x: 8800, y: 2200, value: 30, secret: true },
+  { id: "c-city-1", kind: "coin", x: C.x - 150, y: C.y, value: 5 },
+  { id: "c-city-2", kind: "coin", x: C.x, y: C.y, value: 5 },
+  { id: "c-city-3", kind: "coin", x: C.x + 150, y: C.y, value: 5 },
+  { id: "c-city-core", kind: "ai-core", x: C.x + 700, y: C.y + 700, value: 30, secret: true },
 ];

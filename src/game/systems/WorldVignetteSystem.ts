@@ -132,9 +132,12 @@ export class WorldVignetteSystem {
       this.createSkillTemple(),
       this.createVoiceAiDemo(),
       this.createDatabaseVault(),
-      this.createSecret("ai-bunker", 9050, 4600, "Hidden AI Bunker", "Tool-use agents hum below the lab floor.", PURPLE),
-      this.createSecret("github-cave", 650, 6180, "Secret GitHub Cave", "Old branches, useful scripts, and hard-earned fixes.", GREEN),
-      this.createSecret("prototype-arcade", 5200, 4500, "Old 8-bit Prototype", "First portfolio build unlocked in the arcade cabinet.", YELLOW)
+      this.createHotelBooking(),
+      this.createBroadcastQueue(),
+      this.createReconciliation(),
+      this.createSecret("ai-bunker", 2450, 6900, "Hidden AI Bunker", "Tool-use agents hum below the lab floor.", PURPLE),
+      this.createSecret("github-cave", 7250, 6180, "Secret GitHub Cave", "Old branches, useful scripts, and hard-earned fixes.", GREEN),
+      this.createSecret("prototype-arcade", 8500, 4500, "Old 8-bit Prototype", "First portfolio build unlocked in the arcade cabinet.", YELLOW)
     );
   }
 
@@ -334,7 +337,7 @@ export class WorldVignetteSystem {
   }
 
   private createAiLab(): Vignette {
-    const v = { id: "ai-lab", x: 7500, y: 3150, radius: 760 };
+    const v = { id: "ai-lab", x: 900, y: 5450, radius: 760 };
     const c = this.container(v.x, v.y, 65);
     this.floorDecal(c, 470, 300, PURPLE, 0.42, 12);
     this.rounded(c, 0, 0, 330, 220, 0x251f48, 0.9, 0x8c7cff);
@@ -425,7 +428,7 @@ export class WorldVignetteSystem {
   }
 
   private createProductionIncident(): Vignette {
-    const v = { id: "production-server", x: 7500, y: 5500, radius: 700 };
+    const v = { id: "production-server", x: 4200, y: 5500, radius: 700 };
     const c = this.container(v.x, v.y, 70);
     this.floorDecal(c, 440, 285, BLUE, 0.34, 12);
     this.rounded(c, 0, 0, 330, 220, 0x202631, 0.92, 0x6a98bd);
@@ -491,7 +494,7 @@ export class WorldVignetteSystem {
   }
 
   private createDevOpsFactory(): Vignette {
-    const v = { id: "devops-factory", x: 8700, y: 5500, radius: 730 };
+    const v = { id: "devops-factory", x: 5400, y: 5500, radius: 730 };
     const c = this.container(v.x, v.y, 70);
     this.floorDecal(c, 500, 300, GREEN, 0.32, 12);
     this.rounded(c, 0, 0, 380, 230, 0x26313a, 0.91, 0x7fc9d8);
@@ -645,6 +648,8 @@ export class WorldVignetteSystem {
             xp.setText(`Bug XP: ${score}`);
             this.bugBits.emitParticleAt(wx, wy, 22);
             this.notice(wx, wy - 30, "Bug Fixed", "#236342");
+            gameStore.addXp(5);
+            gameStore.award("ach-first-bug");
           }
         }
       },
@@ -690,7 +695,7 @@ export class WorldVignetteSystem {
   }
 
   private createAiTrainingArea(): Vignette {
-    const v = { id: "ai-training", x: 8100, y: 4250, radius: 650 };
+    const v = { id: "ai-training", x: 1500, y: 6550, radius: 650 };
     const c = this.container(v.x, v.y, 64);
     this.floorDecal(c, 420, 270, PURPLE, 0.36, 6);
     this.worldLabel(v.x, v.y - 165, "AI Training Area");
@@ -740,7 +745,7 @@ export class WorldVignetteSystem {
   }
 
   private createDataPipelineRiver(): Vignette {
-    const v = { id: "data-pipeline", x: 5450, y: 6550, radius: 650 };
+    const v = { id: "data-pipeline", x: 1150, y: 4550, radius: 650 };
     const c = this.container(v.x, v.y, 66);
     this.floorDecal(c, 560, 250, BLUE, 0.22, 12);
     this.worldLabel(v.x, v.y - 155, "Data Pipeline River");
@@ -793,7 +798,7 @@ export class WorldVignetteSystem {
   }
 
   private createApiHighway(): Vignette {
-    const v = { id: "api-highway", x: 8100, y: 1500, radius: 690 };
+    const v = { id: "api-highway", x: 4800, y: 3700, radius: 690 };
     const c = this.container(v.x, v.y, 52);
     this.floorDecal(c, 520, 260, BLUE, 0.2, 2);
     this.worldLabel(v.x, v.y - 170, "API Highway");
@@ -835,7 +840,7 @@ export class WorldVignetteSystem {
   }
 
   private createAchievementMountain(): Vignette {
-    const v = { id: "achievement-mountain", x: 1500, y: 6000, radius: 780 };
+    const v = { id: "achievement-mountain", x: 8100, y: 6000, radius: 780 };
     const c = this.container(v.x, v.y, 50);
     this.floorDecal(c, 500, 760, YELLOW, 0.14, 0);
     this.worldLabel(v.x, v.y - 360, "Achievement Mountain");
@@ -929,7 +934,7 @@ export class WorldVignetteSystem {
   }
 
   private createResumeMuseum(): Vignette {
-    const v = { id: "resume-museum", x: 1450, y: 3200, radius: 650 };
+    const v = { id: "resume-museum", x: 8050, y: 1000, radius: 650 };
     const c = this.container(v.x, v.y, 58);
     this.floorDecal(c, 450, 300, ORANGE, 0.22, 12);
     this.worldLabel(v.x, v.y - 165, "Interactive Resume Museum");
@@ -976,7 +981,7 @@ export class WorldVignetteSystem {
   }
 
   private createSkillTemple(): Vignette {
-    const v = { id: "skill-temple", x: 2200, y: 4200, radius: 680 };
+    const v = { id: "skill-temple", x: 8800, y: 2000, radius: 680 };
     const c = this.container(v.x, v.y, 57);
     this.floorDecal(c, 470, 320, PURPLE, 0.24, 8);
     this.worldLabel(v.x, v.y - 165, "Skill Temple");
@@ -1033,7 +1038,7 @@ export class WorldVignetteSystem {
   }
 
   private createVoiceAiDemo(): Vignette {
-    const v = { id: "voice-ai-demo", x: 8700, y: 4250, radius: 650 };
+    const v = { id: "voice-ai-demo", x: 2100, y: 6550, radius: 650 };
     const c = this.container(v.x, v.y, 66);
     this.floorDecal(c, 410, 260, PURPLE, 0.3, 12);
     this.worldLabel(v.x, v.y - 160, "Voice AI Demo");
@@ -1070,7 +1075,7 @@ export class WorldVignetteSystem {
   }
 
   private createDatabaseVault(): Vignette {
-    const v = { id: "database-vault", x: 7550, y: 6550, radius: 650 };
+    const v = { id: "database-vault", x: 4250, y: 6550, radius: 650 };
     const c = this.container(v.x, v.y, 68);
     this.floorDecal(c, 420, 280, BLUE, 0.28, 10);
     this.worldLabel(v.x, v.y - 160, "Database Vault");
@@ -1098,6 +1103,170 @@ export class WorldVignetteSystem {
         rows[3].setFillStyle(repaired >= 1 ? GREEN : RED, repaired >= 1 ? 0.78 : 0.9);
         status.setText(p < 0.18 ? "password required" : repaired < 1 ? `repairing table ${Math.floor(repaired * 100)}%` : "Recovered Database");
         status.setColor(repaired >= 1 ? "#4ce0a0" : "#dbe6ef");
+      },
+    };
+  }
+
+  /** bnbMEhome: watch a booking travel guest → calendar → key → invoice */
+  private createHotelBooking(): Vignette {
+    const v = { id: "hotel-booking", x: 8550, y: 2800, radius: 620 };
+    const c = this.container(v.x, v.y, 60);
+    this.floorDecal(c, 420, 250, ORANGE, 0.24, 10);
+    this.worldLabel(v.x, v.y - 150, "Live Booking Flow");
+    const stops = [
+      { x: -160, label: "guest" },
+      { x: -53, label: "calendar" },
+      { x: 53, label: "webhook" },
+      { x: 160, label: "invoice" },
+    ];
+    const lane = this.scene.add.graphics();
+    lane.lineStyle(5, 0xf0994b, 0.4);
+    lane.beginPath();
+    lane.moveTo(-160, 0);
+    lane.lineTo(160, 0);
+    lane.strokePath();
+    c.add(lane);
+    stops.forEach((s) => {
+      this.screenPanel(c, s.x, 0, 72, 52, ORANGE, 0.94);
+      this.localText(c, s.x, 40, s.label, 10, "#20242c");
+    });
+    const guest = this.scene.add.circle(-160, -44, 12, 0xf2d199, 1).setStrokeStyle(2, INK);
+    const calGrid = this.localText(c, -53, -4, "MO TU WE\n□  ■  □", 9, "#ffd9a0");
+    const hook = this.localText(c, 53, -4, "POST 200", 9, "#4ce0a0");
+    const invoice = this.localText(c, 160, -4, "₹ 4,200", 10, "#ffd9a0");
+    const status = this.localText(c, 0, 96, "", 12, "#20242c");
+    c.add(guest);
+    let doneAt = -1;
+    return {
+      ...v,
+      update: (ctx) => {
+        const p = this.proximity(ctx, v, 160);
+        const phase = p > 0.06 ? (ctx.time % 8000) / 8000 : 0;
+        guest.setPosition(-160 + Phaser.Math.Easing.Sine.InOut(Math.min(1, phase * 1.4)) * 320, -44);
+        calGrid.setText(phase > 0.3 ? "MO TU WE\n□  ✔  □" : "MO TU WE\n□  ■  □");
+        hook.setAlpha(phase > 0.55 ? 1 : 0.3);
+        invoice.setAlpha(phase > 0.8 ? 1 : 0.25);
+        if (phase > 0.8 && ctx.time - doneAt > 8000) {
+          doneAt = ctx.time;
+          this.sparks.emitParticleAt(v.x + 160, v.y - 20, 10);
+        }
+        status.setText(
+          p < 0.06
+            ? ""
+            : phase < 0.3
+              ? "guest picks a room…"
+              : phase < 0.55
+                ? "availability locked"
+                : phase < 0.8
+                  ? "payment webhook fires"
+                  : "invoice generated ✓"
+        );
+      },
+    };
+  }
+
+  /** MetaOS: messages fan out through a queue into workers */
+  private createBroadcastQueue(): Vignette {
+    const v = { id: "broadcast-queue", x: 3900, y: 6500, radius: 620 };
+    const c = this.container(v.x, v.y, 60);
+    this.floorDecal(c, 430, 260, BLUE, 0.24, 10);
+    this.worldLabel(v.x, v.y - 152, "Broadcast Pipeline");
+    this.screenPanel(c, -140, 0, 84, 60, BLUE, 0.94);
+    this.localText(c, -140, 46, "campaign", 10, "#20242c");
+    const queue = this.screenPanel(c, 0, 0, 66, 96, YELLOW, 0.94);
+    this.localText(c, 0, 66, "queue", 10, "#20242c");
+    const workers = [-58, 0, 58].map((y) => {
+      this.screenPanel(c, 150, y, 70, 44, GREEN, 0.94);
+      return { y, busy: 0 };
+    });
+    this.localText(c, 150, 92, "workers", 10, "#20242c");
+    const depth = this.localText(c, 0, -66, "depth 0", 10, "#f2b843");
+    const sent = this.localText(c, 0, 112, "", 12, "#20242c");
+    const dots = Array.from({ length: 6 }, (_, i) => {
+      const d = this.scene.add.circle(0, 0, 5, 0x9fc4e2, 0.95).setStrokeStyle(1, INK);
+      c.add(d);
+      return { d, offset: i / 6 };
+    });
+    let delivered = 0;
+    return {
+      ...v,
+      update: (ctx) => {
+        const p = this.proximity(ctx, v, 160);
+        queue.setFillStyle(PANEL, 0.96);
+        dots.forEach((dot, i) => {
+          const t = ((ctx.time * 0.00022 + dot.offset) % 1) * (p > 0.06 ? 1 : 0);
+          if (t < 0.45) {
+            // campaign -> queue
+            dot.d.setPosition(-140 + (t / 0.45) * 140, Math.sin(t * 9) * 8);
+          } else {
+            // queue -> a worker lane
+            const k = (t - 0.45) / 0.55;
+            const lane = workers[i % 3].y;
+            dot.d.setPosition(k * 150, lane * k);
+          }
+          dot.d.setAlpha(p > 0.06 ? 0.95 : 0);
+          if (t > 0.97) delivered++;
+        });
+        depth.setText(`depth ${Math.round(2 + Math.sin(ctx.time * 0.001) * 2 + p * 4)}`);
+        sent.setText(p > 0.1 ? `${(24000 + (delivered % 9000)).toLocaleString()} messages delivered` : "");
+      },
+    };
+  }
+
+  /** Aaxel: invoices pair with bank lines — green ties, red orphans */
+  private createReconciliation(): Vignette {
+    const v = { id: "bank-reconciliation", x: 2600, y: 4600, radius: 620 };
+    const c = this.container(v.x, v.y, 60);
+    this.floorDecal(c, 420, 270, GREEN, 0.22, 10);
+    this.worldLabel(v.x, v.y - 158, "AI Reconciliation Desk");
+    this.localText(c, -110, -104, "invoices", 10, "#20242c");
+    this.localText(c, 110, -104, "bank feed", 10, "#20242c");
+    const rows = [-70, -35, 0, 35, 70];
+    const left = rows.map((y, i) => {
+      const r = this.scene.add.rectangle(-110, y, 96, 22, 0x39414f, 0.95).setStrokeStyle(1, INK);
+      c.add(r);
+      this.localText(c, -110, y, `INV-${310 + i}`, 9, "#dbe6ef");
+      return r;
+    });
+    rows.forEach((y, i) => {
+      const r = this.scene.add.rectangle(110, y, 96, 22, 0x2a303b, 0.95).setStrokeStyle(1, INK);
+      c.add(r);
+      this.localText(c, 110, y, i === 3 ? "UPI ???" : `TXN-${88 + i}`, 9, "#dbe6ef");
+      return r;
+    });
+    const ties = this.scene.add.graphics();
+    c.add(ties);
+    const status = this.localText(c, 0, 112, "", 12, "#20242c");
+    // row 3 is the unmatched one the AI flags
+    const matchOrder = [0, 2, 1, 4];
+    return {
+      ...v,
+      update: (ctx) => {
+        const p = this.proximity(ctx, v, 160);
+        const phase = p > 0.06 ? Math.min(1, ((ctx.time % 9000) / 9000) * 1.3) : 0;
+        const matched = Math.floor(phase * (matchOrder.length + 1));
+        ties.clear();
+        matchOrder.slice(0, matched).forEach((row) => {
+          ties.lineStyle(3, GREEN, 0.85);
+          ties.beginPath();
+          ties.moveTo(-62, rows[row]);
+          ties.lineTo(62, rows[row]);
+          ties.strokePath();
+        });
+        left.forEach((r, i) => r.setFillStyle(matchOrder.slice(0, matched).includes(i) ? 0x2c5443 : 0x39414f, 0.95));
+        if (matched > matchOrder.length - 1 && phase > 0.9) {
+          ties.lineStyle(3, RED, 0.9);
+          ties.strokeCircle(110, rows[3], 18);
+        }
+        status.setText(
+          p < 0.06
+            ? ""
+            : matched === 0
+              ? "AI matching transactions…"
+              : matched <= matchOrder.length
+                ? `${matched}/5 matched`
+                : "4 matched · 1 flagged for review"
+        );
       },
     };
   }

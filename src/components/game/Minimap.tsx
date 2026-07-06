@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { WORLD } from "@/game/world";
-import { frame } from "@/game/state/gameStore";
+import { WORLD, CHAPTERS } from "@/game/world";
+import { frame, gameStore } from "@/game/state/gameStore";
 import { PALETTE } from "@/game/config/palette";
 
 const MAP_W = 196;
@@ -58,15 +58,31 @@ export function Minimap() {
       }
       ctx.globalAlpha = 1;
 
-      // roads
-      ctx.strokeStyle = PALETTE.road;
-      ctx.lineWidth = 2.2;
+      // roads (the Career Road spine is drawn wider, then progress-filled)
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       for (const r of WORLD.roads) {
         ctx.strokeStyle = r.kind === "dirt" ? "#b79366" : PALETTE.road;
+        ctx.lineWidth = r.spine ? 3.6 : 2.2;
         ctx.beginPath();
         r.points.forEach((p, i) =>
+          i === 0 ? ctx.moveTo(p.x * SX, p.y * SY) : ctx.lineTo(p.x * SX, p.y * SY)
+        );
+        ctx.stroke();
+      }
+
+      // journey progress: fill the spine up to the furthest chapter visited
+      const visited = gameStore.getState().chaptersVisited;
+      let maxOrder = 0;
+      for (const ch of CHAPTERS) {
+        if (visited.includes(ch.areaId)) maxOrder = Math.max(maxOrder, ch.order);
+      }
+      const spine = WORLD.roads.find((r) => r.spine);
+      if (spine && maxOrder > 1) {
+        ctx.strokeStyle = "#f2b843";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        spine.points.slice(0, maxOrder).forEach((p, i) =>
           i === 0 ? ctx.moveTo(p.x * SX, p.y * SY) : ctx.lineTo(p.x * SX, p.y * SY)
         );
         ctx.stroke();
@@ -81,13 +97,25 @@ export function Minimap() {
         ctx.fill();
       }
 
-      // fast-travel nodes
-      for (const n of WORLD.fastTravel) {
-        ctx.strokeStyle = "rgba(255,255,255,0.7)";
-        ctx.lineWidth = 1.4;
+      // chapter nodes: numbered along the Career Road, gold once visited
+      for (const ch of CHAPTERS) {
+        const area = WORLD.areas.find((a) => a.id === ch.areaId);
+        if (!area) continue;
+        const x = area.center.x * SX;
+        const y = area.center.y * SY;
+        const seen = visited.includes(ch.areaId);
+        ctx.fillStyle = seen ? "#f2b843" : "rgba(255,255,255,0.55)";
+        ctx.strokeStyle = "rgba(32,36,44,0.7)";
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(n.x * SX, n.y * SY, 4.5, 0, Math.PI * 2);
+        ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+        ctx.fill();
         ctx.stroke();
+        ctx.fillStyle = "#20242c";
+        ctx.font = "700 7px ui-monospace, monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(ch.order), x, y + 0.5);
       }
 
       // player

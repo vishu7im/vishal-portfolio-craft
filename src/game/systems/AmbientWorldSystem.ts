@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import { WORLD } from "../world";
+import { gameStore } from "../state/gameStore";
 import type { CarController } from "./CarController";
+import type { DayNightSystem } from "./DayNightSystem";
+import type { AudioSystem } from "./AudioSystem";
 
 interface ReactiveProp {
   img: Phaser.GameObjects.Image;
@@ -15,28 +18,61 @@ interface ReactiveProp {
 
 const INK = 0x20242c;
 
+type Weather = "clear" | "rain" | "storm";
+
+/** props that get warm glows as night falls */
+const NIGHT_GLOW_KINDS: Record<string, { tint: number; scale: number; max: number }> = {
+  lamp: { tint: 0xffe9a8, scale: 0.7, max: 0.6 },
+  house: { tint: 0xffe9a8, scale: 0.9, max: 0.5 },
+  school: { tint: 0xffe9a8, scale: 1.1, max: 0.45 },
+  office: { tint: 0xffe9a8, scale: 1.2, max: 0.55 },
+  loft: { tint: 0xffd9a0, scale: 1.2, max: 0.55 },
+  factory: { tint: 0xafd8ff, scale: 1.4, max: 0.5 },
+  hq: { tint: 0xffe9a8, scale: 1.5, max: 0.6 },
+  aiLab: { tint: 0x8c7cff, scale: 2.6, max: 0.9 }, // the neon lab owns the night
+  cafe: { tint: 0xffc9a0, scale: 0.9, max: 0.6 },
+  futureGate: { tint: 0xe04f3f, scale: 1.3, max: 0.55 },
+};
+
 export class AmbientWorldSystem {
   private readonly scene: Phaser.Scene;
   private readonly car: CarController;
+  private readonly dayNight?: DayNightSystem;
+  private readonly audio?: AudioSystem;
   private readonly props: ReactiveProp[] = [];
   private readonly serverDots: Phaser.GameObjects.GameObject[] = [];
+  private readonly nightGlows: Array<{ img: Phaser.GameObjects.Image; max: number }> = [];
   private readonly drones: Array<{ node: Phaser.GameObjects.Container; cx: number; cy: number; r: number; phase: number }> = [];
   private readonly butterflies: Array<{ node: Phaser.GameObjects.Container; cx: number; cy: number; phase: number }> = [];
   private readonly clouds: Phaser.GameObjects.Image[] = [];
+  private readonly traffic: Array<{
+    node: Phaser.GameObjects.Container;
+    dist: number;
+    dir: 1 | -1;
+    speed: number;
+  }> = [];
+  private spinePoints: Array<{ x: number; y: number }> = [];
+  private spineLens: number[] = [];
+  private spineTotal = 0;
 
   private readonly leaves: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly petals: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly dust: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly sparks: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly smoke: Phaser.GameObjects.Particles.ParticleEmitter;
+  private rain?: Phaser.GameObjects.Particles.ParticleEmitter;
 
   private nextBirdAt = 0;
   private nextEventAt = 8000;
   private trainActive = false;
+  private weather: Weather = "clear";
+  private nextWeatherAt = 45000;
 
-  constructor(scene: Phaser.Scene, car: CarController) {
+  constructor(scene: Phaser.Scene, car: CarController, dayNight?: DayNightSystem, audio?: AudioSystem) {
     this.scene = scene;
     this.car = car;
+    this.dayNight = dayNight;
+    this.audio = audio;
 
     this.leaves = scene.add
       .particles(0, 0, "soft", {
@@ -100,6 +136,9 @@ export class AmbientWorldSystem {
     this.addDrones();
     this.addButterflies();
     this.addCoffeeRobot();
+    this.addWalkers();
+    this.addTraffic();
+    this.buildRain();
     this.addAmbientDistrictDetails();
   }
 
@@ -108,6 +147,9 @@ export class AmbientWorldSystem {
     this.updateClouds(delta);
     this.updateDrones(time);
     this.updateButterflies(time);
+    this.updateTraffic(delta);
+    this.updateNightGlows(time);
+    this.updateWeather(time);
     this.emitAmbientParticles(time);
 
     if (time > this.nextBirdAt) {
@@ -123,14 +165,18 @@ export class AmbientWorldSystem {
 
   destroy() {
     this.serverDots.forEach((o) => o.destroy());
+    this.nightGlows.forEach((g) => g.img.destroy());
     this.drones.forEach((d) => d.node.destroy());
     this.butterflies.forEach((b) => b.node.destroy());
     this.clouds.forEach((c) => c.destroy());
+    this.traffic.forEach((t) => t.node.destroy());
     this.leaves.destroy();
     this.petals.destroy();
     this.dust.destroy();
     this.sparks.destroy();
     this.smoke.destroy();
+    this.rain?.destroy();
+    this.headlights?.destroy();
   }
 
   private collectExistingProps() {
@@ -182,6 +228,18 @@ export class AmbientWorldSystem {
         });
       }
 
+      const nightSpec = NIGHT_GLOW_KINDS[kind];
+      if (nightSpec) {
+        const glow = this.scene.add
+          .image(obj.x, obj.y - 14, "glow")
+          .setTint(nightSpec.tint)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setScale(nightSpec.scale * obj.scaleX * 2.2)
+          .setAlpha(0)
+          .setDepth(obj.depth + 1);
+        this.nightGlows.push({ img: glow, max: nightSpec.max });
+      }
+
       if (kind === "server") this.addServerBlinkers(obj);
       if (kind === "boost") {
         this.scene.tweens.add({
@@ -228,9 +286,9 @@ export class AmbientWorldSystem {
 
   private addDrones() {
     const centers = [
-      { x: 7500, y: 3150 },
-      { x: 8750, y: 3150 },
-      { x: 8700, y: 4250 },
+      { x: 900, y: 5450 },
+      { x: 2150, y: 5450 },
+      { x: 2100, y: 6550 },
     ];
     centers.forEach((center, i) => {
       for (let n = 0; n < 2; n++) {
@@ -254,8 +312,8 @@ export class AmbientWorldSystem {
     const centers = [
       { x: 1200, y: 1200 },
       { x: 2100, y: 1800 },
-      { x: 4300, y: 3350 },
-      { x: 5650, y: 3850 },
+      { x: 7600, y: 3350 },
+      { x: 8950, y: 3850 },
     ];
     centers.forEach((center, i) => {
       for (let n = 0; n < 4; n++) {
@@ -269,7 +327,7 @@ export class AmbientWorldSystem {
   }
 
   private addCoffeeRobot() {
-    const bot = this.scene.add.container(1180, 3350).setDepth(10 + 3350 + 80);
+    const bot = this.scene.add.container(7780, 1150).setDepth(10 + 1150 + 80);
     bot.add(this.scene.add.rectangle(0, 0, 36, 28, 0xf2e6cf, 1).setStrokeStyle(2, INK));
     bot.add(this.scene.add.circle(-9, -4, 3, 0x20242c, 1));
     bot.add(this.scene.add.circle(9, -4, 3, 0x20242c, 1));
@@ -281,8 +339,8 @@ export class AmbientWorldSystem {
     );
     this.scene.tweens.add({
       targets: bot,
-      x: 1840,
-      y: 4050,
+      x: 8440,
+      y: 1850,
       duration: 9500,
       yoyo: true,
       repeat: -1,
@@ -291,26 +349,202 @@ export class AmbientWorldSystem {
     });
   }
 
+  /** two more walkers in the coffee-bot mould, in different districts */
+  private addWalkers() {
+    const walkers = [
+      { from: { x: 4450, y: 3400 }, to: { x: 5150, y: 4000 }, label: "delivery bot", body: 0xcfe3bf, head: 0x4c9a6a },
+      { from: { x: 4500, y: 5700 }, to: { x: 5100, y: 6300 }, label: "intern.exe", body: 0xdbe6ef, head: 0x39a0f0 },
+    ];
+    for (const w of walkers) {
+      const bot = this.scene.add.container(w.from.x, w.from.y).setDepth(10 + w.from.y + 80);
+      bot.add(this.scene.add.rectangle(0, 0, 36, 28, w.body, 1).setStrokeStyle(2, INK));
+      bot.add(this.scene.add.circle(-9, -4, 3, INK, 1));
+      bot.add(this.scene.add.circle(9, -4, 3, INK, 1));
+      bot.add(this.scene.add.circle(0, -25, 10, w.head, 1).setStrokeStyle(2, INK));
+      bot.add(
+        this.scene.add
+          .text(0, 30, w.label, { fontFamily: "ui-monospace, monospace", fontSize: "10px", color: "#20242c", stroke: "#f4ede0", strokeThickness: 3 })
+          .setOrigin(0.5)
+      );
+      this.scene.tweens.add({
+        targets: bot,
+        x: w.to.x,
+        y: w.to.y,
+        duration: Phaser.Math.Between(8000, 11000),
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.inOut",
+        onUpdate: () => bot.setDepth(10 + bot.y + 80),
+      });
+      this.serverDots.push(bot); // reuse the misc-cleanup bucket
+    }
+  }
+
+  /** ambient cars cruising the Career Road spine — pure decor, no physics */
+  private addTraffic() {
+    const spine = WORLD.roads.find((r) => r.spine);
+    if (!spine) return;
+    this.spinePoints = spine.points;
+    this.spineLens = [];
+    this.spineTotal = 0;
+    for (let i = 0; i < spine.points.length - 1; i++) {
+      const len = Math.hypot(
+        spine.points[i + 1].x - spine.points[i].x,
+        spine.points[i + 1].y - spine.points[i].y
+      );
+      this.spineLens.push(len);
+      this.spineTotal += len;
+    }
+    const colors = [0x5aa0d8, 0xf2b843, 0xcfe3bf, 0xb06a4a];
+    for (let i = 0; i < 4; i++) {
+      const node = this.scene.add.container(0, 0).setDepth(50);
+      node.add(this.scene.add.rectangle(0, 0, 40, 20, colors[i], 1).setStrokeStyle(2, INK));
+      node.add(this.scene.add.rectangle(-4, 0, 14, 14, 0x20242c, 0.8));
+      node.add(this.scene.add.circle(16, -7, 3, 0xfff4d0, 0.9));
+      node.add(this.scene.add.circle(16, 7, 3, 0xfff4d0, 0.9));
+      this.traffic.push({
+        node,
+        dist: (this.spineTotal / 4) * i,
+        dir: i % 2 === 0 ? 1 : -1,
+        speed: Phaser.Math.FloatBetween(0.12, 0.2),
+      });
+    }
+  }
+
+  private updateTraffic(delta: number) {
+    if (!this.spinePoints.length) return;
+    for (const t of this.traffic) {
+      t.dist += t.speed * delta * t.dir;
+      if (t.dist >= this.spineTotal) {
+        t.dist = this.spineTotal;
+        t.dir = -1;
+      } else if (t.dist <= 0) {
+        t.dist = 0;
+        t.dir = 1;
+      }
+      // locate along the polyline, offset to the right lane
+      let d = t.dist;
+      let seg = 0;
+      while (seg < this.spineLens.length - 1 && d > this.spineLens[seg]) {
+        d -= this.spineLens[seg];
+        seg++;
+      }
+      const a = this.spinePoints[seg];
+      const b = this.spinePoints[seg + 1];
+      const len = this.spineLens[seg] || 1;
+      const k = Phaser.Math.Clamp(d / len, 0, 1);
+      const ux = (b.x - a.x) / len;
+      const uy = (b.y - a.y) / len;
+      const lane = 52 * t.dir;
+      const x = a.x + ux * len * k - uy * lane;
+      const y = a.y + uy * len * k + ux * lane;
+      t.node.setPosition(x, y);
+      t.node.setRotation(Math.atan2(uy * t.dir, ux * t.dir));
+      t.node.setDepth(10 + y - 30); // under the player car at same y
+    }
+  }
+
+  private headlights?: Phaser.GameObjects.Image;
+
+  private updateNightGlows(time: number) {
+    const night = this.dayNight?.nightness ?? 0;
+    if (night <= 0.01 && this.nightGlows[0]?.img.alpha === 0 && !this.headlights?.alpha) return;
+    for (const g of this.nightGlows) {
+      g.img.setAlpha(night * g.max * (0.9 + 0.1 * Math.sin(time * 0.004 + g.img.x)));
+    }
+    // headlight pool ahead of the car after dark
+    if (!this.headlights) {
+      this.headlights = this.scene.add
+        .image(0, 0, "glow")
+        .setTint(0xfff2c8)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setScale(2.6, 1.7)
+        .setAlpha(0)
+        .setDepth(9);
+    }
+    const a = this.car.angle;
+    this.headlights
+      .setPosition(this.car.x + Math.cos(a) * 120, this.car.y + Math.sin(a) * 120)
+      .setRotation(a)
+      .setAlpha(night * 0.55);
+  }
+
+  // --- weather ---------------------------------------------------------------
+
+  private buildRain() {
+    this.rain = this.scene.add
+      .particles(0, 0, "soft", {
+        tint: 0x9fc4e2,
+        // generous fixed span — the emitter is repositioned to the view each frame
+        x: { min: -200, max: 2800 },
+        y: -30,
+        lifespan: 900,
+        speedY: { min: 640, max: 820 },
+        speedX: { min: -60, max: -20 },
+        scaleX: 0.06,
+        scaleY: { start: 0.5, end: 0.3 },
+        alpha: { start: 0.55, end: 0.1 },
+        quantity: 3,
+        emitting: false,
+      })
+      .setScrollFactor(0)
+      .setDepth(95000);
+  }
+
+  private updateWeather(time: number) {
+    if (time > this.nextWeatherAt) {
+      const roll = Math.random();
+      const next: Weather = roll < 0.68 ? "clear" : roll < 0.9 ? "rain" : "storm";
+      this.setWeather(next);
+      this.nextWeatherAt = time + Phaser.Math.Between(60000, 120000);
+    }
+    if (this.weather === "clear" || !this.rain) return;
+
+    // keep the emitter pinned to the top-left of the visible view despite zoom
+    const cam = this.scene.cameras.main;
+    const z = cam.zoom;
+    const left = (0 - cam.width / 2) / z + cam.width / 2;
+    this.rain.setPosition(left, (0 - cam.height / 2) / z + cam.height / 2 - 40);
+
+    // storms borrow the existing lightning event
+    if (this.weather === "storm" && Math.random() < 0.004) this.spawnLightning();
+    // wet roads: occasional puddle ripple near the car
+    if (Math.random() < 0.05) this.spawnRipple(this.car.x + Phaser.Math.Between(-220, 220), this.car.y + Phaser.Math.Between(-160, 160), 0.8);
+  }
+
+  private setWeather(next: Weather) {
+    if (next === this.weather) return;
+    this.weather = next;
+    const reduced = gameStore.getState().reducedMotion;
+    if (next === "clear") {
+      this.rain?.stop();
+    } else {
+      this.rain?.start();
+      if (this.rain) this.rain.quantity = reduced ? 1 : next === "storm" ? 5 : 3;
+    }
+    this.audio?.setRain(next === "clear" ? 0 : next === "storm" ? 0.9 : 0.55);
+  }
+
   private addAmbientDistrictDetails() {
     // Static visual identity accents: network cables, hologram rings, and achievement statues.
     const g = this.scene.add.graphics().setDepth(4);
     g.lineStyle(5, 0x39a0f0, 0.34);
     for (const y of [5480, 5600, 6525, 6645]) {
       g.beginPath();
-      g.moveTo(7240, y);
-      g.lineTo(8900, y - 80);
+      g.moveTo(3940, y);
+      g.lineTo(5600, y - 80);
       g.strokePath();
     }
     g.lineStyle(4, 0x7b5cff, 0.32);
-    for (const x of [7500, 8100, 8700]) {
-      g.strokeCircle(x, 3700, 190);
-      g.strokeCircle(x, 3700, 230);
+    for (const x of [900, 1500, 2100]) {
+      g.strokeCircle(x, 6000, 190);
+      g.strokeCircle(x, 6000, 230);
     }
     g.lineStyle(4, 0xf2b843, 0.28);
     g.beginPath();
-    g.moveTo(850, 5500);
-    g.lineTo(1500, 6000);
-    g.lineTo(2150, 5550);
+    g.moveTo(7450, 5500);
+    g.lineTo(8100, 6000);
+    g.lineTo(8750, 5550);
     g.strokePath();
   }
 
@@ -346,6 +580,8 @@ export class AmbientWorldSystem {
 
       if (p.kind === "server" && Math.random() < 0.0009) this.sparks.emitParticleAt(p.x, p.y - 18, 2);
       if (p.kind === "silo" && Math.random() < 0.0016) this.smoke.emitParticleAt(p.x, p.y - 52, 1);
+      if (p.kind === "cafe" && Math.random() < 0.003) this.smoke.emitParticleAt(p.x, p.y - 58, 1);
+      if (p.kind === "factory" && Math.random() < 0.002) this.smoke.emitParticleAt(p.x + 78, p.y - 92, 1);
       if (p.kind === "puddle" && Math.random() < 0.002) this.spawnRipple(p.x, p.y, p.scaleX);
     }
   }
@@ -394,7 +630,7 @@ export class AmbientWorldSystem {
       );
     }
     if (Math.random() < 0.006) {
-      this.petals.emitParticleAt(4800 + Phaser.Math.Between(-900, 900), 3700 + Phaser.Math.Between(-800, 800), 1);
+      this.petals.emitParticleAt(8100 + Phaser.Math.Between(-900, 900), 3700 + Phaser.Math.Between(-800, 800), 1);
     }
   }
 
