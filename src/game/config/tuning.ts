@@ -73,13 +73,23 @@ export const UNLOCKS: UnlockRule[] = [
 
 export const TUNING = {
   // camera
-  camLerp: 1,
+  camLerp: 1, // Phaser follow lerp; we smooth the target ourselves (magnet)
   camZoom: 1.0,
-  camZoomNitro: 0.94,
-  camZoomSpeedRange: 0.045, // how far the view widens at top speed
+  camZoomNitro: 0.88, // wide-angle rush while boosting
+  camZoomSpeedRange: 0.12, // how far the view widens at top speed (sense of velocity)
   camZoomNear: 1.1, // slow-roll zoom-in beside a portfolio anchor
+  camZoomSmooth: 3.5, // zoom ease rate (per second)
+  // magnet follow: the camera target chases the car with a distance-proportional
+  // rate, so it trails with a soft look-ahead at speed and settles cleanly at rest
+  camMagnetBase: 3.4, // base follow rate (per second) near the car
+  camMagnetGain: 0.05, // extra rate per px of lag — catches up when far
+  camMagnetDistCap: 260, // px, cap on the distance term so it never snaps
   camTiltDrift: 0.02, // rad (~1.1°) camera lean while drifting
   camShakeCrash: 0.003,
+  // impact roll: a damped harmonic oscillator kicked on collisions/boost
+  camRollPull: 110, // spring constant pulling the roll back to level
+  camRollDamping: 5, // energy bleed per second
+  camRollKick: 0.9, // scales a kick's strength into roll velocity
   // drift / marks
   driftMarkThreshold: 1.75, // lateral speed (px/step) before marks/smoke appear
   tireMarkCap: 700,

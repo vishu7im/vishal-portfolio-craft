@@ -383,6 +383,11 @@ export class WorldScene extends Phaser.Scene {
     return Math.hypot(v.x, v.y);
   }
 
+  /** Map a collision impact speed to a camera-roll kick strength (~1–4° tilt). */
+  private rollKick(impact: number) {
+    return Phaser.Math.Clamp(impact * 0.14, 0.2, 0.85);
+  }
+
   private onCollisionStart(event: Phaser.Physics.Matter.Events.CollisionStartEvent) {
     for (const pair of event.pairs) {
       const a = pair.bodyA as MatterJS.BodyType & { gameObject?: Phaser.GameObjects.GameObject };
@@ -405,6 +410,7 @@ export class WorldScene extends Phaser.Scene {
         else if (kind === "boost") {
           this.car.boost();
           this.destruction.boostBurst(other.x, other.y);
+          this.rig.kick(0.4);
         }
         continue;
       }
@@ -412,6 +418,7 @@ export class WorldScene extends Phaser.Scene {
         if (impact > TUNING.destroySpeedThreshold) {
           const blasted = this.destruction.smash(other as Phaser.GameObjects.Image, impact);
           if (blasted) this.car.flipFromCollision(impact, other.x, other.y);
+          this.rig.kick(this.rollKick(impact));
         } else {
           this.destruction.thud(other.x, other.y, impact);
         }
@@ -419,7 +426,10 @@ export class WorldScene extends Phaser.Scene {
       }
       if (physics === "pushable") {
         this.destruction.thud(other.x, other.y, impact * 0.5);
-        if (impact > TUNING.crashSpeedThreshold) this.car.onCollision(impact, other.x, other.y);
+        if (impact > TUNING.crashSpeedThreshold) {
+          this.car.onCollision(impact, other.x, other.y);
+          this.rig.kick(this.rollKick(impact));
+        }
         continue;
       }
       // solid static
@@ -427,6 +437,7 @@ export class WorldScene extends Phaser.Scene {
       if (impact > TUNING.crashSpeedThreshold) {
         this.destruction.thud(other.x, other.y, impact);
         this.car.onCollision(impact, other.x, other.y);
+        this.rig.kick(this.rollKick(impact));
       }
     }
   }
