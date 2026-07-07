@@ -657,7 +657,12 @@ Phases 0, 12 can run early/independently. Phases 4–7 deliver the largest perce
   - [x] `WorldScene.update` now iterates an explicit ordered pipeline built from `ORDER.*` priorities — encodes the historical order **1:1** (no behavior change); the interleaved glue (interact/area/gate/fast-travel/telemetry) is now discrete named steps
   - [x] Deduped constants: `DayNightSystem` local `lerp` → `core/maths.lerp`; `Ambient`/`WorldVignette` hardcoded `INK/PAPER` hex → `hex(PALETTE.ink/paper)` (values provably identical: `0x20242c`/`0xf4ede0`)
   - [x] `tsc --noEmit` ✓, `npm run build` ✓ (phaser chunk unchanged 1.48 MB), lint = only the 2 pre-existing issues, dev-server module transforms ✓
-- [ ] **Phase 2 — Split the god-systems** (`WorldVignetteSystem`, `AmbientWorldSystem` → <300-line modules, identical visuals)
+- [x] **Phase 2 — Split the god-systems** ✅ _(branch `redesign/phase-2-split-god-systems`)_
+  - [x] `WorldVignetteSystem` (1306 → **70** thin coordinator): shared `vignette/VignetteKit.ts` (drawing helpers + constants + 5 particle emitters) + 4 grouped scene modules (`scenes/{aiData,ops,career,misc}.ts`, ≤277 lines each) exporting the ~20 diorama factories via a barrel
+  - [x] `AmbientWorldSystem` (1108 → **64** thin coordinator): shared `ambient/AmbientKit.ts` (scene/car/dayNight/audio + emitters + ripple/lightning) + 5 cohesive modules — `ReactiveProps` (props+night glows+headlights), `AmbientLife` (clouds/drones/butterflies), `Npcs` (walkers/road-walkers/ducks/traffic + horn/hit), `Weather`, `WorldEvents`
+  - [x] Pure mechanical extraction — draw/anim logic copied verbatim; **public API unchanged** (`onHorn`/`onLampHit`/`update`/`destroy`) and per-frame update order preserved
+  - [x] `tsc --noEmit` ✓, `npm run build` ✓ (Game chunk 333 KB ≈ unchanged), lint = only the 2 pre-existing issues, all split modules transform at runtime ✓
+  - [~] Most modules < ~300 lines; two intentionally cohesive files exceed the soft target — `Npcs.ts` (470, all NPC characters share one `walkerBots` reaction list) and `VignetteKit.ts` (315, the shared drawing toolkit). Not the mixed grab-bags the phase targeted.
 - [ ] **Phase 3 — Input action-mapping + context filters** (actions + `intro/driving/panel/menu` filters; controls unchanged)
 - [ ] **Phase 4 — Camera redesign** (magnet follow + speed-zoom + impact roll kick; no jitter)
 - [ ] **Phase 5 — Vehicle feel & handling** (soft top-speed cap, reverse-brake, boost, surface traction, skid marks)
