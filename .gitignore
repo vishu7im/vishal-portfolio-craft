@@ -27,5 +27,3 @@ dist-ssr
 functions/node_modules
 node_modules
 functions/.env
-
-docs
