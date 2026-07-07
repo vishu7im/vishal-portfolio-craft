@@ -73,13 +73,13 @@ export const UNLOCKS: UnlockRule[] = [
 
 export const TUNING = {
   // camera
-  camLerp: 0.105,
+  camLerp: 1,
   camZoom: 1.0,
-  camZoomNitro: 0.88,
-  camZoomSpeedRange: 0.12, // how far the view widens at top speed
+  camZoomNitro: 0.94,
+  camZoomSpeedRange: 0.045, // how far the view widens at top speed
   camZoomNear: 1.1, // slow-roll zoom-in beside a portfolio anchor
-  camTiltDrift: 0.06, // rad (~3.4°) camera lean while drifting
-  camShakeCrash: 0.006,
+  camTiltDrift: 0.02, // rad (~1.1°) camera lean while drifting
+  camShakeCrash: 0.003,
   // drift / marks
   driftMarkThreshold: 1.75, // lateral speed (px/step) before marks/smoke appear
   tireMarkCap: 700,

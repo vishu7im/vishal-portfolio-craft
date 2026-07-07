@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import toast from "react-hot-toast";
-import type { MissionDef, RandomEventDef } from "../types";
+import type { MissionDef } from "../types";
 import { WORLD } from "../world";
 import { gameStore } from "../state/gameStore";
 import { TEX_SS } from "../art/textureFactory";
@@ -11,8 +11,7 @@ import type { CameraRig } from "./CameraRig";
 // Runs all missions: delivery (carry a package to a drop), race (hit checkpoints
 // before the clock), escape (outrun the memory-leak monster), and the boss
 // production incident (hit fix stations before CPU maxes out). Missions start by
-// driving into their beacon — or dynamically from a phone-call event. Only one
-// runs at a time: beacons and phone calls both funnel through `this.active`.
+// driving into their beacon. Only one runs at a time.
 
 interface Beacon {
   mission: MissionDef;
@@ -28,9 +27,6 @@ export class MissionManager {
   private beacons = new Map<string, Beacon>();
 
   private active: MissionDef | null = null;
-  /** true while the active mission came from a phone call (no beacon respawn) */
-  private dynamic = false;
-  private dynamicEvent: RandomEventDef | null = null;
   private pkg?: Phaser.GameObjects.Image;
   private markers: Phaser.GameObjects.Image[] = [];
   private chaser?: Phaser.GameObjects.Container;
@@ -135,28 +131,6 @@ export class MissionManager {
     this.redPulse?.destroy();
     this.redPulse = undefined;
     this.rig?.zoomTo(null);
-    this.dynamic = false;
-    this.dynamicEvent = null;
-  }
-
-  /** start a timed delivery offered by a phone-call event (no beacon involved) */
-  startDynamic(ev: RandomEventDef) {
-    if (this.active) return;
-    const m: MissionDef = {
-      id: `dyn-${ev.id}`,
-      title: `📞 ${ev.caller}`,
-      brief: ev.pitch,
-      areaId: gameStore.getState().currentArea,
-      type: "delivery",
-      giver: { x: this.car.x, y: this.car.y, radius: 0, label: "" },
-      deliver: { ...ev.destination, radius: 210 },
-      rewardCoins: ev.rewardXp,
-      rewardText: `Client happy — job done in time. +${ev.rewardXp} XP`,
-    };
-    this.dynamic = true;
-    this.dynamicEvent = ev;
-    this.timer = ev.timeLimitMs;
-    this.startCore(m);
   }
 
   private start(m: MissionDef) {
@@ -269,19 +243,8 @@ export class MissionManager {
   }
 
   private complete(m: MissionDef) {
-    const wasDynamic = this.dynamic;
     this.cleanup();
     this.active = null;
-    if (wasDynamic) {
-      // dynamic jobs are repeatable: XP only, no missionsDone entry
-      gameStore.set({ activeMissionId: null, objective: null });
-      this.lastObjective = "";
-      gameStore.addXp(m.rewardCoins);
-      this.audio.chord();
-      this.fireworks.emitParticleAt(this.car.x, this.car.y - 70, 42);
-      toast.success(m.rewardText);
-      return;
-    }
     gameStore.completeMission(m.id, m.rewardCoins);
     for (const ach of m.rewardAchievements ?? []) gameStore.award(ach);
     if (m.projectRef) {
@@ -315,14 +278,13 @@ export class MissionManager {
   }
 
   private fail(m: MissionDef, reason: string) {
-    const wasDynamic = this.dynamic;
     this.cleanup();
     this.active = null;
     gameStore.set({ activeMissionId: null, objective: null });
     this.lastObjective = "";
     this.audio.crash(0.5);
     toast(reason);
-    if (!wasDynamic) this.addBeacon(m); // beacon missions retry; phone jobs return to the pool
+    this.addBeacon(m);
   }
 
   update(dt: number, time = 0) {
@@ -341,11 +303,6 @@ export class MissionManager {
       this.updateBoss(m, dt, time);
     } else if (m.type === "delivery" && m.deliver) {
       if (this.pkg) this.pkg.setPosition(this.car.x, this.car.y - 4).setDepth(10 + this.car.y + 1);
-      if (this.dynamic) {
-        this.timer -= dt;
-        if (this.timer <= 0) return this.fail(m, "⏱️ The client went with someone else. Next time!");
-        this.setObjective(`${m.deliver.label} — ${(this.timer / 1000).toFixed(1)}s`);
-      }
       if (Math.hypot(this.car.x - m.deliver.x, this.car.y - m.deliver.y) < m.deliver.radius) this.complete(m);
     } else if (m.type === "race" && m.checkpoints) {
       this.timer -= dt;

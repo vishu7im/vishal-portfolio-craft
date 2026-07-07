@@ -11,8 +11,8 @@ import type { TireMarks } from "./TireMarks";
 // double as night taillights, and a hold-to-burnout launch. Everything is
 // particle/pool based and skips itself under prefers-reduced-motion.
 
-const STREAK_COUNT = 6;
-const STREAK_ON = 0.72; // speedNorm where streaks fade in
+const STREAK_COUNT = 3;
+const STREAK_ON = 0.88; // speedNorm where streaks fade in
 const BURNOUT_LAUNCH_MS = 600;
 
 export class CarFxSystem {
@@ -223,7 +223,7 @@ export class CarFxSystem {
     const strength = reduced
       ? 0
       : car.nitroActive
-        ? 1
+        ? 0.55
         : Phaser.Math.Clamp((car.speedNorm - STREAK_ON) / (1 - STREAK_ON), 0, 1);
     if (strength <= 0) {
       for (const s of this.streaks) if (s.img.alpha > 0) s.img.setAlpha(0);
@@ -232,7 +232,7 @@ export class CarFxSystem {
     const h = car.angle;
     const vx = -Math.cos(h);
     const vy = -Math.sin(h);
-    const pxPerMs = 0.55 + strength * 0.5;
+    const pxPerMs = 0.34 + strength * 0.32;
     const w = cam.width;
     const hh = cam.height;
     const z = cam.zoom;
@@ -252,7 +252,7 @@ export class CarFxSystem {
         1,
         (Math.abs(s.sx - w / 2) / (w / 2) + Math.abs(s.sy - hh / 2) / (hh / 2)) * 0.9
       );
-      s.img.setAlpha(0.22 * strength * (0.35 + edge * 0.65));
+      s.img.setAlpha(0.1 * strength * (0.25 + edge * 0.75));
     }
   }
 }

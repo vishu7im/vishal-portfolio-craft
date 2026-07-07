@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronUp, Keyboard } from "lucide-react";
 import { useGameStore } from "@/game/state/gameStore";
 import { frame } from "@/game/state/gameStore";
 import { WORLD, chapterFor } from "@/game/world";
@@ -224,33 +225,51 @@ export function Speedometer() {
   );
 }
 
-/** One-time controls legend that fades away after the first drive. */
+/** Persistent controls legend; users can collapse it, but a show chip remains. */
 export function ControlsCard() {
-  const [gone, setGone] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const ready = useGameStore((s) => s.ready);
-  useEffect(() => {
-    if (!ready) return;
-    const onKey = () => setTimeout(() => setGone(true), 4000);
-    window.addEventListener("keydown", onKey, { once: true });
-    const t = setTimeout(() => setGone(true), 9000);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      clearTimeout(t);
-    };
-  }, [ready]);
+
+  if (!ready) return null;
+
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        onClick={() => setCollapsed(false)}
+        className="glass pointer-events-auto absolute bottom-4 left-1/2 flex h-10 -translate-x-1/2 items-center gap-2 rounded-full px-4 text-xs font-semibold text-white transition hover:bg-white/10"
+        aria-label="Show controls"
+        title="Show controls"
+      >
+        <Keyboard className="h-4 w-4" />
+        Controls
+        <ChevronUp className="h-4 w-4" />
+      </button>
+    );
+  }
 
   return (
     <div
-      className="glass pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-2xl px-5 py-3 text-white transition-all duration-500"
-      style={{ opacity: gone ? 0 : 1, transform: `translate(-50%, ${gone ? 12 : 0}px)` }}
+      className="glass pointer-events-auto absolute bottom-4 left-1/2 flex max-w-[min(760px,calc(100vw-2rem))] -translate-x-1/2 items-center gap-3 rounded-2xl px-4 py-3 text-white"
+      role="group"
+      aria-label="Driving controls"
     >
-      <div className="flex items-center gap-4 text-xs">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
         <Legend keys="W A S D" label="Drive" />
         <Legend keys="Space" label="Drift" />
         <Legend keys="Shift" label="Nitro" />
         <Legend keys="E" label="Interact" />
         <Legend keys="H" label="Horn" />
       </div>
+      <button
+        type="button"
+        onClick={() => setCollapsed(true)}
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+        aria-label="Hide controls"
+        title="Hide controls"
+      >
+        <ChevronDown className="h-4 w-4" />
+      </button>
     </div>
   );
 }

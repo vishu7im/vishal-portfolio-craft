@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { AreaId, RandomEventDef } from "../types";
+import type { AreaId } from "../types";
 import { levelForXp } from "../content/achievements";
 
 // ---------------------------------------------------------------------------
@@ -34,7 +34,6 @@ export interface GameUIState {
   missionsDone: string[];
   activeMissionId: string | null;
   objective: string | null; // current objective line for the tracker
-  phoneCall: RandomEventDef | null; // incoming "client calling" offer (PhoneCallCard)
   vehiclesUnlocked: string[];
   selectedVehicle: string;
   garageOpen: boolean;
@@ -95,7 +94,6 @@ let state: GameUIState = {
   missionsDone: saved.missionsDone ?? [],
   activeMissionId: null,
   objective: null,
-  phoneCall: null,
   vehiclesUnlocked: saved.vehiclesUnlocked?.length ? saved.vehiclesUnlocked : ["sports"],
   selectedVehicle: saved.selectedVehicle ?? "sports",
   garageOpen: false,
@@ -284,5 +282,4 @@ export const frame = {
   timeOfDay: 0,
   /** command flags React -> Phaser */
   requestTravel: null as { x: number; y: number } | null,
-  phoneAnswer: null as "accept" | "decline" | null,
 };

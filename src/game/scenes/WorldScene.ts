@@ -24,7 +24,6 @@ import { AudioSystem } from "../systems/AudioSystem";
 import { WorldVignetteSystem } from "../systems/WorldVignetteSystem";
 import { AmbientWorldSystem } from "../systems/AmbientWorldSystem";
 import { AchievementSystem } from "../systems/AchievementSystem";
-import { PhoneCallSystem } from "../systems/PhoneCallSystem";
 import { DayNightSystem } from "../systems/DayNightSystem";
 import { ScreenDisplaySystem } from "../systems/ScreenDisplaySystem";
 
@@ -42,7 +41,6 @@ export class WorldScene extends Phaser.Scene {
   private vignettes!: WorldVignetteSystem;
   private ambient!: AmbientWorldSystem;
   private achievements!: AchievementSystem;
-  private phoneCalls!: PhoneCallSystem;
   private dayNight!: DayNightSystem;
   private opsScreens!: ScreenDisplaySystem;
   private audio!: AudioSystem;
@@ -119,7 +117,6 @@ export class WorldScene extends Phaser.Scene {
     this.mission.setCameraRig(this.rig);
     this.progression = new ProgressionSystem(this.car);
     this.achievements = new AchievementSystem(this, this.car, this.audio);
-    this.phoneCalls = new PhoneCallSystem(this.car, this.mission, this.audio);
 
     // --- input + collisions ---
     this.removeInput = installInputListeners();
@@ -449,15 +446,14 @@ export class WorldScene extends Phaser.Scene {
       this.ambient.onHorn(this.car.x, this.car.y);
     }
 
-    // hard-braking tyre screech (one-shot, cooldown so it never machine-guns)
-    if (this.car.braking && this.car.speedNorm > 0.55 && time > this.screechAt) {
-      this.screechAt = time + 900;
-      this.audio.screech(0.5 + this.car.speedNorm * 0.5);
+    // hard-braking tyre hush (one-shot, spaced out so it never machine-guns)
+    if (this.car.braking && this.car.speedNorm > 0.7 && time > this.screechAt) {
+      this.screechAt = time + 1600;
+      this.audio.screech(0.35 + this.car.speedNorm * 0.4);
     }
 
     this.collectibles.update(this.car.x, this.car.y);
     this.mission.update(delta, time);
-    this.phoneCalls.update(time);
     this.progression.update();
     this.reactivity.update(this.car.x, this.car.y, time);
     this.vignettes.update(this.car.x, this.car.y, time, delta);

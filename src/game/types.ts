@@ -170,16 +170,6 @@ export interface MissionDef {
   rewardAchievements?: string[];
 }
 
-/** A "client calling" random event: a timed delivery offered while driving. */
-export interface RandomEventDef {
-  id: string;
-  caller: string;
-  pitch: string;
-  timeLimitMs: number;
-  rewardXp: number;
-  destination: { x: number; y: number; label: string };
-}
-
 export interface FastTravelNode {
   id: string;
   areaId: AreaId;

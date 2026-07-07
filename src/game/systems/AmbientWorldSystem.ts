@@ -16,6 +16,21 @@ interface ReactiveProp {
   cooldown: number;
 }
 
+interface WalkerBot {
+  node: Phaser.GameObjects.Container;
+  reactAt: number;
+}
+
+interface RoadWalker extends WalkerBot {
+  dist: number;
+  dir: 1 | -1;
+  lane: number;
+  speed: number;
+  phase: number;
+  hitAt: number;
+  disabledUntil: number;
+}
+
 const INK = 0x20242c;
 
 type Weather = "clear" | "rain" | "storm";
@@ -55,7 +70,8 @@ export class AmbientWorldSystem {
   private spineLens: number[] = [];
   private spineTotal = 0;
   // NPC reactions: walkers wave at a stopped car and jump at the horn
-  private readonly walkerBots: Array<{ node: Phaser.GameObjects.Container; reactAt: number }> = [];
+  private readonly walkerBots: WalkerBot[] = [];
+  private readonly roadWalkers: RoadWalker[] = [];
   private readonly ducks: Array<{
     node: Phaser.GameObjects.Container;
     home: { x: number; y: number };
@@ -148,6 +164,7 @@ export class AmbientWorldSystem {
     this.addWalkers();
     this.addDucks();
     this.addTraffic();
+    this.addRoadWalkers();
     this.buildRain();
     this.addAmbientDistrictDetails();
   }
@@ -158,6 +175,7 @@ export class AmbientWorldSystem {
     this.updateDrones(time);
     this.updateButterflies(time);
     this.updateTraffic(delta);
+    this.updateRoadWalkers(time, delta);
     this.updateNightGlows(time);
     this.updateWeather(time);
     this.emitAmbientParticles(time);
@@ -183,6 +201,7 @@ export class AmbientWorldSystem {
     this.butterflies.forEach((b) => b.node.destroy());
     this.clouds.forEach((c) => c.destroy());
     this.traffic.forEach((t) => t.node.destroy());
+    this.roadWalkers.forEach((w) => w.node.destroy());
     this.leaves.destroy();
     this.petals.destroy();
     this.dust.destroy();
@@ -551,19 +570,7 @@ export class AmbientWorldSystem {
 
   /** ambient cars cruising the Career Road spine — pure decor, no physics */
   private addTraffic() {
-    const spine = WORLD.roads.find((r) => r.spine);
-    if (!spine) return;
-    this.spinePoints = spine.points;
-    this.spineLens = [];
-    this.spineTotal = 0;
-    for (let i = 0; i < spine.points.length - 1; i++) {
-      const len = Math.hypot(
-        spine.points[i + 1].x - spine.points[i].x,
-        spine.points[i + 1].y - spine.points[i].y
-      );
-      this.spineLens.push(len);
-      this.spineTotal += len;
-    }
+    if (!this.ensureSpinePath()) return;
     const colors = [0x5aa0d8, 0xf2b843, 0xcfe3bf, 0xb06a4a];
     for (let i = 0; i < 4; i++) {
       const node = this.scene.add.container(0, 0).setDepth(50);
@@ -578,6 +585,100 @@ export class AmbientWorldSystem {
         speed: Phaser.Math.FloatBetween(0.12, 0.2),
       });
     }
+  }
+
+  private ensureSpinePath() {
+    if (this.spinePoints.length) return true;
+    const spine = WORLD.roads.find((r) => r.spine);
+    if (!spine) return false;
+    this.spinePoints = spine.points;
+    this.spineLens = [];
+    this.spineTotal = 0;
+    for (let i = 0; i < spine.points.length - 1; i++) {
+      const len = Math.hypot(
+        spine.points[i + 1].x - spine.points[i].x,
+        spine.points[i + 1].y - spine.points[i].y
+      );
+      this.spineLens.push(len);
+      this.spineTotal += len;
+    }
+    return this.spineTotal > 0;
+  }
+
+  private addRoadWalkers() {
+    if (!this.ensureSpinePath()) return;
+    const colors = [
+      { body: 0xf2e6cf, head: 0xc08a55, label: "npc" },
+      { body: 0xdbe6ef, head: 0x39a0f0, label: "walker" },
+      { body: 0xcfe3bf, head: 0x4c9a6a, label: "dev" },
+      { body: 0xf7a6c8, head: 0xb06a4a, label: "guest" },
+      { body: 0xffe9a8, head: 0xf0994b, label: "ops" },
+      { body: 0xded6ff, head: 0x7b5cff, label: "qa" },
+    ];
+    const lanes = [-54, 0, 58, -18, 34, -72];
+    for (let i = 0; i < colors.length; i++) {
+      const point = this.pointOnSpine((this.spineTotal / colors.length) * (i + 0.35), 1, lanes[i]);
+      const node = this.createRoadWalkerNode(point.x, point.y, colors[i].label, colors[i].body, colors[i].head);
+      const walker: RoadWalker = {
+        node,
+        reactAt: 0,
+        dist: (this.spineTotal / colors.length) * (i + 0.35),
+        dir: i % 2 === 0 ? 1 : -1,
+        lane: lanes[i],
+        speed: Phaser.Math.FloatBetween(0.032, 0.058),
+        phase: i * 1.7,
+        hitAt: 0,
+        disabledUntil: 0,
+      };
+      this.roadWalkers.push(walker);
+      this.walkerBots.push(walker);
+    }
+  }
+
+  private createRoadWalkerNode(x: number, y: number, label: string, body: number, head: number) {
+    const node = this.scene.add.container(x, y).setDepth(10 + y + 70);
+    node.add(this.scene.add.ellipse(0, 19, 31, 12, 0x151922, 0.18));
+    node.add(this.scene.add.rectangle(-7, 11, 5, 17, 0x39414f, 1).setStrokeStyle(1, INK));
+    node.add(this.scene.add.rectangle(7, 11, 5, 17, 0x39414f, 1).setStrokeStyle(1, INK));
+    node.add(this.scene.add.rectangle(0, -4, 27, 31, body, 1).setStrokeStyle(2, INK));
+    node.add(this.scene.add.circle(0, -27, 12, head, 1).setStrokeStyle(2, INK));
+    node.add(this.scene.add.circle(-4, -30, 2.2, INK, 1));
+    node.add(this.scene.add.circle(5, -30, 2.2, INK, 1));
+    node.add(this.scene.add.rectangle(-19, -2, 5, 20, body, 1).setStrokeStyle(1, INK));
+    node.add(this.scene.add.rectangle(19, -2, 5, 20, body, 1).setStrokeStyle(1, INK));
+    node.add(
+      this.scene.add
+        .text(0, 34, label, {
+          fontFamily: "ui-monospace, monospace",
+          fontSize: "10px",
+          color: "#20242c",
+          stroke: "#f4ede0",
+          strokeThickness: 3,
+        })
+        .setOrigin(0.5)
+    );
+    return node;
+  }
+
+  private pointOnSpine(dist: number, dir: 1 | -1, lane: number) {
+    if (!this.spinePoints.length) return { x: 0, y: 0, angle: 0 };
+    let d = Phaser.Math.Clamp(dist, 0, this.spineTotal);
+    let seg = 0;
+    while (seg < this.spineLens.length - 1 && d > this.spineLens[seg]) {
+      d -= this.spineLens[seg];
+      seg++;
+    }
+    const a = this.spinePoints[seg];
+    const b = this.spinePoints[seg + 1];
+    const len = this.spineLens[seg] || 1;
+    const k = Phaser.Math.Clamp(d / len, 0, 1);
+    const ux = (b.x - a.x) / len;
+    const uy = (b.y - a.y) / len;
+    return {
+      x: a.x + ux * len * k - uy * lane,
+      y: a.y + uy * len * k + ux * lane,
+      angle: Math.atan2(uy * dir, ux * dir),
+    };
   }
 
   private updateTraffic(delta: number) {
@@ -611,6 +712,65 @@ export class AmbientWorldSystem {
       t.node.setRotation(Math.atan2(uy * t.dir, ux * t.dir));
       t.node.setDepth(10 + y - 30); // under the player car at same y
     }
+  }
+
+  private updateRoadWalkers(time: number, delta: number) {
+    if (!this.spinePoints.length) return;
+    const carVelocity = this.car.body.body.velocity;
+    const carSpeed = Math.hypot(carVelocity.x, carVelocity.y);
+
+    for (const w of this.roadWalkers) {
+      if (time >= w.disabledUntil) {
+        w.dist += w.speed * delta * w.dir;
+        if (w.dist >= this.spineTotal) {
+          w.dist = this.spineTotal;
+          w.dir = -1;
+        } else if (w.dist <= 0) {
+          w.dist = 0;
+          w.dir = 1;
+        }
+        const p = this.pointOnSpine(w.dist, w.dir, w.lane);
+        const bob = Math.sin(time * 0.011 + w.phase);
+        w.node.setPosition(p.x, p.y + bob * 2.5);
+        w.node.setRotation(Math.sin(time * 0.006 + w.phase) * 0.035);
+        w.node.setDepth(10 + w.node.y + 70);
+      }
+
+      if (time < w.hitAt || carSpeed < 1.2) continue;
+      const dx = w.node.x - this.car.x;
+      const dy = w.node.y - this.car.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 58) continue;
+      this.hitRoadWalker(w, time, carSpeed, dx / (dist || 1), dy / (dist || 1));
+    }
+  }
+
+  private hitRoadWalker(w: RoadWalker, time: number, carSpeed: number, nx: number, ny: number) {
+    w.hitAt = time + 1800;
+    w.disabledUntil = time + 920;
+    w.reactAt = time + 3500;
+    const shove = Phaser.Math.Clamp(90 + carSpeed * 18, 110, 230);
+    this.audio?.crash(0.18 + Math.min(1, carSpeed / 8) * 0.22);
+    this.dust.emitParticleAt(w.node.x, w.node.y + 16, 9);
+    this.bubble(w.node, "bonk!");
+    this.car.onCollision(Math.max(1.6, carSpeed), w.node.x, w.node.y);
+    this.scene.tweens.killTweensOf(w.node);
+    this.scene.tweens.add({
+      targets: w.node,
+      x: w.node.x + nx * shove,
+      y: w.node.y + ny * shove,
+      angle: Phaser.Math.FloatBetween(-0.34, 0.34),
+      scaleX: 1.12,
+      scaleY: 0.84,
+      duration: 220,
+      ease: "Cubic.out",
+      yoyo: true,
+      onUpdate: () => w.node.setDepth(10 + w.node.y + 70),
+      onComplete: () => {
+        w.node.setScale(1);
+        w.node.setRotation(0);
+      },
+    });
   }
 
   private headlights?: Phaser.GameObjects.Image;

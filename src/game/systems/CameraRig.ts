@@ -3,9 +3,9 @@ import { TUNING } from "../config/tuning";
 import { gameStore } from "../state/gameStore";
 import type { CarController } from "./CarController";
 
-// Smooth follow camera with velocity lookahead, speed/nitro zoom-out, a gentle
-// zoom-in when idling beside a building, a subtle lean while drifting, and
-// crash shake. Follows the (invisible) physics body so it tracks true position.
+// Centered follow camera with light speed/nitro zoom-out, a gentle zoom-in when
+// idling beside a building, and crash shake. Follows the invisible physics body
+// directly so the car stays readable at speed.
 
 export class CameraRig {
   private cam: Phaser.Cameras.Scene2D.Camera;
@@ -28,7 +28,7 @@ export class CameraRig {
 
   shake(intensity: number, durationMs = 180) {
     if (gameStore.getState().reducedMotion) return;
-    this.cam.shake(durationMs, intensity);
+    this.cam.shake(durationMs, Math.min(intensity, 0.003));
   }
 
   /** temporary cinematic zoom override; pass null to release back to normal */
@@ -43,39 +43,33 @@ export class CameraRig {
   }
 
   update(deltaMs: number) {
-    const v = this.car.body.body.velocity;
-    const lookahead = 4 + this.car.speedNorm * 8;
-    const desiredX = this.car.x + v.x * lookahead;
-    const desiredY = this.car.y + v.y * lookahead;
-    const lerp = Math.min(1, deltaMs * 0.0048);
-    this.target.setPosition(
-      this.target.x + (desiredX - this.target.x) * lerp,
-      this.target.y + (desiredY - this.target.y) * lerp
-    );
+    const speed = this.car.speedNorm;
+    this.target.setPosition(this.car.x, this.car.y);
 
     // zoom priority: cinematic override > slow-roll beside a building > speed/nitro widen
     const zoomOut = this.car.nitroActive
       ? TUNING.camZoomNitro
-      : TUNING.camZoom - this.car.speedNorm * TUNING.camZoomSpeedRange;
-    const slow = Phaser.Math.Clamp(1 - this.car.speedNorm / 0.3, 0, 1);
+      : TUNING.camZoom - speed * TUNING.camZoomSpeedRange;
+    const slow = Phaser.Math.Clamp(1 - speed / 0.3, 0, 1);
     const near = this.nearness * slow;
     const nearZoom =
       near > 0.02 ? TUNING.camZoom + (TUNING.camZoomNear - TUNING.camZoom) * near : null;
     this.targetZoom = this.cinematicZoom ?? nearZoom ?? zoomOut;
     const z = this.cam.zoom;
-    this.cam.setZoom(z + (this.targetZoom - z) * Math.min(1, deltaMs * 0.006));
+    this.cam.setZoom(z + (this.targetZoom - z) * Math.min(1, deltaMs * 0.0035));
 
     // a short kick the moment nitro engages
-    if (this.car.nitroActive && !this.wasNitro) this.shake(140, 0.0015);
+    if (this.car.nitroActive && !this.wasNitro) this.shake(0.0008, 120);
     this.wasNitro = this.car.nitroActive;
 
     // drift lean — locked out during missions/cinematics so screen-fixed
     // overlays (boss CPU bar) and reduced-motion users are never tilted
     const s = gameStore.getState();
-    const allowTilt = !s.reducedMotion && !s.activeMissionId && this.cinematicZoom === null;
+    const allowTilt =
+      !s.reducedMotion && !s.activeMissionId && this.cinematicZoom === null && speed < 0.72;
     const targetTilt =
       allowTilt && this.car.drifting ? -this.car.slipSign * TUNING.camTiltDrift : 0;
-    this.tilt += (targetTilt - this.tilt) * Math.min(1, deltaMs * 0.004);
+    this.tilt += (targetTilt - this.tilt) * Math.min(1, deltaMs * 0.0025);
     if (targetTilt === 0 && Math.abs(this.tilt) < 0.0004) this.tilt = 0;
     this.cam.setRotation(this.tilt);
   }
