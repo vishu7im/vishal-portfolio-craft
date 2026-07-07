@@ -1,0 +1,90 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=0.6in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\usepackage{parskip}
+
+\pagenumbering{gobble}
+\setlength{\parindent}{0pt}
+
+\titleformat{\section}{\large\bfseries\scshape}{}{0em}{}[\vspace{2pt}\titlerule\vspace{4pt}]
+\titlespacing{\section}{0pt}{8pt}{4pt}
+
+\setlist[itemize]{leftmargin=1.3em,itemsep=1pt,topsep=2pt,parsep=0pt}
+
+\newcommand{\role}[4]{%
+  \textbf{#1}\hfill\textbf{#3}\\
+  \textit{#2}\hfill\textit{#4}\vspace{2pt}%
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0pt,label={},itemsep=4pt,topsep=2pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeSubheading}[4]{%
+  \item \textbf{#1}\hfill\textbf{#2}\\
+  \textit{#3}\hfill\textit{#4}\vspace{2pt}%
+}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE \scshape \textbf{Vishal Munday}}\\[3pt]
+  {\normalsize Backend Tech Lead $|$ AI \& Cloud-Native Systems}\\[4pt]
+  \small
+  Jind, Haryana, India $\bullet$ Phone: +91 8570090556 $\bullet$
+  Email: \href{mailto:im@vishu.dev}{im@vishu.dev}\\
+  Portfolio: \href{https://vishu.dev}{vishu.dev} $\bullet$
+  LinkedIn: \href{https://linkedin.com/in/vishal-munday-869024223/}{linkedin.com/in/vishal-munday-869024223} $\bullet$
+  GitHub: \href{https://github.com/vishu7im}{github.com/vishu7im}
+\end{center}
+
+\section{Professional Summary}
+Backend Tech Lead with 3+ years of experience designing and scaling production-grade backend systems, GenAI applications, and cloud-native platforms. Proven expertise in microservices, real-time systems, and third-party integrations across supply chain, insurance, hospitality, and SaaS domains. Adept at leading backend teams and translating complex requirements into reliable, high-performance solutions.
+
+\section{Technical Skills}
+\textbf{Languages:} JavaScript, TypeScript, Python, SQL, HTML, CSS\\
+\textbf{Frameworks:} Node.js, Express.js, React.js, Next.js, Tailwind CSS\\
+\textbf{Databases:} MySQL, MongoDB, PostgreSQL, Redis\\
+\textbf{Cloud \& DevOps:} AWS, Firebase, Docker, GitHub Actions\\
+\textbf{AI / GenAI:} LangChain.js, LangGraph, RAG, Agent-to-Agent (ADK), AI Agents, Mem0, GuardRails, LiveKit, WebRTC
+
+\section{Professional Experience}
+\role{EdgeNRoots Solutions Pvt Ltd}{Backend Tech Lead}{May 2024 -- Present}{Remote (Full-Time)}
+\begin{itemize}
+  \item Led backend and AI initiatives across supply chain, insurance, hospitality, and SaaS clients, delivering scalable production-grade systems and mentoring the backend team.
+  \item Architected MetaOS, a WhatsApp CRM platform with campaigns, automation, analytics, and AI-powered engagement, cutting manual customer-response effort by an estimated 60\%.
+  \item Built Aaxel Voice Agent, a real-time voice-to-voice AI agent on LiveKit and WebRTC, achieving low-latency conversational experiences and production-scale reliability.
+\end{itemize}
+
+\role{Icomply Lifescience Solution Pvt Ltd}{Full Stack Developer (Intern + Part-Time)}{Oct 2022 -- Jun 2024}{Remote}
+\begin{itemize}
+  \item Integrated AS2 gateway and XML templates to enable secure, compliant B2B data exchange for life-science clients.
+  \item Designed backend APIs powering dynamic user interfaces, improving frontend responsiveness and data throughput.
+  \item Optimized application performance, increasing system reliability and reducing average response times by an estimated 30\%.
+\end{itemize}
+
+\section{Key Projects}
+\textbf{FabricatorOS -- uPVC SaaS Platform} \hfill \textit{Node.js, Express, PostgreSQL, Prisma, Docker, React}
+\begin{itemize}
+  \item Developed a multi-tenant SaaS platform for uPVC and aluminium fabricators covering quotation, work order, and production management.
+  \item Engineered a dynamic window/door configuration engine with live SVG rendering, cutting lists, material optimization, and multi-span topology generation.
+\end{itemize}
+
+\textbf{TalkTive -- WhatsApp CRM Platform} \hfill \textit{Node.js, Express.js, Redis, WhatsApp API, Microservices}
+\begin{itemize}
+  \item Led backend development of inbox, campaigns, approvals, analytics, and third-party integration modules for high-volume messaging.
+  \item Designed scalable microservice APIs, asynchronous pipelines, and AI-powered automation agents for customer support orchestration.
+\end{itemize}
+
+\section{Education}
+  \resumeSubHeadingListStart
+   \resumeSubheading
+      {BITS Pilani (WILP)}{2026 -- Ongoing}
+      {B.Tech. Artificial Intelligence and Machine Learning}{Pilani, India}
+   \resumeSubheading
+      {Guru BrahmaNand Ji Govt. Polytechnic}{2021 -- 2024}
+      {Diploma in Computer Engineering}{Karnal, Haryana}
+  \resumeSubHeadingListEnd
+
+\end{document}
