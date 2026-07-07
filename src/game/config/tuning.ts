@@ -90,8 +90,16 @@ export const TUNING = {
   camRollPull: 110, // spring constant pulling the roll back to level
   camRollDamping: 5, // energy bleed per second
   camRollKick: 0.9, // scales a kick's strength into roll velocity
+  // vehicle feel — soft top-speed cap (reference PhysicsVehicle engineForce/(1+overflow))
+  softCapStart: 0.88, // fraction of top speed where engine pull begins to fade
+  softCapK: 0.7, // how sharply pull fades past that point (weighty, natural cap)
+  // surface traction — dirt is looser and slower (reference lowers frictionSlip on ice)
+  dirtGrip: 0.62, // lateral-grip multiplier on dirt (slides more)
+  dirtDrag: 0.006, // extra per-step longitudinal decay on dirt
+  dirtTopSpeed: 0.9, // top-speed multiplier on dirt
   // drift / marks
   driftMarkThreshold: 1.75, // lateral speed (px/step) before marks/smoke appear
+  driftMarkThresholdDirt: 1.05, // lower on loose dirt so skids read sooner
   tireMarkCap: 700,
   // crash
   crashSpeedThreshold: 3.2,

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { TUNING } from "../config/tuning";
+import { frame } from "../state/gameStore";
 import type { CarController } from "./CarController";
 
 // Persistent tire marks stamped at the rear wheels while drifting. A capped
@@ -42,8 +43,10 @@ export class TireMarks {
   }
 
   update(car: CarController) {
-    // lateral slip (handbrake or hard drift) leaves marks; require some travel
-    if (!car.drifting || car.lateralSlip < TUNING.driftMarkThreshold) return;
+    // lateral slip (handbrake or hard drift) leaves marks; require some travel.
+    // Loose dirt scuffs sooner, so the threshold drops when off-road.
+    const thresh = frame.onDirt ? TUNING.driftMarkThresholdDirt : TUNING.driftMarkThreshold;
+    if (!car.drifting || car.lateralSlip < thresh) return;
     const moved = Math.hypot(car.x - this.lastX, car.y - this.lastY);
     if (moved < 9) return;
     this.lastX = car.x;

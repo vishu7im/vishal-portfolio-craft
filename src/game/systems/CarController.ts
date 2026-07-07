@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { CarInput } from "../state/input";
-import type { VehicleTuning } from "../config/tuning";
+import { TUNING, type VehicleTuning } from "../config/tuning";
 import { TEX_SS } from "../art/textureFactory";
 
 // Top-down arcade car. Matter body handles collisions; handling (thrust,
@@ -204,10 +204,21 @@ export class CarController {
     // throttle spins the wheels — no thrust until the handbrake is released
     this.burnout = input.handbrake && this.throttleSmoothed > 0.05 && speed < 2.0;
 
+    // Soft top-speed cap (reference PhysicsVehicle: engineForce/(1+overflowSpeed)).
+    // Engine pull fades as the car nears its top speed instead of being floored
+    // then hard-clamped — acceleration gains weight and eases into the cap.
+    // nMul already folds in nitro + boost, so the boost raises the effective cap.
+    const onDirt = this.surfaceRumble > 0.5;
+    const surfaceTop = onDirt ? TUNING.dirtTopSpeed : 1;
+    const topFwd = T.maxSpeed * nMul * surfaceTop;
+    const overflow = Math.max(0, speed - topFwd * TUNING.softCapStart);
+    const softCap = 1 / (1 + overflow * TUNING.softCapK);
+
     // thrust and braking. Braking intentionally bites harder than acceleration.
     if (this.throttleSmoothed > 0 && !this.burnout) {
+      const braking = forwardDot < -0.3;
       const f =
-        (forwardDot < -0.3 ? T.brakeForce : T.driveForce) *
+        (braking ? T.brakeForce : T.driveForce * softCap) *
         this.throttleSmoothed *
         nMul *
         step;
@@ -221,7 +232,7 @@ export class CarController {
       this.body.applyForce(new Phaser.Math.Vector2(-fx * f, -fy * f));
     }
     if (this.boostMs > 0 && this.throttleSmoothed > 0.2) {
-      const f = T.driveForce * 0.55 * step;
+      const f = T.driveForce * 0.55 * softCap * step;
       this.body.applyForce(new Phaser.Math.Vector2(fx * f, fy * f));
     }
 
@@ -243,24 +254,29 @@ export class CarController {
 
     this.drifting =
       (input.handbrake && speed > 2.8) ||
-      (Math.abs(this.steerSmoothed) > 0.86 && speed > 6.4 && this.lateralSlip > 1.1);
+      (Math.abs(this.steerSmoothed) > 0.86 && speed > 6.4 && this.lateralSlip > 1.1) ||
+      // loose dirt breaks traction sooner — the car slides through turns
+      (onDirt && Math.abs(this.steerSmoothed) > 0.6 && speed > 4.5 && this.lateralSlip > 0.8);
 
     if (this.bump > 0) {
       // just bumped something — let Matter own the bounce for a moment
       this.bump -= dt;
       this.body.setVelocity(nv.x * 0.96, nv.y * 0.96);
     } else {
-      const grip = 1 - Math.pow(1 - (this.drifting ? T.gripDrift : T.gripNormal), step);
+      // surface traction: dirt shaves lateral bite so the tail steps out
+      const surfGrip = onDirt ? TUNING.dirtGrip : 1;
+      const grip = 1 - Math.pow(1 - (this.drifting ? T.gripDrift : T.gripNormal) * surfGrip, step);
       const keptR = rComp * (1 - grip);
       let ox = fx * fComp + rx * keptR;
       let oy = fy * fComp + ry * keptR;
       const noThrottle = this.throttleSmoothed < 0.03 && this.reverseSmoothed < 0.03;
-      const dragF = this.braking ? 0.86 : input.handbrake ? 0.955 : noThrottle ? 0.968 : T.drag;
+      let dragF = this.braking ? 0.86 : input.handbrake ? 0.955 : noThrottle ? 0.968 : T.drag;
+      if (onDirt) dragF -= TUNING.dirtDrag; // loose ground scrubs momentum
       const drag = Math.pow(dragF, step);
       ox *= drag;
       oy *= drag;
       const reverseCap = fComp < -0.2 ? T.maxSpeed * 0.44 : T.maxSpeed;
-      const maxS = reverseCap * nMul;
+      const maxS = reverseCap * nMul * surfaceTop;
       const sp = Math.hypot(ox, oy);
       if (sp > maxS) {
         ox = (ox / sp) * maxS;
