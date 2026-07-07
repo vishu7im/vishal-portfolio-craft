@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { gameStore } from "../state/gameStore";
+import { PALETTE, hex } from "../config/palette";
 
 interface VignetteContext {
   carX: number;
@@ -17,8 +18,8 @@ interface Vignette {
   destroy?(): void;
 }
 
-const INK = 0x20242c;
-const PAPER = 0xf4ede0;
+const INK = hex(PALETTE.ink);
+const PAPER = hex(PALETTE.paper);
 const PANEL = 0x2a303b;
 const PANEL_2 = 0x39414f;
 const GREEN = 0x4ce0a0;

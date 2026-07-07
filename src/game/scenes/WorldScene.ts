@@ -26,6 +26,12 @@ import { AmbientWorldSystem } from "../systems/AmbientWorldSystem";
 import { AchievementSystem } from "../systems/AchievementSystem";
 import { DayNightSystem } from "../systems/DayNightSystem";
 import { ScreenDisplaySystem } from "../systems/ScreenDisplaySystem";
+import {
+  ORDER,
+  orderedPipeline,
+  type SystemStep,
+  type FrameContext,
+} from "../core/systemOrder";
 
 export class WorldScene extends Phaser.Scene {
   private car!: CarController;
@@ -44,6 +50,8 @@ export class WorldScene extends Phaser.Scene {
   private dayNight!: DayNightSystem;
   private opsScreens!: ScreenDisplaySystem;
   private audio!: AudioSystem;
+
+  private pipeline: SystemStep[] = [];
 
   private removeInput: () => void = () => {};
   private unsub: () => void = () => {};
@@ -131,6 +139,10 @@ export class WorldScene extends Phaser.Scene {
         this.audio.setMuted(m);
       }
     });
+
+    // Freeze the per-frame system order into an explicit registry (see
+    // core/systemOrder.ts). Built once here now that every system exists.
+    this.pipeline = this.buildPipeline();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.teardown, this);
     this.events.once(Phaser.Scenes.Events.DESTROY, this.teardown, this);
@@ -413,23 +425,152 @@ export class WorldScene extends Phaser.Scene {
 
   update(time: number, delta: number) {
     if (!this.car) return;
+    const ctx: FrameContext = { time, delta };
+    for (const step of this.pipeline) step.run(ctx);
+  }
 
-    frame.onDirt = isOnDirt(this.car.x, this.car.y);
-    this.car.surfaceRumble = frame.onDirt ? 1 : 0;
-    this.car.update(carInput, delta);
-    this.rig.update(delta);
-    this.tire.update(this.car);
-    this.carFx.update(time, delta);
+  /**
+   * Build the ordered per-frame pipeline. Each step is registered with a named
+   * priority from core/systemOrder.ts and executed ascending, so the frame
+   * order lives in one visible, tunable place. This encodes the historical
+   * order 1:1 — no behavior change from the previous inline `update()`.
+   */
+  private buildPipeline(): SystemStep[] {
+    const steps: SystemStep[] = [
+      {
+        order: ORDER.VEHICLE,
+        label: "vehicle",
+        run: ({ delta }) => {
+          frame.onDirt = isOnDirt(this.car.x, this.car.y);
+          this.car.surfaceRumble = frame.onDirt ? 1 : 0;
+          this.car.update(carInput, delta);
+        },
+      },
+      {
+        order: ORDER.CAMERA,
+        label: "camera",
+        run: ({ delta }) => this.rig.update(delta),
+      },
+      {
+        order: ORDER.TIRE,
+        label: "tire",
+        run: () => this.tire.update(this.car),
+      },
+      {
+        order: ORDER.CAR_FX,
+        label: "car-fx",
+        run: ({ time, delta }) => this.carFx.update(time, delta),
+      },
+      {
+        order: ORDER.PROXIMITY,
+        label: "proximity",
+        run: () => {
+          this.proximity.update(this.car.x, this.car.y);
+          const nearAnchor = this.proximity.near;
+          this.rig.setNearness(
+            nearAnchor
+              ? 1 -
+                  Math.hypot(this.car.x - nearAnchor.x, this.car.y - nearAnchor.y) /
+                    nearAnchor.radius
+              : 0
+          );
+        },
+      },
+      {
+        order: ORDER.INTERACT,
+        label: "interact",
+        run: () => this.handleInteractInput(),
+      },
+      {
+        order: ORDER.BRAKE_SFX,
+        label: "brake-sfx",
+        run: ({ time }) => {
+          // hard-braking tyre hush (one-shot, spaced so it never machine-guns)
+          if (this.car.braking && this.car.speedNorm > 0.7 && time > this.screechAt) {
+            this.screechAt = time + 1600;
+            this.audio.screech(0.35 + this.car.speedNorm * 0.4);
+          }
+        },
+      },
+      {
+        order: ORDER.COLLECTIBLES,
+        label: "collectibles",
+        run: () => this.collectibles.update(this.car.x, this.car.y),
+      },
+      {
+        order: ORDER.MISSION,
+        label: "mission",
+        run: ({ time, delta }) => this.mission.update(delta, time),
+      },
+      {
+        order: ORDER.PROGRESSION,
+        label: "progression",
+        run: () => this.progression.update(),
+      },
+      {
+        order: ORDER.REACTIVITY,
+        label: "reactivity",
+        run: ({ time }) => this.reactivity.update(this.car.x, this.car.y, time),
+      },
+      {
+        order: ORDER.VIGNETTE,
+        label: "vignette",
+        run: ({ time, delta }) => this.vignettes.update(this.car.x, this.car.y, time, delta),
+      },
+      {
+        order: ORDER.AMBIENT,
+        label: "ambient",
+        run: ({ time, delta }) => this.ambient.update(time, delta),
+      },
+      {
+        order: ORDER.DAY_NIGHT,
+        label: "day-night",
+        run: ({ delta }) => this.dayNight.update(delta),
+      },
+      {
+        order: ORDER.SCREENS,
+        label: "screens",
+        run: ({ time }) => this.opsScreens.update(time),
+      },
+      {
+        order: ORDER.AREA,
+        label: "area-transition",
+        run: () => this.handleAreaTransition(),
+      },
+      {
+        order: ORDER.GATE,
+        label: "gate-cinematic",
+        run: () => this.handleGateCinematic(),
+      },
+      {
+        order: ORDER.FAST_TRAVEL,
+        label: "fast-travel",
+        run: () => this.handleFastTravel(),
+      },
+      {
+        order: ORDER.TELEMETRY,
+        label: "telemetry",
+        run: () => this.pushTelemetry(),
+      },
+      {
+        order: ORDER.AUDIO,
+        label: "audio",
+        run: () => {
+          if (gameStore.getState().audioStarted) {
+            this.audio.update(
+              this.car.rpm,
+              carInput.throttle,
+              this.car.driftLoad,
+              this.carFx.burnoutActive
+            );
+          }
+        },
+      },
+    ];
+    return orderedPipeline(steps);
+  }
 
-    this.proximity.update(this.car.x, this.car.y);
-    const nearAnchor = this.proximity.near;
-    this.rig.setNearness(
-      nearAnchor
-        ? 1 - Math.hypot(this.car.x - nearAnchor.x, this.car.y - nearAnchor.y) / nearAnchor.radius
-        : 0
-    );
-
-    // interact / dismiss
+  private handleInteractInput() {
     if (carInput.interact) {
       carInput.interact = false;
       if (this.proximity.near) gameStore.focus(this.proximity.near.id);
@@ -445,23 +586,9 @@ export class WorldScene extends Phaser.Scene {
       this.audio.horn();
       this.ambient.onHorn(this.car.x, this.car.y);
     }
+  }
 
-    // hard-braking tyre hush (one-shot, spaced out so it never machine-guns)
-    if (this.car.braking && this.car.speedNorm > 0.7 && time > this.screechAt) {
-      this.screechAt = time + 1600;
-      this.audio.screech(0.35 + this.car.speedNorm * 0.4);
-    }
-
-    this.collectibles.update(this.car.x, this.car.y);
-    this.mission.update(delta, time);
-    this.progression.update();
-    this.reactivity.update(this.car.x, this.car.y, time);
-    this.vignettes.update(this.car.x, this.car.y, time, delta);
-    this.ambient.update(time, delta);
-    this.dayNight.update(delta);
-    this.opsScreens.update(time);
-
-    // area transitions
+  private handleAreaTransition() {
     const area = areaAt(this.car.x, this.car.y);
     if (area.id !== this.lastArea) {
       this.lastArea = area.id;
@@ -475,7 +602,9 @@ export class WorldScene extends Phaser.Scene {
         this.time.delayedCall(2400, () => this.rig.zoomTo(null));
       }
     }
+  }
 
+  private handleGateCinematic() {
     // cinematic: the locked Future City gate pulls the camera in on approach
     const gateD = Math.hypot(this.car.x - 8900, this.car.y - 6600);
     if (gateD < 620 && !this.gateZoomed) {
@@ -485,7 +614,9 @@ export class WorldScene extends Phaser.Scene {
       this.gateZoomed = false;
       this.rig.zoomTo(null);
     }
+  }
 
+  private handleFastTravel() {
     // fast-travel request from the minimap
     if (frame.requestTravel) {
       const { x, y } = frame.requestTravel;
@@ -494,7 +625,9 @@ export class WorldScene extends Phaser.Scene {
       this.car.body.setVelocity(0, 0);
       this.cameras.main.flash(320, 244, 237, 224);
     }
+  }
 
+  private pushTelemetry() {
     // telemetry → React (no re-render)
     frame.playerX = this.car.x;
     frame.playerY = this.car.y;
@@ -506,10 +639,6 @@ export class WorldScene extends Phaser.Scene {
     frame.drifting = this.car.drifting;
     frame.braking = this.car.braking;
     frame.reversing = this.car.reversing;
-
-    if (gameStore.getState().audioStarted) {
-      this.audio.update(this.car.rpm, carInput.throttle, this.car.driftLoad, this.carFx.burnoutActive);
-    }
   }
 
   private teardown() {

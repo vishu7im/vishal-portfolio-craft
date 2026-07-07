@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { frame } from "../state/gameStore";
+import { lerp } from "../core/maths";
 
 // A day/night cycle as a single camera-fixed MULTIPLY rectangle — one draw
 // call, and it keeps the hand-drawn paper aesthetic (Light2D would fight it).
@@ -68,11 +69,10 @@ export class DayNightSystem {
       }
     }
     const k = b.t === a.t ? 0 : (t - a.t) / (b.t - a.t);
-    const lerp = (x: number, y: number) => x + (y - x) * k;
-    const r = Math.round(lerp(a.color.r, b.color.r));
-    const g = Math.round(lerp(a.color.g, b.color.g));
-    const bl = Math.round(lerp(a.color.b, b.color.b));
-    const alpha = lerp(a.alpha, b.alpha);
+    const r = Math.round(lerp(a.color.r, b.color.r, k));
+    const g = Math.round(lerp(a.color.g, b.color.g, k));
+    const bl = Math.round(lerp(a.color.b, b.color.b, k));
+    const alpha = lerp(a.alpha, b.alpha, k);
     this.nightness = Phaser.Math.Clamp((alpha - 0.1) / 0.4, 0, 1);
 
     // MULTIPLY toward the key colour: blend white → colour by alpha

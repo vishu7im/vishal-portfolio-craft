@@ -651,10 +651,12 @@ Phases 0, 12 can run early/independently. Phases 4–7 deliver the largest perce
   - [x] Removed `admin` creds block from `db.json`; locked `firestore.rules` to default-deny; emptied dead `messages` indexes
   - [x] Deleted dead `components/ui/*` (all 46 — zero app imports), legacy `chatWithGemini` + `prompt.txt` (+ unused `cors` dep), phantom `@react-three`
   - [x] Added `manualChunks` → phaser split into its own 1.48 MB chunk; `npm run build` ✓, `tsc --noEmit` ✓ (0 errors), no creds in `dist`, CNAME preserved
-- [ ] **Phase 1 — Shared core utilities + system-order registry**
-- [ ] `game/core/maths.ts`, `Events.ts`, `systemOrder.ts` created
-- [ ] Systems import shared maths/palette (zero duplicated constants)
-- [ ] `WorldScene.update` runs in documented order; visual parity
+- [x] **Phase 1 — Shared core utilities + system-order registry** ✅ _(branch `redesign/phase-1-core-utils`)_
+  - [x] `game/core/maths.ts` — ported `folio-2025` `utilities/maths.js` verbatim & typed (`clamp/lerp/remap/remapClamp/smoothstep/safeMod/signedModDelta/smallestAngle/dist/segment-circle & polygon geometry`)
+  - [x] `game/core/Events.ts` — ordered pub/sub (typed port of `Events.js`; slice-on-trigger so a listener can safely remove itself); `game/core/systemOrder.ts` — named priority constants + `orderedPipeline()` helper
+  - [x] `WorldScene.update` now iterates an explicit ordered pipeline built from `ORDER.*` priorities — encodes the historical order **1:1** (no behavior change); the interleaved glue (interact/area/gate/fast-travel/telemetry) is now discrete named steps
+  - [x] Deduped constants: `DayNightSystem` local `lerp` → `core/maths.lerp`; `Ambient`/`WorldVignette` hardcoded `INK/PAPER` hex → `hex(PALETTE.ink/paper)` (values provably identical: `0x20242c`/`0xf4ede0`)
+  - [x] `tsc --noEmit` ✓, `npm run build` ✓ (phaser chunk unchanged 1.48 MB), lint = only the 2 pre-existing issues, dev-server module transforms ✓
 - [ ] **Phase 2 — Split the god-systems** (`WorldVignetteSystem`, `AmbientWorldSystem` → <300-line modules, identical visuals)
 - [ ] **Phase 3 — Input action-mapping + context filters** (actions + `intro/driving/panel/menu` filters; controls unchanged)
 - [ ] **Phase 4 — Camera redesign** (magnet follow + speed-zoom + impact roll kick; no jitter)

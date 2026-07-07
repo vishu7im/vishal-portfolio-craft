@@ -4,6 +4,7 @@ import { gameStore } from "../state/gameStore";
 import type { CarController } from "./CarController";
 import type { DayNightSystem } from "./DayNightSystem";
 import type { AudioSystem } from "./AudioSystem";
+import { PALETTE, hex } from "../config/palette";
 
 interface ReactiveProp {
   img: Phaser.GameObjects.Image;
@@ -31,7 +32,7 @@ interface RoadWalker extends WalkerBot {
   disabledUntil: number;
 }
 
-const INK = 0x20242c;
+const INK = hex(PALETTE.ink);
 
 type Weather = "clear" | "rain" | "storm";
 
