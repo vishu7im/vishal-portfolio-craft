@@ -18,4 +18,15 @@ export default defineConfig(({ mode }) => ({
     },
   },
   base: "/",
+  build: {
+    rollupOptions: {
+      output: {
+        // Phaser is ~1.5MB minified; split it out so the React/UI shell and the
+        // game engine cache independently and the initial parse isn't blocked.
+        manualChunks: {
+          phaser: ["phaser"],
+        },
+      },
+    },
+  },
 }));

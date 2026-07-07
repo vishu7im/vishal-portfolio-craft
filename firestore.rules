@@ -2,19 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Devices collection
-    match /devices/{deviceId} {
-      allow read, write: if true; // public bot, everyone can create/read device info
-    }
-
-    // Sessions collection
-    match /sessions/{sessionId} {
-      allow read, write: if true;
-    }
-
-    // Messages collection
-    match /messages/{messageId} {
-      allow read, write: if true;
+    // The app no longer reads or writes Firestore directly. The only backend,
+    // `portfolioChat`, is a stateless Cloud Function that keeps no per-user
+    // state. The former world-writable `devices`/`sessions`/`messages`
+    // collections (and their `allow read, write: if true` rules) were removed
+    // along with the legacy `chatWithGemini` endpoint.
+    //
+    // Deny all client access by default. Cloud Functions using the Admin SDK
+    // bypass these rules, so future server-side storage is unaffected.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

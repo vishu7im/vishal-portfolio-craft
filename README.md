@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
+# Vishal Munday — Portfolio
 
-## Project info
+An interactive portfolio built as a **2D top-down driving game**. Drive a car
+around a stylized world whose districts map to career chapters, collect items,
+run missions, and reveal project/skill panels — with an in-game AI chat NPC. A
+`/classic` route provides a plain, accessible résumé fallback.
 
-**URL**: https://lovable.dev/projects/87c588b2-de71-419a-9651-0607e6417ce8
+**Live:** https://vishu.dev
 
-## How can I edit this code?
+## Tech stack
 
-There are several ways of editing your application.
+- **Game:** [Phaser 3](https://phaser.io) with Matter.js physics
+  (`src/game/`) — scenes, ~17 systems, procedural art, and a hand-rolled
+  dual-channel store (`src/game/state/gameStore.ts`).
+- **Shell/UI:** React 18 + TypeScript, React Router (HashRouter), Tailwind CSS.
+  In-game HUD overlays live in `src/components/game/`.
+- **Build:** Vite 5 (`npm run dev` serves on port **8080**).
+- **Backend (optional):** a Firebase Cloud Function `portfolioChat`
+  (`functions/`) powers the AI NPC. When `VITE_CHAT_ENDPOINT` is unset or the
+  endpoint fails, the NPC falls back to a scripted offline flow, so the game is
+  fully playable with no backend.
 
-**Use Lovable**
+## Project layout
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/87c588b2-de71-419a-9651-0607e6417ce8) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/
+  game/            Phaser game
+    scenes/        BootScene, WorldScene (orchestrator)
+    systems/       car, camera, audio, missions, achievements, ambient, …
+    world/         world layout, districts (areas/), roads, scatter
+    art/            procedural texture factories (no asset files)
+    state/         gameStore (dual-channel), input
+    content/       portfolio bindings, narrative, scripted chat
+    config/        palette, tuning constants
+  components/game/  React HUD overlays (Hud, Minimap, ChatPanel, panels, …)
+  pages/            Game (/), Classic (/classic), NotFound (*)
+  data/db.json      portfolio content (projects, skills, experience, …)
+functions/          Firebase Cloud Functions (portfolioChat NPC)
 ```
 
-**Edit a file directly in GitHub**
+## Development
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm install
+npm run dev      # http://localhost:8080
+npm run build    # production build to dist/
+npm run lint
+```
 
-**Use GitHub Codespaces**
+There is a DEV-only automation hook: `window.__drive` (see
+`src/game/usePhaserGame.ts`) exposes the running game for Playwright smoke tests.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Content
 
-## What technologies are used for this project?
+Edit `src/data/db.json` to update projects, skills, experience, education, and
+testimonials. That single source feeds the in-game panels, the `/classic` view,
+and the AI NPC's generated system prompt (`functions/buildPrompt.js`).
 
-This project is built with:
+## Credits
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/87c588b2-de71-419a-9651-0607e6417ce8) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+See [CREDITS.md](./CREDITS.md) for asset, font, library, and inspiration
+attributions.
