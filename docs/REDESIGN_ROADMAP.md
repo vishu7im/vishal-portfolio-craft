@@ -668,7 +668,12 @@ Phases 0, 12 can run early/independently. Phases 4–7 deliver the largest perce
   - [x] **Bindings unchanged** — default `driving` context is live-for-everything, so normal play is identical; `carInput`/`setTouch`/`installInputListeners` exports preserved (no consumer changes)
   - [x] `WorldScene` gameStore subscription now sets context: panel open → `panel`, achievements → `menu`, else `driving`; driving suspends (car coasts) while an overlay is open, Escape/back still closes it. Held keys survive a context switch (tracked always, output gated in `recompute`)
   - [x] **Verified in a headless browser** (Playwright + the DEV `window.__drive` hook): drove (speed 0.86) → opened panel (`ctx=panel`, W held → coasted to 0.008) → Escape closed panel → driving restored (speed 0.79); zero console errors. `tsc`/`build`/lint(only 2 pre-existing) ✓
-- [ ] **Phase 4 — Camera redesign** (magnet follow + speed-zoom + impact roll kick; no jitter)
+- [x] **Phase 4 — Camera redesign** ✅ _(branch `redesign/phase-4-camera`)_
+  - [x] **Magnet follow** — the follow target chases the car with a distance-proportional, frame-rate-independent rate (`1 - exp(-rate·dt)`, `rate = camMagnetBase + camMagnetGain·min(dist,cap)`): soft look-ahead trail at speed, self-limiting steady-state lag (~90px at top speed), clean settle at rest with no snap
+  - [x] **Speed zoom** — view widens with speed (`camZoomSpeedRange` 0.045 → **0.12**, nitro 0.94 → **0.88**) and eases (exp, `camZoomSmooth`); cinematic/nearness overrides preserved
+  - [x] **Impact roll kick** — ported the reference `View.setRoll` damped harmonic oscillator (`camRollPull`/`camRollDamping`/`camRollKick`); new `kick(strength)` springs a tilt back to level. Wired into `WorldScene` collisions (force-scaled via `rollKick(impact)` → ~1–4°), boost pads, and nitro engage
+  - [x] **Reduced-motion respected** — `kick()`/`shake()` no-op; drift-lean already gated. Roll summed with existing drift tilt into one `setRotation`
+  - [x] **Verified in a headless browser** (Playwright + `window.__drive.game` live camera): zoom widened 1.0 → 0.913 at speed, eased back to 0.98 when braked to stop, camera followed (252px), **zero rotation jitter** driving straight (maxRotStep 0), no console errors. `tsc`/`build`/lint(only 2 pre-existing) ✓
 - [ ] **Phase 5 — Vehicle feel & handling** (soft top-speed cap, reverse-brake, boost, surface traction, skid marks)
 - [ ] **Phase 6 — Collision & feedback juice** (force-scaled SFX + camera kick + bullet-time; `TimeScale.ts`)
 - [ ] **Phase 7 — Audio overhaul** (group mixer, CC0 music + vetted SFX, synth fallback, mute persists)
