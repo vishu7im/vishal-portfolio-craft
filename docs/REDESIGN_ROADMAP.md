@@ -663,7 +663,11 @@ Phases 0, 12 can run early/independently. Phases 4–7 deliver the largest perce
   - [x] Pure mechanical extraction — draw/anim logic copied verbatim; **public API unchanged** (`onHorn`/`onLampHit`/`update`/`destroy`) and per-frame update order preserved
   - [x] `tsc --noEmit` ✓, `npm run build` ✓ (Game chunk 333 KB ≈ unchanged), lint = only the 2 pre-existing issues, all split modules transform at runtime ✓
   - [~] Most modules < ~300 lines; two intentionally cohesive files exceed the soft target — `Npcs.ts` (470, all NPC characters share one `walkerBots` reaction list) and `VignetteKit.ts` (315, the shared drawing toolkit). Not the mixed grab-bags the phase targeted.
-- [ ] **Phase 3 — Input action-mapping + context filters** (actions + `intro/driving/panel/menu` filters; controls unchanged)
+- [x] **Phase 3 — Input action-mapping + context filters** ✅ _(branch `redesign/phase-3-input-actions`)_
+  - [x] `state/input.ts` refactored into a device-agnostic **action/category/context** layer: actions grouped by category (`drive`/`interact`/`dismiss`), an active **context** (`driving`/`panel`/`menu`/`intro`) gates categories via `CONTEXT_FILTERS`; `setInputContext()` swaps the whole scheme in one call
+  - [x] **Bindings unchanged** — default `driving` context is live-for-everything, so normal play is identical; `carInput`/`setTouch`/`installInputListeners` exports preserved (no consumer changes)
+  - [x] `WorldScene` gameStore subscription now sets context: panel open → `panel`, achievements → `menu`, else `driving`; driving suspends (car coasts) while an overlay is open, Escape/back still closes it. Held keys survive a context switch (tracked always, output gated in `recompute`)
+  - [x] **Verified in a headless browser** (Playwright + the DEV `window.__drive` hook): drove (speed 0.86) → opened panel (`ctx=panel`, W held → coasted to 0.008) → Escape closed panel → driving restored (speed 0.79); zero console errors. `tsc`/`build`/lint(only 2 pre-existing) ✓
 - [ ] **Phase 4 — Camera redesign** (magnet follow + speed-zoom + impact roll kick; no jitter)
 - [ ] **Phase 5 — Vehicle feel & handling** (soft top-speed cap, reverse-brake, boost, surface traction, skid marks)
 - [ ] **Phase 6 — Collision & feedback juice** (force-scaled SFX + camera kick + bullet-time; `TimeScale.ts`)

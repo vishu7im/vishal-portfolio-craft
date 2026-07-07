@@ -6,7 +6,7 @@ import { PALETTE, hex, type AreaId } from "../config/palette";
 import { TUNING, VEHICLES, DEFAULT_VEHICLE } from "../config/tuning";
 import { DEV_JOKES } from "../content/narrative";
 import type { PropInstance, PortfolioAnchor } from "../types";
-import { carInput, installInputListeners } from "../state/input";
+import { carInput, installInputListeners, setInputContext, type InputContext } from "../state/input";
 import { mulberry32 } from "../world/scatter";
 import { gameStore, frame } from "../state/gameStore";
 import { CarController } from "../systems/CarController";
@@ -56,6 +56,7 @@ export class WorldScene extends Phaser.Scene {
   private removeInput: () => void = () => {};
   private unsub: () => void = () => {};
   private lastMuted = gameStore.getState().muted;
+  private lastContext: InputContext = "driving";
   private lastArea: AreaId | null = null;
   private jokeIx = 0;
   private gateZoomed = false;
@@ -133,10 +134,17 @@ export class WorldScene extends Phaser.Scene {
     this.input.on("pointerdown", this.ensureAudio, this);
 
     this.unsub = gameStore.subscribe(() => {
-      const m = gameStore.getState().muted;
-      if (m !== this.lastMuted) {
-        this.lastMuted = m;
-        this.audio.setMuted(m);
+      const st = gameStore.getState();
+      if (st.muted !== this.lastMuted) {
+        this.lastMuted = st.muted;
+        this.audio.setMuted(st.muted);
+      }
+      // Swap the input context so driving is suspended while an overlay is open
+      // (project panel or achievements menu); Escape/back still closes it.
+      const ctx: InputContext = st.focusedId ? "panel" : st.achievementsOpen ? "menu" : "driving";
+      if (ctx !== this.lastContext) {
+        this.lastContext = ctx;
+        setInputContext(ctx);
       }
     });
 
