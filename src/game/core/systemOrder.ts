@@ -24,6 +24,8 @@ export const ORDER = {
   CAR_FX: 30,
   /** Proximity to portfolio anchors + camera nearness bias. */
   PROXIMITY: 40,
+  /** In-world anchor markers — reveal on proximity/hover (reads proximity + pointer). */
+  MARKERS: 42,
   /** Discrete input actions: interact / dismiss / horn. */
   INTERACT: 45,
   /** Hard-brake tyre-screech one-shot. */

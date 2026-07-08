@@ -26,9 +26,10 @@ function PanelBody({ text }: { text: string }) {
 }
 
 /**
- * Glass side panel that slides in from the edge when an anchor is focused.
- * Non-blocking: the car keeps driving, the world never pauses; closing just
- * releases focus.
+ * Glass side panel that slides in from the edge when an anchor is focused. The
+ * camera cinematically frames the anchor and driving suspends while it's open
+ * (Phase 9); closing releases focus, the frame eases back to the car, and
+ * driving resumes. Content fades up on each open for a softer arrival.
  */
 export function PortfolioPanel() {
   const focusedId = useGameStore((s) => s.focusedId);
@@ -65,7 +66,7 @@ export function PortfolioPanel() {
     >
       <div className="glass thin-scroll pointer-events-auto max-h-[82dvh] w-full overflow-y-auto rounded-[26px] p-7 text-white">
         {data && (
-          <>
+          <div key={data.title} className="animate-fade-up">
             <div className="flex items-start justify-between gap-4">
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/55">
                 {data.eyebrow}
@@ -121,9 +122,9 @@ export function PortfolioPanel() {
             )}
 
             <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.2em] text-white/40">
-              Esc or ✕ to close · keep driving
+              Esc or ✕ to close · resume driving
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>
