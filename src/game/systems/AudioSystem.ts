@@ -1,8 +1,18 @@
 import type { AudioLayerConfig } from "../types";
+import { MusicPlayer } from "./MusicPlayer";
 
-// Fully-synthesized game audio (no asset files). By default this keeps only
-// short event SFX active; continuous engine/pad/rain beds stay disabled so the
-// game does not produce an always-on buzz after audio starts.
+// Game audio, restructured into a small group mixer (docs/REDESIGN_ROADMAP.md,
+// Phase 7). The reference (folio-2025) routes everything through named groups
+// with playRandomNext / antiSpam / positional fade; we mirror that shape:
+//
+//   master ── toneFilter ── compressor ── destination
+//     ├── musicBus   ← streaming CC0 jukebox (MusicPlayer)
+//     ├── sfxBus     ← one-shot event SFX (optionally stereo-panned)
+//     └── ambientBus ← continuous engine/drift/wind/pad/rain beds
+//
+// Every SFX stays fully synthesized here — our guaranteed-safe path — while the
+// only reused asset files are the three CC0 music tracks (see CREDITS.md). The
+// continuous beds remain gated off by default so the game never buzzes.
 
 const MASTER_LEVEL = 0.58;
 const PAD_LEVEL = 0.11;
@@ -13,11 +23,16 @@ const ENABLE_CONTINUOUS_AUDIO = false;
 export class AudioSystem {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  // group buses (children of master) — the mixer's three channels
+  private musicBus: GainNode | null = null;
+  private sfxBus: GainNode | null = null;
+  private ambientBus: GainNode | null = null;
+  private music: MusicPlayer | null = null;
   private muted = false;
   private started = false;
   private noiseBuf: AudioBuffer | null = null;
-  private lastDingAt = -1;
-  private lastCrashAt = -1;
+  /** per-key throttle timestamps (ctx-time seconds) — the antiSpam gate */
+  private lastAt = new Map<string, number>();
 
   // rain
   private rainGain: GainNode | null = null;
@@ -65,20 +80,33 @@ export class AudioSystem {
     master.connect(toneFilter).connect(compressor).connect(ctx.destination);
     this.master = master;
 
+    // group buses — everything routes through one of these three into master
+    this.musicBus = ctx.createGain();
+    this.sfxBus = ctx.createGain();
+    this.ambientBus = ctx.createGain();
+    this.musicBus.connect(master);
+    this.sfxBus.connect(master);
+    this.ambientBus.connect(master);
+
     this.noiseBuf = this.makeNoise(ctx);
 
     if (ENABLE_CONTINUOUS_AUDIO) {
-      this.buildEngine(ctx, master);
-      this.buildDrift(ctx, master);
-      this.buildWind(ctx, master);
-      this.buildPad(ctx, master, area);
+      this.buildEngine(ctx, this.ambientBus);
+      this.buildDrift(ctx, this.ambientBus);
+      this.buildWind(ctx, this.ambientBus);
+      this.buildPad(ctx, this.ambientBus, area);
     }
+
+    // streaming CC0 jukebox on the music bus (starts on this same gesture)
+    this.music = new MusicPlayer(ctx, this.musicBus);
+    this.music.start(muted);
 
     if (ctx.state === "suspended") ctx.resume();
   }
 
   setMuted(muted: boolean) {
     this.muted = muted;
+    this.music?.setMuted(muted);
     if (this.master && this.ctx) {
       const t = this.ctx.currentTime;
       this.master.gain.cancelScheduledValues(t);
@@ -86,7 +114,37 @@ export class AudioSystem {
     }
   }
 
+  /** Skip to the next jukebox track (for a future HUD control). */
+  nextTrack() {
+    this.music?.next();
+  }
+
+  /**
+   * Route a one-shot SFX to the sfx bus, optionally stereo-panned by screen
+   * position (-1 left … +1 right). The reference fades sounds by listener
+   * distance; for our near-camera events a light pan is the useful 2D analogue.
+   */
+  private sfxOut(pan = 0): AudioNode {
+    const bus = this.sfxBus ?? this.master;
+    if (!this.ctx || !bus || !pan) return bus as AudioNode;
+    const p = this.ctx.createStereoPanner();
+    p.pan.value = Math.max(-1, Math.min(1, pan));
+    p.connect(bus);
+    return p;
+  }
+
+  /** True if `key` fired within `gap` seconds — the shared anti-spam throttle. */
+  private antiSpam(key: string, gap: number): boolean {
+    if (!this.ctx) return true;
+    const t = this.ctx.currentTime;
+    const last = this.lastAt.get(key) ?? -Infinity;
+    if (t - last < gap) return true;
+    this.lastAt.set(key, t);
+    return false;
+  }
+
   dispose() {
+    this.music?.dispose();
     this.padOscs.forEach((o) => {
       try {
         o.stop();
@@ -158,11 +216,10 @@ export class AudioSystem {
 
   // --- SFX ----------------------------------------------------------------
 
-  ding(pitchMul = 1) {
-    if (!this.ctx || !this.master) return;
+  ding(pitchMul = 1, pan = 0) {
+    if (!this.ctx || !this.sfxBus) return;
+    if (this.antiSpam("ding", 0.07)) return;
     const t = this.ctx.currentTime;
-    if (t - this.lastDingAt < 0.07) return;
-    this.lastDingAt = t;
     const o = this.ctx.createOscillator();
     const g = this.ctx.createGain();
     o.type = "sine";
@@ -171,16 +228,15 @@ export class AudioSystem {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(0.052, t + 0.025);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
-    o.connect(g).connect(this.master);
+    o.connect(g).connect(this.sfxOut(pan));
     o.start(t);
     o.stop(t + 0.28);
   }
 
-  crash(intensity = 0.6) {
-    if (!this.ctx || !this.master || !this.noiseBuf) return;
+  crash(intensity = 0.6, pan = 0) {
+    if (!this.ctx || !this.sfxBus || !this.noiseBuf) return;
+    if (this.antiSpam("crash", 0.08)) return;
     const t = this.ctx.currentTime;
-    if (t - this.lastCrashAt < 0.08) return;
-    this.lastCrashAt = t;
     const src = this.ctx.createBufferSource();
     src.buffer = this.noiseBuf;
     const f = this.ctx.createBiquadFilter();
@@ -190,14 +246,14 @@ export class AudioSystem {
     const g = this.ctx.createGain();
     g.gain.setValueAtTime(Math.min(0.22, 0.09 + intensity * 0.12), t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
-    src.connect(f).connect(g).connect(this.master);
+    src.connect(f).connect(g).connect(this.sfxOut(pan));
     src.start(t);
     src.stop(t + 0.3);
   }
 
   /** low-end body-blow that layers under crash() on the hardest hits */
-  boom(intensity = 1) {
-    if (!this.ctx || !this.master) return;
+  boom(intensity = 1, pan = 0) {
+    if (!this.ctx || !this.sfxBus) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator();
     const g = this.ctx.createGain();
@@ -207,7 +263,7 @@ export class AudioSystem {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(Math.min(0.16, 0.06 + intensity * 0.12), t + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
-    o.connect(g).connect(this.master);
+    o.connect(g).connect(this.sfxOut(pan));
     o.start(t);
     o.stop(t + 0.38);
   }
@@ -219,7 +275,7 @@ export class AudioSystem {
 
   /** friendly two-tone car horn */
   horn() {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.sfxBus) return;
     const t = this.ctx.currentTime;
     const filter = this.ctx.createBiquadFilter();
     filter.type = "lowpass";
@@ -229,7 +285,7 @@ export class AudioSystem {
     g.gain.exponentialRampToValueAtTime(0.032, t + 0.025);
     g.gain.setValueAtTime(0.03, t + 0.14);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
-    filter.connect(g).connect(this.master);
+    filter.connect(g).connect(this.sfxBus);
     for (const f of [330, 392]) {
       const o = this.ctx.createOscillator();
       o.type = "triangle";
@@ -242,7 +298,7 @@ export class AudioSystem {
 
   /** one-shot tyre screech for hard braking */
   screech(intensity = 0.7) {
-    if (!this.ctx || !this.master || !this.noiseBuf) return;
+    if (!this.ctx || !this.sfxBus || !this.noiseBuf) return;
     const t = this.ctx.currentTime;
     const src = this.ctx.createBufferSource();
     src.buffer = this.noiseBuf;
@@ -255,7 +311,7 @@ export class AudioSystem {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(0.05 * intensity, t + 0.035);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
-    src.connect(f).connect(g).connect(this.master);
+    src.connect(f).connect(g).connect(this.sfxBus);
     src.start(t);
     src.stop(t + 0.36);
   }
@@ -299,7 +355,7 @@ export class AudioSystem {
       f.Q.value = 0.55;
       const g = this.ctx.createGain();
       g.gain.value = 0.0001;
-      src.connect(f).connect(g).connect(this.master);
+      src.connect(f).connect(g).connect(this.ambientBus ?? this.master!);
       src.start();
       this.rainSrc = src;
       this.rainGain = g;
@@ -308,7 +364,7 @@ export class AudioSystem {
   }
 
   private tone(freq: number, dur: number, peak = TONE_PEAK, type: OscillatorType = "sine") {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.sfxBus) return;
     const t = this.ctx.currentTime;
     const o = this.ctx.createOscillator();
     const g = this.ctx.createGain();
@@ -317,7 +373,7 @@ export class AudioSystem {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(peak, t + 0.035);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(this.master);
+    o.connect(g).connect(this.sfxBus);
     o.start(t);
     o.stop(t + dur + 0.05);
   }

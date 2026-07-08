@@ -79,13 +79,14 @@ export class DestructionSystem {
 
     const x = img.x;
     const y = img.y;
+    const pan = this.panAt(x);
     // burst density scales with impact so a fast smash reads visibly bigger
     const force = Phaser.Math.Clamp(impact / 6, 0, 1);
     this.dust.emitParticleAt(x, y, Math.round(16 + force * 20));
     this.blast.emitParticleAt(x, y, Math.round(18 + force * 22));
     this.spawnDebris(x, y, img.rotation, force);
-    this.audio.crash(Math.min(1, impact / 6));
-    if (force > 0.75) this.audio.boom(force); // low-end punch on the hardest smashes
+    this.audio.crash(Math.min(1, impact / 6), pan);
+    if (force > 0.75) this.audio.boom(force, pan); // low-end punch on the hardest smashes
 
     // crates & barrels pay out a little XP burst — breaking things is rewarded
     const kind = img.getData("kind");
@@ -123,11 +124,19 @@ export class DestructionSystem {
   }
 
   thud(x: number, y: number, impact: number) {
+    const pan = this.panAt(x);
     this.dust.emitParticleAt(x, y, Math.round(4 + Math.min(1, impact / 8) * 8));
-    this.audio.crash(Math.min(0.6, impact / 8));
-    if (impact > 7) this.audio.boom(Math.min(1, (impact - 7) / 6)); // heavy wall slam
+    this.audio.crash(Math.min(0.6, impact / 8), pan);
+    if (impact > 7) this.audio.boom(Math.min(1, (impact - 7) / 6), pan); // heavy wall slam
     if (!gameStore.getState().reducedMotion && impact > 2.2)
       this.scene.cameras.main.shake(80, TUNING.camShakeCrash * 0.4);
+  }
+
+  /** map a world-x to a stereo pan (-1..1) relative to the camera view */
+  private panAt(x: number): number {
+    const view = this.scene.cameras.main.worldView;
+    if (!view.width) return 0;
+    return Phaser.Math.Clamp((x - view.centerX) / (view.width / 2), -1, 1);
   }
 
   /** continuous drift dust at the rear wheels */
