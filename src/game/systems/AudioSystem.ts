@@ -195,6 +195,23 @@ export class AudioSystem {
     src.stop(t + 0.3);
   }
 
+  /** low-end body-blow that layers under crash() on the hardest hits */
+  boom(intensity = 1) {
+    if (!this.ctx || !this.master) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(120, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.22);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(Math.min(0.16, 0.06 + intensity * 0.12), t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+    o.connect(g).connect(this.master);
+    o.start(t);
+    o.stop(t + 0.38);
+  }
+
   /** tiny bird/duck chirp */
   chirp() {
     this.tone(1100 + Math.random() * 220, 0.08, 0.026);

@@ -79,10 +79,13 @@ export class DestructionSystem {
 
     const x = img.x;
     const y = img.y;
-    this.dust.emitParticleAt(x, y, 24);
-    this.blast.emitParticleAt(x, y, 28);
-    this.spawnDebris(x, y, img.rotation);
+    // burst density scales with impact so a fast smash reads visibly bigger
+    const force = Phaser.Math.Clamp(impact / 6, 0, 1);
+    this.dust.emitParticleAt(x, y, Math.round(16 + force * 20));
+    this.blast.emitParticleAt(x, y, Math.round(18 + force * 22));
+    this.spawnDebris(x, y, img.rotation, force);
     this.audio.crash(Math.min(1, impact / 6));
+    if (force > 0.75) this.audio.boom(force); // low-end punch on the hardest smashes
 
     // crates & barrels pay out a little XP burst — breaking things is rewarded
     const kind = img.getData("kind");
@@ -120,8 +123,9 @@ export class DestructionSystem {
   }
 
   thud(x: number, y: number, impact: number) {
-    this.dust.emitParticleAt(x, y, 6);
+    this.dust.emitParticleAt(x, y, Math.round(4 + Math.min(1, impact / 8) * 8));
     this.audio.crash(Math.min(0.6, impact / 8));
+    if (impact > 7) this.audio.boom(Math.min(1, (impact - 7) / 6)); // heavy wall slam
     if (!gameStore.getState().reducedMotion && impact > 2.2)
       this.scene.cameras.main.shake(80, TUNING.camShakeCrash * 0.4);
   }
@@ -131,11 +135,12 @@ export class DestructionSystem {
     this.dust.emitParticleAt(x, y, 1);
   }
 
-  private spawnDebris(x: number, y: number, rotation: number) {
+  private spawnDebris(x: number, y: number, rotation: number, force = 0.5) {
     const colors = [0xc79a5c, 0x8f6a38, 0xf2d199, 0x5a6170];
-    for (let i = 0; i < 9; i++) {
-      const a = rotation + (i / 9) * Math.PI * 2 + Phaser.Math.FloatBetween(-0.25, 0.25);
-      const speed = Phaser.Math.Between(70, 190);
+    const count = Math.round(7 + force * 6); // more shards from a harder smash
+    for (let i = 0; i < count; i++) {
+      const a = rotation + (i / count) * Math.PI * 2 + Phaser.Math.FloatBetween(-0.25, 0.25);
+      const speed = Phaser.Math.Between(70, 190) * (0.8 + force * 0.5);
       const shard = this.scene.add
         .rectangle(x, y, Phaser.Math.Between(6, 14), Phaser.Math.Between(4, 10), colors[i % colors.length], 0.95)
         .setStrokeStyle(1, 0x20242c, 0.35)
