@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { usePhaserGame } from "@/game/usePhaserGame";
+import { useGameStore } from "@/game/state/gameStore";
 import { Hud } from "@/components/game/Hud";
 import { PortfolioPanel } from "@/components/game/PortfolioPanel";
 import { InteractHint } from "@/components/game/InteractHint";
@@ -7,7 +8,7 @@ import { Minimap } from "@/components/game/Minimap";
 import { ObjectiveTracker } from "@/components/game/ObjectiveTracker";
 import { GarageMenu } from "@/components/game/GarageMenu";
 import { TouchControls } from "@/components/game/TouchControls";
-import { AreaIntro, ClockChip, ControlsCard, LevelUp, LoadingVeil, Speedometer } from "@/components/game/HudExtras";
+import { AreaIntro, ClockChip, ControlsCard, IntroOverlay, LevelUp, Speedometer } from "@/components/game/HudExtras";
 import { AchievementsPanel } from "@/components/game/AchievementsPanel";
 import { ChatPanel } from "@/components/game/ChatPanel";
 import { Seo } from "@/components/Seo";
@@ -16,6 +17,16 @@ import { Seo } from "@/components/Seo";
 // The overlay is pointer-events-none by default; interactive bits opt back in.
 export default function Game() {
   const parentRef = usePhaserGame();
+  const started = useGameStore((s) => s.started);
+  const reduced = useGameStore((s) => s.reducedMotion);
+
+  // Paint-in: the canvas irises open from the car (screen centre) once the
+  // visitor presses start on the intro; before that it's clipped to nothing and
+  // the paper page/overlay shows through. Reduced-motion gets an instant reveal.
+  const reveal = {
+    clipPath: `circle(${started ? "150%" : "0%"} at 50% 52%)`,
+    transition: reduced ? "none" : "clip-path 1000ms cubic-bezier(0.4, 0, 0.2, 1)",
+  } as const;
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -44,7 +55,7 @@ export default function Game() {
           Kiki, a Vercel clone, Spotify clone, bnbMEhome, EasySupply, and Aaxel Insurance.
         </p>
       </main>
-      <div ref={parentRef} className="absolute inset-0 z-0" />
+      <div ref={parentRef} className="absolute inset-0 z-0" style={reveal} />
       <div className="pointer-events-none absolute inset-0 z-10 select-none">
         <Hud />
         <ObjectiveTracker />
@@ -60,7 +71,7 @@ export default function Game() {
         <AchievementsPanel />
         <GarageMenu />
         <TouchControls />
-        <LoadingVeil />
+        <IntroOverlay />
       </div>
     </div>
   );

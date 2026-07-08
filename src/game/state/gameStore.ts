@@ -17,7 +17,8 @@ export interface GameUIState {
   audioStarted: boolean;
   muted: boolean;
   reducedMotion: boolean;
-  ready: boolean;
+  ready: boolean; // world scene has committed its first frame (textures baked)
+  started: boolean; // visitor pressed "start" on the intro → world paints in
   currentArea: AreaId;
   focusedId: string | null; // anchor revealed in the side panel
   nearId: string | null; // anchor in proximity (shows the E hint)
@@ -78,6 +79,7 @@ let state: GameUIState = {
     typeof window !== "undefined" &&
     !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
   ready: false,
+  started: false,
   currentArea: "forest",
   focusedId: null,
   nearId: null,
@@ -215,6 +217,10 @@ export const gameStore = {
   },
   setReady() {
     if (!state.ready) set({ ready: true });
+  },
+  /** Visitor pressed start on the intro — unlocks driving + paints the world in. */
+  introStart() {
+    if (!state.started) set({ started: true });
   },
   startMission(id: string, objective: string) {
     set({ activeMissionId: id, objective });

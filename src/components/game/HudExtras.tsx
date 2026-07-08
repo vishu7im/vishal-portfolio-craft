@@ -1,29 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Keyboard } from "lucide-react";
-import { useGameStore } from "@/game/state/gameStore";
+import { ChevronDown, ChevronUp, Keyboard, Volume2, VolumeX } from "lucide-react";
+import { gameStore, useGameStore } from "@/game/state/gameStore";
 import { frame } from "@/game/state/gameStore";
 import { WORLD, chapterFor } from "@/game/world";
 import { LEVEL_TITLES } from "@/game/content/achievements";
 
-/** Full-screen veil shown until the world scene has committed its first frame. */
-export function LoadingVeil() {
-  const ready = useGameStore((s) => s.ready);
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => {
-    if (ready) {
-      const t = setTimeout(() => setHidden(true), 500);
-      return () => clearTimeout(t);
-    }
-  }, [ready]);
-  if (hidden) return null;
+const PAPER_VEIL =
+  "radial-gradient(120% 90% at 50% 40%, #f6efe2 0%, #ece2d1 60%, #e3d7c2 100%)";
+
+/** Spinning progress ring shown while the world bakes its textures. */
+function LoadingRing() {
   return (
-    <div
-      className="pointer-events-none absolute inset-0 z-50 grid place-items-center transition-opacity duration-500"
-      style={{
-        opacity: ready ? 0 : 1,
-        background: "radial-gradient(120% 90% at 50% 40%, #f6efe2 0%, #ece2d1 60%, #e3d7c2 100%)",
-      }}
-    >
+    <div className="flex flex-col items-center gap-5">
+      <svg viewBox="0 0 48 48" className="h-14 w-14 animate-spin" style={{ animationDuration: "1.1s" }}>
+        <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(91,83,70,0.18)" strokeWidth="4" />
+        <path
+          d="M24 4 a20 20 0 0 1 20 20"
+          fill="none"
+          stroke="#c98a3c"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+      </svg>
       <p className="font-mono text-[11px] uppercase tracking-[0.4em] text-[#5b5346]">
         warming up the engine…
       </p>
@@ -31,20 +29,128 @@ export function LoadingVeil() {
   );
 }
 
+/**
+ * The arrival moment (docs/REDESIGN_ROADMAP.md, Phase 10): a full-screen paper
+ * veil that shows a loading ring, then a start prompt with a controls summary
+ * and a mute toggle. Pressing start inits audio on that gesture (via the store →
+ * WorldScene) and paints the world in — the canvas irises open from the car
+ * (see Game.tsx) while this veil fades. `#skip` bypasses it for dev.
+ */
+export function IntroOverlay() {
+  const ready = useGameStore((s) => s.ready);
+  const started = useGameStore((s) => s.started);
+  const muted = useGameStore((s) => s.muted);
+  const reduced = useGameStore((s) => s.reducedMotion);
+  const [hidden, setHidden] = useState(false);
+
+  // dev bypass: `?skip` (a query param, not a hash — the app uses HashRouter, so
+  // a hash would be read as a route and never load the game)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.toLowerCase().includes("skip")) {
+      gameStore.introStart();
+    }
+  }, []);
+
+  // fade out then unmount once the world has been entered
+  useEffect(() => {
+    if (!started) return;
+    const t = setTimeout(() => setHidden(true), reduced ? 150 : 650);
+    return () => clearTimeout(t);
+  }, [started, reduced]);
+
+  // let a keypress start too (once the prompt is up), matching the click gesture
+  useEffect(() => {
+    if (!ready || started) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        gameStore.introStart();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [ready, started]);
+
+  if (hidden) return null;
+
+  return (
+    <div
+      className={`${started ? "pointer-events-none" : "pointer-events-auto"} absolute inset-0 z-50 grid place-items-center transition-opacity duration-500`}
+      style={{ opacity: started ? 0 : 1, background: PAPER_VEIL }}
+      aria-hidden={started}
+    >
+      {!ready ? (
+        <LoadingRing />
+      ) : (
+        <div className="animate-fade-up flex max-w-[92vw] flex-col items-center text-center">
+          <p className="font-mono text-[11px] uppercase tracking-[0.45em] text-[#8a7a5e]">
+            Interactive Portfolio
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[#20242c] sm:text-5xl">
+            Vishal Munday
+          </h1>
+          <p className="mt-2 text-[15px] text-[#5b5346]">
+            A little driving game. Explore the districts — each is a chapter of the work.
+          </p>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            {[
+              ["W A S D", "Drive"],
+              ["Shift", "Nitro"],
+              ["E", "Interact"],
+            ].map(([k, label]) => (
+              <span
+                key={label}
+                className="flex items-center gap-2 rounded-full border border-[#20242c]/12 bg-white/55 px-3 py-1.5 text-xs font-medium text-[#3a4048]"
+              >
+                <kbd className="rounded bg-[#20242c] px-1.5 py-0.5 font-mono text-[10px] text-[#f4ede0]">
+                  {k}
+                </kbd>
+                {label}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-8 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => gameStore.introStart()}
+              className="rounded-full bg-[#20242c] px-7 py-3 text-sm font-semibold text-[#f4ede0] shadow-lg transition hover:bg-[#2f3540] active:scale-[0.98]"
+            >
+              Enter the world ▸
+            </button>
+            <button
+              type="button"
+              onClick={() => gameStore.toggleMute()}
+              className="grid h-11 w-11 place-items-center rounded-full border border-[#20242c]/12 bg-white/55 text-[#3a4048] transition hover:bg-white/80"
+              aria-label={muted ? "Unmute" : "Mute"}
+              title={muted ? "Sound off" : "Sound on"}
+            >
+              {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Chapter title card whenever you cross into a new life chapter. */
 export function AreaIntro() {
   const areaId = useGameStore((s) => s.currentArea);
-  const ready = useGameStore((s) => s.ready);
+  const started = useGameStore((s) => s.started);
   const [visible, setVisible] = useState(false);
   const first = useRef(true);
 
+  // wait for the world to be entered so the first chapter card lands with the
+  // paint-in reveal rather than playing out behind the intro veil
   useEffect(() => {
-    if (!ready) return;
+    if (!started) return;
     setVisible(true);
     const t = setTimeout(() => setVisible(false), first.current ? 3600 : 2800);
     first.current = false;
     return () => clearTimeout(t);
-  }, [areaId, ready]);
+  }, [areaId, started]);
 
   const chapter = chapterFor(areaId);
   const area = WORLD.areas.find((a) => a.id === areaId);

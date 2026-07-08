@@ -62,6 +62,7 @@ export class WorldScene extends Phaser.Scene {
   private lastMuted = gameStore.getState().muted;
   private lastContext: InputContext = "driving";
   private lastFocused: string | null = null;
+  private lastStarted = false;
   private lastArea: AreaId | null = null;
   private jokeIx = 0;
   private gateZoomed = false;
@@ -145,9 +146,22 @@ export class WorldScene extends Phaser.Scene {
         this.lastMuted = st.muted;
         this.audio.setMuted(st.muted);
       }
+      // Init audio on the intro's start gesture (this listener runs synchronously
+      // inside the click's call stack, satisfying the browser autoplay policy).
+      if (st.started && !this.lastStarted) {
+        this.lastStarted = true;
+        this.ensureAudio();
+      }
       // Swap the input context so driving is suspended while an overlay is open
-      // (project panel or achievements menu); Escape/back still closes it.
-      const ctx: InputContext = st.focusedId ? "panel" : st.achievementsOpen ? "menu" : "driving";
+      // (intro not yet started, project panel, or achievements menu); Esc/back
+      // still closes overlays.
+      const ctx: InputContext = !st.started
+        ? "intro"
+        : st.focusedId
+          ? "panel"
+          : st.achievementsOpen
+            ? "menu"
+            : "driving";
       if (ctx !== this.lastContext) {
         this.lastContext = ctx;
         setInputContext(ctx);
@@ -174,6 +188,13 @@ export class WorldScene extends Phaser.Scene {
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.teardown, this);
     this.events.once(Phaser.Scenes.Events.DESTROY, this.teardown, this);
+
+    // Lock driving behind the intro until the visitor presses start (the
+    // subscribe above only fires on *changes*, so seed the context here).
+    this.lastStarted = gameStore.getState().started;
+    const initCtx: InputContext = this.lastStarted ? "driving" : "intro";
+    setInputContext(initCtx);
+    this.lastContext = initCtx;
 
     const area = areaAt(s.x, s.y);
     this.lastArea = area.id;
