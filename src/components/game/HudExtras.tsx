@@ -8,6 +8,39 @@ import { LEVEL_TITLES } from "@/game/content/achievements";
 const PAPER_VEIL =
   "radial-gradient(120% 90% at 50% 40%, #f6efe2 0%, #ece2d1 60%, #e3d7c2 100%)";
 
+/**
+ * Cinematic vignette (Phase 11 art pass) — a radial-gradient overlay that
+ * darkens the corners for depth/focus and deepens after dark, driven by the
+ * day/night `frame.nightness`. Done in CSS (not a WebGL post-FX) so it renders
+ * identically on every device and never fights the in-canvas day/night tint. It
+ * sits below the HUD (z-[5]) so only the world dims, never the readouts.
+ */
+export function WorldVignette() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      if (ref.current) ref.current.style.opacity = (0.4 + frame.nightness * 0.46).toFixed(3);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      data-vignette
+      className="pointer-events-none fixed inset-0 z-[5]"
+      style={{
+        opacity: 0.4,
+        background:
+          "radial-gradient(ellipse 80% 80% at 50% 47%, transparent 40%, rgba(14,17,28,0.5) 76%, rgba(9,11,20,0.9) 100%)",
+      }}
+    />
+  );
+}
+
 /** Spinning progress ring shown while the world bakes its textures. */
 function LoadingRing() {
   return (

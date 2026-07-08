@@ -288,6 +288,8 @@ export const frame = {
   timeScale: 1,
   /** 0..1 position in the day/night cycle (0 = noon) */
   timeOfDay: 0,
+  /** 0 at noon → 1 deep night; drives the CSS vignette darkening */
+  nightness: 0,
   /** command flags React -> Phaser */
   requestTravel: null as { x: number; y: number } | null,
 };

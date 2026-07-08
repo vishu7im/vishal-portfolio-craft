@@ -8,7 +8,7 @@ import { Minimap } from "@/components/game/Minimap";
 import { ObjectiveTracker } from "@/components/game/ObjectiveTracker";
 import { GarageMenu } from "@/components/game/GarageMenu";
 import { TouchControls } from "@/components/game/TouchControls";
-import { AreaIntro, ClockChip, ControlsCard, IntroOverlay, LevelUp, Speedometer } from "@/components/game/HudExtras";
+import { AreaIntro, ClockChip, ControlsCard, IntroOverlay, LevelUp, Speedometer, WorldVignette } from "@/components/game/HudExtras";
 import { AchievementsPanel } from "@/components/game/AchievementsPanel";
 import { ChatPanel } from "@/components/game/ChatPanel";
 import { Seo } from "@/components/Seo";
@@ -23,9 +23,13 @@ export default function Game() {
   // Paint-in: the canvas irises open from the car (screen centre) once the
   // visitor presses start on the intro; before that it's clipped to nothing and
   // the paper page/overlay shows through. Reduced-motion gets an instant reveal.
+  // The colour grade (Phase 11 art pass) is a CSS filter on the canvas — richer,
+  // punchier colour than the flat render — done in CSS, not a WebGL post-FX, so
+  // it renders identically on every device.
   const reveal = {
     clipPath: `circle(${started ? "150%" : "0%"} at 50% 52%)`,
     transition: reduced ? "none" : "clip-path 1000ms cubic-bezier(0.4, 0, 0.2, 1)",
+    filter: "saturate(1.16) contrast(1.05) brightness(1.01)",
   } as const;
 
   useEffect(() => {
@@ -56,6 +60,7 @@ export default function Game() {
         </p>
       </main>
       <div ref={parentRef} className="absolute inset-0 z-0" style={reveal} />
+      <WorldVignette />
       <div className="pointer-events-none absolute inset-0 z-10 select-none">
         <Hud />
         <ObjectiveTracker />

@@ -77,6 +77,7 @@ export class DayNightSystem {
     const tint = this.cycle.color("tint");
     const overlay = this.cycle.num("overlay");
     this.nightness = clamp(this.cycle.num("nightness"), 0, 1);
+    frame.nightness = this.nightness; // consumed by the CSS vignette overlay
 
     // MULTIPLY toward the key colour: blend white → colour by overlay strength
     const mix = (c: number) => Math.round(255 + (c - 255) * Math.min(1, overlay * 2));
