@@ -63,6 +63,20 @@ export class CameraRig {
     this.cinematicZoom = zoom;
   }
 
+  // Cinematic framing: glide the view off the car to frame a world point (a
+  // focused anchor) and hold a zoom, then release back to the car. Reuses the
+  // same smoothed focus point as normal follow, so the move in and the return
+  // are both eased — no snap, no glitch (reference View cinematic mode).
+  private cinematicPoint: { x: number; y: number } | null = null;
+  cinematicFocus(x: number, y: number, zoom: number) {
+    this.cinematicPoint = { x, y };
+    this.cinematicZoom = zoom;
+  }
+  releaseCinematic() {
+    this.cinematicPoint = null;
+    this.cinematicZoom = null;
+  }
+
   /** 0..1 closeness to the nearest portfolio anchor; drives the slow-roll zoom-in */
   setNearness(t: number) {
     this.nearness = t;
@@ -72,9 +86,11 @@ export class CameraRig {
     const speed = this.car.speedNorm;
     const dt = Math.min(deltaMs, 33) / 1000; // clamp spikes (reference clamps to 1/30)
 
-    // --- magnet follow: chase the car with a distance-proportional rate ---
-    const dx = this.car.x - this.focusX;
-    const dy = this.car.y - this.focusY;
+    // --- magnet follow: chase the car (or a cinematic framing point) ---
+    const followX = this.cinematicPoint ? this.cinematicPoint.x : this.car.x;
+    const followY = this.cinematicPoint ? this.cinematicPoint.y : this.car.y;
+    const dx = followX - this.focusX;
+    const dy = followY - this.focusY;
     const dist = Math.hypot(dx, dy);
     const rate =
       TUNING.camMagnetBase + TUNING.camMagnetGain * Math.min(dist, TUNING.camMagnetDistCap);

@@ -16,6 +16,7 @@ import { CarFxSystem } from "../systems/CarFxSystem";
 import { TimeScale } from "../systems/TimeScale";
 import { isOnDirt } from "../world/roads";
 import { ProximitySystem } from "../systems/ProximitySystem";
+import { AnchorMarkers } from "../systems/AnchorMarkers";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
 import { MissionManager } from "../systems/MissionManager";
 import { ProgressionSystem } from "../systems/ProgressionSystem";
@@ -41,6 +42,7 @@ export class WorldScene extends Phaser.Scene {
   private tire!: TireMarks;
   private carFx!: CarFxSystem;
   private proximity!: ProximitySystem;
+  private markers!: AnchorMarkers;
   private collectibles!: CollectibleSystem;
   private mission!: MissionManager;
   private progression!: ProgressionSystem;
@@ -59,6 +61,7 @@ export class WorldScene extends Phaser.Scene {
   private unsub: () => void = () => {};
   private lastMuted = gameStore.getState().muted;
   private lastContext: InputContext = "driving";
+  private lastFocused: string | null = null;
   private lastArea: AreaId | null = null;
   private jokeIx = 0;
   private gateZoomed = false;
@@ -123,6 +126,7 @@ export class WorldScene extends Phaser.Scene {
     this.tire = new TireMarks(this);
     this.carFx = new CarFxSystem(this, this.car, this.rig, this.tire, this.dayNight);
     this.proximity = new ProximitySystem(WORLD.anchors);
+    this.markers = new AnchorMarkers(this, WORLD.anchors, accentFor);
     this.collectibles = new CollectibleSystem(this, WORLD.collectibles, this.audio);
     this.mission = new MissionManager(this, this.car, this.audio);
     this.mission.setCameraRig(this.rig);
@@ -147,6 +151,20 @@ export class WorldScene extends Phaser.Scene {
       if (ctx !== this.lastContext) {
         this.lastContext = ctx;
         setInputContext(ctx);
+      }
+      // Cinematic framing: glide the camera to frame a focused anchor, then
+      // release back to the car on close. Bias the frame right of the subject so
+      // it clears the right-side panel (centred for the full-screen chat panel).
+      if (st.focusedId !== this.lastFocused) {
+        this.lastFocused = st.focusedId;
+        const anchor = st.focusedId ? WORLD.anchors.find((a) => a.id === st.focusedId) : null;
+        if (anchor) {
+          const isChat = anchor.content.contentKind === "chat";
+          const offset = isChat ? 0 : Math.min(150, this.cameras.main.width * 0.14);
+          this.rig.cinematicFocus(anchor.x + offset, anchor.y, 1.35);
+        } else {
+          this.rig.releaseCinematic();
+        }
       }
     });
 
@@ -517,6 +535,11 @@ export class WorldScene extends Phaser.Scene {
         },
       },
       {
+        order: ORDER.MARKERS,
+        label: "anchor-markers",
+        run: () => this.markers.update(this.car.x, this.car.y),
+      },
+      {
         order: ORDER.INTERACT,
         label: "interact",
         run: () => this.handleInteractInput(),
@@ -690,6 +713,7 @@ export class WorldScene extends Phaser.Scene {
     this.vignettes?.destroy();
     this.achievements?.destroy();
     this.dayNight?.destroy();
+    this.markers?.destroy();
     this.opsScreens?.destroy();
     this.audio?.dispose();
   }
