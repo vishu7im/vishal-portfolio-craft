@@ -14,7 +14,16 @@ export default function Classic() {
   const [profile] = usePortfolioData<Profile>("profile");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
+      {/* soft top glow so the page doesn't read as a flat grey sheet */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
+        style={{
+          background:
+            "radial-gradient(120% 100% at 50% -10%, hsl(226 84% 56% / 0.08) 0%, transparent 60%)",
+        }}
+      />
       <Seo
         title="Vishal Munday Resume | Backend Tech Lead, AI Engineer, Node.js & RAG"
         description="Classic resume view for Vishal Munday: backend development, AI agents, RAG applications, APIs, DevOps, databases, professional experience, projects, and contact details."

@@ -9,6 +9,7 @@ import {
   FileText,
   Copy,
   GraduationCap,
+  Briefcase,
 } from "lucide-react";
 import {
   usePortfolioData,
@@ -30,9 +31,12 @@ function Chip({ children }: { children: React.ReactNode }) {
 function SectionHead({ eyebrow, title, lead }: { eyebrow: string; title: string; lead?: string }) {
   return (
     <header className="mb-6">
-      <p className="eyebrow mb-2">{eyebrow}</p>
+      <div className="mb-2 flex items-center gap-2.5">
+        <span className="h-px w-6 bg-primary/60" />
+        <p className="eyebrow text-primary/90">{eyebrow}</p>
+      </div>
       <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>
-      {lead && <p className="mt-2 max-w-prose text-muted-foreground">{lead}</p>}
+      {lead && <p className="mt-2 max-w-prose leading-relaxed text-muted-foreground">{lead}</p>}
     </header>
   );
 }
@@ -53,7 +57,7 @@ function LinkBtn({
       rel="noreferrer"
       className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
         primary
-          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
           : "border border-border bg-card text-foreground hover:bg-secondary"
       }`}
     >
@@ -63,7 +67,7 @@ function LinkBtn({
 }
 
 /* ------------------------------------------------------------------ */
-/* About                                                               */
+/* About — the hero                                                    */
 /* ------------------------------------------------------------------ */
 
 export function AboutContent() {
@@ -71,54 +75,65 @@ export function AboutContent() {
 
   return (
     <section>
-      <SectionHead eyebrow="whoami" title={`Hi, I'm ${profile.name.split(" ")[0]}.`} />
+      {/* Hero card — warm gradient, portrait, name, quick facts */}
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 shadow-[0_1px_2px_rgba(17,18,22,0.04),0_24px_48px_-28px_rgba(17,18,22,0.22)] sm:p-8">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-primary/[0.06] blur-3xl" />
 
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <img
-          src={profile.avatar}
-          alt={`Portrait of ${profile.name}`}
-          className="h-28 w-28 flex-none rounded-2xl border border-border bg-secondary object-cover"
-          loading="lazy"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/placeholder.svg";
-          }}
-        />
-        <div className="space-y-4">
-          <p className="text-lg leading-relaxed">{profile.intro}</p>
-          <p className="leading-relaxed text-muted-foreground">{profile.bio}</p>
+        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
+          <img
+            src={profile.avatar}
+            alt={`Portrait of ${profile.name}`}
+            className="h-28 w-28 flex-none rounded-2xl border border-border bg-secondary object-cover shadow-md ring-1 ring-primary/15 sm:h-32 sm:w-32"
+            loading="lazy"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = "/placeholder.svg";
+            }}
+          />
+          <div className="min-w-0">
+            <p className="eyebrow text-primary/90">whoami</p>
+            <h1 className="mt-1.5 text-3xl font-bold tracking-tight sm:text-4xl">{profile.name}</h1>
+            <p className="mt-1.5 text-base text-muted-foreground">
+              <span className="font-medium text-foreground">{profile.title}</span>
+              {profile.company && <> · {profile.company}</>}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 text-primary/80" strokeWidth={1.75} /> {profile.location}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Briefcase className="h-4 w-4 text-primary/80" strokeWidth={1.75} />{" "}
+                {profile.experience}
+              </span>
+              <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.15)]" />
+                Open to work
+              </span>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {profile.resume && (
+                <LinkBtn href={profile.resume} primary>
+                  <FileText className="h-4 w-4" /> Résumé
+                </LinkBtn>
+              )}
+              <LinkBtn href={profile.github}>
+                <Github className="h-4 w-4" /> GitHub
+              </LinkBtn>
+              <LinkBtn href={profile.linkedin}>
+                <Linkedin className="h-4 w-4" /> LinkedIn
+              </LinkBtn>
+            </div>
+          </div>
         </div>
       </div>
 
-      <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label="Role" value={profile.title} />
-        <Stat label="At" value={profile.company} />
-        <Stat label="Experience" value={profile.experience} />
-        <Stat label="Based in" value={profile.location} />
-      </dl>
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        {profile.resume && (
-          <LinkBtn href={profile.resume} primary>
-            <FileText className="h-4 w-4" /> Résumé
-          </LinkBtn>
-        )}
-        <LinkBtn href={profile.github}>
-          <Github className="h-4 w-4" /> GitHub
-        </LinkBtn>
-        <LinkBtn href={profile.linkedin}>
-          <Linkedin className="h-4 w-4" /> LinkedIn
-        </LinkBtn>
+      {/* Intro + bio */}
+      <div className="mt-6 space-y-4">
+        <p className="text-lg leading-relaxed">{profile.intro}</p>
+        <p className="leading-relaxed text-muted-foreground">{profile.bio}</p>
       </div>
     </section>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-secondary/50 px-3 py-2.5">
-      <dt className="eyebrow">{label}</dt>
-      <dd className="mt-0.5 text-sm font-medium">{value}</dd>
-    </div>
   );
 }
 
@@ -140,7 +155,7 @@ export function SkillsContent() {
         {skills.map((s) => (
           <span
             key={s.name}
-            className="rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium shadow-[0_1px_2px_rgba(17,18,22,0.04)] transition-colors hover:border-primary/40 hover:text-primary"
+            className="rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium shadow-[0_1px_2px_rgba(17,18,22,0.04)] transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
           >
             {s.name}
           </span>
@@ -151,7 +166,7 @@ export function SkillsContent() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Work — experience + education                                       */
+/* Work — experience (timeline) + education                            */
 /* ------------------------------------------------------------------ */
 
 export function WorkContent() {
@@ -159,29 +174,37 @@ export function WorkContent() {
   const [education] = usePortfolioData<Education[]>("education");
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-10">
       <div>
         <SectionHead eyebrow="experience" title="Where I've worked" />
-        <ol className="space-y-4">
+        {/* vertical timeline */}
+        <ol className="relative space-y-4 border-l border-border/80 pl-6">
           {experience.map((job) => (
-            <li key={job.id} className="rounded-2xl border border-border bg-card p-5">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <h3 className="text-base font-semibold">
-                  {job.position}
-                  <span className="text-muted-foreground"> · {job.company}</span>
-                </h3>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {job.startDate} — {job.current ? "Present" : job.endDate}
-                </span>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{job.description}</p>
-              {job.technologies?.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {job.technologies.map((t) => (
-                    <Chip key={t}>{t}</Chip>
-                  ))}
+            <li key={job.id} className="relative">
+              <span
+                className={`absolute -left-[31px] top-5 h-3 w-3 rounded-full border-2 border-background ${
+                  job.current ? "bg-primary shadow-[0_0_0_4px_rgba(59,102,241,0.14)]" : "bg-muted-foreground/40"
+                }`}
+              />
+              <div className="rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-[0_12px_32px_-18px_rgba(17,18,22,0.25)]">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <h3 className="text-base font-semibold">
+                    {job.position}
+                    <span className="text-muted-foreground"> · {job.company}</span>
+                  </h3>
+                  <span className="rounded-full bg-secondary px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+                    {job.startDate} — {job.current ? "Present" : job.endDate}
+                  </span>
                 </div>
-              )}
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{job.description}</p>
+                {job.technologies?.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {job.technologies.map((t) => (
+                      <Chip key={t}>{t}</Chip>
+                    ))}
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ol>
@@ -195,7 +218,7 @@ export function WorkContent() {
               key={edu.id}
               className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4"
             >
-              <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-secondary text-foreground">
+              <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <GraduationCap className="h-5 w-5" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -238,8 +261,11 @@ export function ProjectsContent() {
         {ordered.map((p) => (
           <article
             key={p.id}
-            className="flex flex-col rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-[0_12px_32px_-16px_rgba(17,18,22,0.25)]"
+            className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_16px_36px_-18px_rgba(17,18,22,0.28)]"
           >
+            {p.featured && (
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary/70 to-primary/0" />
+            )}
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-base font-semibold leading-snug">{p.title}</h3>
               {p.featured && (
@@ -298,11 +324,11 @@ export function ContactContent() {
         lead="Open to backend & applied-AI roles and collaborations. The fastest way to reach me:"
       />
 
-      <div className="space-y-2.5">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         <button
           type="button"
           onClick={copyEmail}
-          className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-secondary"
+          className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:border-primary/30 hover:bg-secondary"
         >
           <Mail className="h-5 w-5 flex-none text-primary" strokeWidth={1.75} />
           <span className="min-w-0 flex-1 truncate text-sm">{profile.email}</span>
@@ -311,13 +337,13 @@ export function ContactContent() {
 
         <a
           href={`tel:${profile.phone.replace(/\s/g, "")}`}
-          className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:bg-secondary"
+          className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary/30 hover:bg-secondary"
         >
           <Phone className="h-5 w-5 flex-none text-primary" strokeWidth={1.75} />
           <span className="text-sm">{profile.phone}</span>
         </a>
 
-        <div className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+        <div className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:col-span-2">
           <MapPin className="h-5 w-5 flex-none text-primary" strokeWidth={1.75} />
           <span className="text-sm">{profile.location}</span>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Keyboard, Volume2, VolumeX } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ChevronDown, ChevronUp, FileText, Keyboard, Volume2, VolumeX } from "lucide-react";
 import { gameStore, useGameStore } from "@/game/state/gameStore";
 import { frame } from "@/game/state/gameStore";
 import { WORLD, chapterFor } from "@/game/world";
@@ -144,7 +145,7 @@ export function IntroOverlay() {
             ))}
           </div>
 
-          <div className="mt-8 flex items-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => gameStore.introStart()}
@@ -152,6 +153,13 @@ export function IntroOverlay() {
             >
               Enter the world ▸
             </button>
+            <Link
+              to="/classic"
+              className="inline-flex items-center gap-2 rounded-full border border-[#20242c]/15 bg-white/55 px-5 py-3 text-sm font-semibold text-[#3a4048] shadow-sm transition hover:bg-white/85 active:scale-[0.98]"
+            >
+              <FileText className="h-4 w-4" strokeWidth={1.9} />
+              View résumé
+            </Link>
             <button
               type="button"
               onClick={() => gameStore.toggleMute()}
@@ -162,6 +170,9 @@ export function IntroOverlay() {
               {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </button>
           </div>
+          <p className="mt-4 text-xs text-[#8a7a5e]">
+            Prefer to read? The résumé has everything, no driving required.
+          </p>
         </div>
       )}
     </div>
