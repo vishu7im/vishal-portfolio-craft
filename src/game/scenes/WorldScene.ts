@@ -13,6 +13,7 @@ import { CarController } from "../systems/CarController";
 import { CameraRig } from "../systems/CameraRig";
 import { TireMarks } from "../systems/TireMarks";
 import { CarFxSystem } from "../systems/CarFxSystem";
+import { TimeScale } from "../systems/TimeScale";
 import { isOnDirt } from "../world/roads";
 import { ProximitySystem } from "../systems/ProximitySystem";
 import { CollectibleSystem } from "../systems/CollectibleSystem";
@@ -36,6 +37,7 @@ import {
 export class WorldScene extends Phaser.Scene {
   private car!: CarController;
   private rig!: CameraRig;
+  private timeScale = new TimeScale();
   private tire!: TireMarks;
   private carFx!: CarFxSystem;
   private proximity!: ProximitySystem;
@@ -388,6 +390,15 @@ export class WorldScene extends Phaser.Scene {
     return Phaser.Math.Clamp(impact * 0.14, 0.2, 0.85);
   }
 
+  /** Only genuinely hard hits earn bullet-time; 0 below the threshold. */
+  private bulletStrength(impact: number) {
+    return Phaser.Math.Clamp(
+      (impact - TUNING.bulletHitThreshold) / TUNING.bulletHitRange,
+      0,
+      1
+    );
+  }
+
   private onCollisionStart(event: Phaser.Physics.Matter.Events.CollisionStartEvent) {
     for (const pair of event.pairs) {
       const a = pair.bodyA as MatterJS.BodyType & { gameObject?: Phaser.GameObjects.GameObject };
@@ -419,6 +430,7 @@ export class WorldScene extends Phaser.Scene {
           const blasted = this.destruction.smash(other as Phaser.GameObjects.Image, impact);
           if (blasted) this.car.flipFromCollision(impact, other.x, other.y);
           this.rig.kick(this.rollKick(impact));
+          this.timeScale.hit(this.bulletStrength(impact));
         } else {
           this.destruction.thud(other.x, other.y, impact);
         }
@@ -438,13 +450,22 @@ export class WorldScene extends Phaser.Scene {
         this.destruction.thud(other.x, other.y, impact);
         this.car.onCollision(impact, other.x, other.y);
         this.rig.kick(this.rollKick(impact));
+        this.timeScale.hit(this.bulletStrength(impact)); // slam into a wall → slow-mo
       }
     }
   }
 
   update(time: number, delta: number) {
     if (!this.car) return;
-    const ctx: FrameContext = { time, delta };
+    // Bullet-time: one scale slows the Matter step (position integration) and the
+    // delta the pipeline hands every system, so physics, camera and animation slow
+    // together. The scale itself advances in REAL time so slow-mo lasts a fixed
+    // wall-clock span and always recovers. Stays 1.0 except right after a hard hit.
+    this.timeScale.update(delta);
+    const ts = this.timeScale.scale;
+    this.matter.world.engine.timing.timeScale = ts;
+    frame.timeScale = ts;
+    const ctx: FrameContext = { time, delta: delta * ts };
     for (const step of this.pipeline) step.run(ctx);
   }
 

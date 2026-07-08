@@ -104,6 +104,15 @@ export const TUNING = {
   // crash
   crashSpeedThreshold: 3.2,
   destroySpeedThreshold: 2.2,
+  // collision & feedback juice — force-scaled impact + rare bullet-time on hard
+  // hits (reference routes contact FORCE to onCollision(force,pos); we estimate
+  // force from impact speed). A single TimeScale source slows the whole frame.
+  bulletHitThreshold: 6.2, // impact speed (px/step) a hit must exceed to slow time
+  bulletHitRange: 6, // span above the threshold that maps to full strength
+  bulletMinScale: 0.35, // deepest time scale on the hardest hit
+  bulletHoldMs: 130, // real-ms held at the dipped scale before recovering
+  bulletRecover: 3.4, // ramp-back rate toward 1.0 (per second)
+  bulletCooldownMs: 900, // min real-ms between slow-mo triggers (anti-spam)
   // proximity default
   anchorRadius: 150,
   reactionRadius: 320,

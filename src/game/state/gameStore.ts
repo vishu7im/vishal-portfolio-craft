@@ -278,6 +278,8 @@ export const frame = {
   braking: false,
   reversing: false,
   onDirt: false, // car is on a dirt shortcut (dust tint, rumble)
+  /** global time scale (1 = real time, <1 = bullet-time on a hard crash) */
+  timeScale: 1,
   /** 0..1 position in the day/night cycle (0 = noon) */
   timeOfDay: 0,
   /** command flags React -> Phaser */
