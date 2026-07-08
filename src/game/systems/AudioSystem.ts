@@ -54,6 +54,9 @@ export class AudioSystem {
   private padFilter: BiquadFilterNode | null = null;
   private ambGain: GainNode | null = null;
   private ambFilter: BiquadFilterNode | null = null;
+  // night crickets bed (gated on by the day-cycle 'night' interval)
+  private crickets: { gain: AudioParam; stop: () => void } | null = null;
+  private cricketsOn = false;
 
   start(muted: boolean, area: AudioLayerConfig) {
     if (this.started) return;
@@ -159,6 +162,7 @@ export class AudioSystem {
     } catch {
       /* noop */
     }
+    this.crickets?.stop();
     this.ctx?.close();
     this.ctx = null;
     this.started = false;
@@ -361,6 +365,61 @@ export class AudioSystem {
       this.rainGain = g;
     }
     this.rainGain!.gain.setTargetAtTime(0.025 * level, t, 1.2);
+  }
+
+  /**
+   * Night ambience bed, toggled by DayNightSystem's `night` cycle interval — the
+   * reference ties ambient loops to day-cycle events the same way. A soft
+   * tremolo-pulsed bandpass-noise "crickets" wash, gated ON only after dark so
+   * the daytime world stays clean (unlike the always-on beds we keep disabled).
+   */
+  setNightAmbience(active: boolean) {
+    if (!this.ctx || !this.ambientBus || active === this.cricketsOn) return;
+    this.cricketsOn = active;
+    const t = this.ctx.currentTime;
+    if (active) {
+      if (!this.crickets) this.crickets = this.buildCrickets(this.ctx, this.ambientBus);
+      this.crickets.gain.cancelScheduledValues(t);
+      this.crickets.gain.linearRampToValueAtTime(AMBIENCE_LEVEL, t + 2.5);
+    } else if (this.crickets) {
+      this.crickets.gain.cancelScheduledValues(t);
+      this.crickets.gain.linearRampToValueAtTime(0.0001, t + 2.5);
+    }
+  }
+
+  private buildCrickets(ctx: AudioContext, out: GainNode): { gain: AudioParam; stop: () => void } {
+    const src = ctx.createBufferSource();
+    src.buffer = this.noiseBuf;
+    src.loop = true;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 4600;
+    bp.Q.value = 14;
+    // tremolo: a ~9 Hz pulse gives the chirpy rhythm
+    const trem = ctx.createGain();
+    trem.gain.value = 0.5;
+    const lfo = ctx.createOscillator();
+    lfo.type = "triangle";
+    lfo.frequency.value = 9;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.5;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.0001;
+    lfo.connect(lfoGain).connect(trem.gain);
+    src.connect(bp).connect(trem).connect(gain).connect(out);
+    src.start();
+    lfo.start();
+    return {
+      gain: gain.gain,
+      stop: () => {
+        try {
+          src.stop();
+          lfo.stop();
+        } catch {
+          /* noop */
+        }
+      },
+    };
   }
 
   private tone(freq: number, dur: number, peak = TONE_PEAK, type: OscillatorType = "sine") {

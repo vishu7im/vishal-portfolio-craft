@@ -51,6 +51,27 @@ export function areaPalette(id: AreaId): AreaPalette {
   return PALETTE.area[id];
 }
 
+// --- Day/night mood presets ------------------------------------------------
+// Keyframed by Cycles (DayNightSystem) to continuously recolor the world. These
+// are OUR hues, not Bruno's candy/vaporwave set: a warm-paper day that dims to a
+// golden dusk, a deep indigo night, and a rosy dawn — so the mood animates while
+// the hand-drawn identity holds. `tint` is the color a camera-fixed MULTIPLY
+// overlay pushes toward, `overlay` its strength (0 = untouched daylight), and
+// `nightness` (0 noon → 1 deep night) is what glows/lamps read to swell after dark.
+
+export interface DayPhasePreset {
+  tint: { r: number; g: number; b: number };
+  overlay: number;
+  nightness: number;
+}
+
+export const DAY_CYCLE = {
+  day: { tint: { r: 255, g: 250, b: 240 }, overlay: 0.0, nightness: 0.0 },
+  dusk: { tint: { r: 255, g: 170, b: 112 }, overlay: 0.3, nightness: 0.32 },
+  night: { tint: { r: 42, g: 54, b: 104 }, overlay: 0.54, nightness: 1.0 },
+  dawn: { tint: { r: 255, g: 186, b: 170 }, overlay: 0.22, nightness: 0.2 },
+} satisfies Record<string, DayPhasePreset>;
+
 /** hex "#rrggbb" -> 0xrrggbb for Phaser tint APIs */
 export function hex(color: string): number {
   return parseInt(color.replace("#", ""), 16);

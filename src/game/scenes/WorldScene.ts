@@ -116,7 +116,7 @@ export class WorldScene extends Phaser.Scene {
     const s = WORLD.spawn;
     this.car = new CarController(this, s.x, s.y, s.angle, VEHICLES[DEFAULT_VEHICLE]);
     this.rig = new CameraRig(this, this.car, W, H);
-    this.dayNight = new DayNightSystem(this);
+    this.dayNight = new DayNightSystem(this, this.audio);
     this.ambient = new AmbientWorldSystem(this, this.car, this.dayNight, this.audio);
 
     // --- systems that depend on car ---
