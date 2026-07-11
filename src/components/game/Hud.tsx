@@ -12,6 +12,14 @@ export function Hud() {
 
   return (
     <>
+      {/* top-center: résumé — the focal action */}
+      <Link
+        to="/classic"
+        className="glass pointer-events-auto absolute left-1/2 top-5 flex -translate-x-1/2 items-center gap-2 rounded-full px-7 py-3 text-base font-semibold text-white shadow-xl ring-1 ring-white/25 transition hover:bg-white/15 hover:ring-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+      >
+        Résumé
+      </Link>
+
       {/* top-left: current area */}
       <div className="glass pointer-events-none absolute left-4 top-4 rounded-2xl px-4 py-3 text-white">
         <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-white/55">
@@ -40,7 +48,7 @@ export function Hud() {
           </span>
           <span className="tabular-nums text-xs font-medium text-white/70">{xp} XP</span>
         </button>
-        {/* one compact strip: garage · mute · résumé */}
+        {/* one compact strip: garage · mute */}
         <div className="glass pointer-events-auto flex h-10 items-center overflow-hidden rounded-full">
           <button
             onClick={() => gameStore.toggleGarage()}
@@ -57,13 +65,6 @@ export function Hud() {
           >
             {muted ? "🔇" : "🔊"}
           </button>
-          <span className="h-5 w-px bg-white/15" />
-          <Link
-            to="/classic"
-            className="grid h-full place-items-center px-3.5 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
-          >
-            Résumé
-          </Link>
         </div>
       </div>
     </>

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { AreaId } from "../types";
 import { levelForXp } from "../content/achievements";
+import { VEHICLES } from "../config/tuning";
 
 // ---------------------------------------------------------------------------
 // Two channels of state (ported from the old worldStore):
@@ -34,6 +35,8 @@ export interface GameUIState {
   achievementsOpen: boolean;
   missionsDone: string[];
   activeMissionId: string | null;
+  missionTitle: string | null; // active mission title (instruction card)
+  missionBrief: string | null; // active mission brief / what-to-do line
   objective: string | null; // current objective line for the tracker
   vehiclesUnlocked: string[];
   selectedVehicle: string;
@@ -95,8 +98,10 @@ let state: GameUIState = {
   achievementsOpen: false,
   missionsDone: saved.missionsDone ?? [],
   activeMissionId: null,
+  missionTitle: null,
+  missionBrief: null,
   objective: null,
-  vehiclesUnlocked: saved.vehiclesUnlocked?.length ? saved.vehiclesUnlocked : ["sports"],
+  vehiclesUnlocked: Object.keys(VEHICLES), // all cars always available
   selectedVehicle: saved.selectedVehicle ?? "sports",
   garageOpen: false,
 };
@@ -222,8 +227,8 @@ export const gameStore = {
   introStart() {
     if (!state.started) set({ started: true });
   },
-  startMission(id: string, objective: string) {
-    set({ activeMissionId: id, objective });
+  startMission(id: string, title: string, brief: string) {
+    set({ activeMissionId: id, missionTitle: title, missionBrief: brief, objective: title });
   },
   setObjective(objective: string | null) {
     set({ objective });
@@ -235,6 +240,8 @@ export const gameStore = {
       ...gainXp({}, coins),
       missionsDone: [...state.missionsDone, id],
       activeMissionId: state.activeMissionId === id ? null : state.activeMissionId,
+      missionTitle: null,
+      missionBrief: null,
       objective: null,
       coins: state.coins + coins,
     };
@@ -292,4 +299,8 @@ export const frame = {
   nightness: 0,
   /** command flags React -> Phaser */
   requestTravel: null as { x: number; y: number } | null,
+  /** active mission target (world coords) → minimap route + guide arrow */
+  objTargetX: 0,
+  objTargetY: 0,
+  hasObjTarget: false,
 };

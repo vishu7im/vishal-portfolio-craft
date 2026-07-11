@@ -10,7 +10,14 @@ export function TouchControls() {
   const focusedId = useGameStore((s) => s.focusedId);
 
   useEffect(() => {
-    setShow("ontouchstart" in window || navigator.maxTouchPoints > 0);
+    // Show only on touch-primary devices (phones/tablets), not touchscreen
+    // laptops — their primary pointer is a trackpad, so they report
+    // hover: hover / pointer: fine and fall back to keyboard (WASD).
+    const mql = window.matchMedia("(hover: none) and (pointer: coarse)");
+    const update = () => setShow(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
   }, []);
 
   const knobRef = useRef<HTMLDivElement>(null);

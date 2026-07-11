@@ -121,6 +121,30 @@ export function Minimap() {
       // player
       const px = frame.playerX * SX;
       const py = frame.playerY * SY;
+
+      // active-mission route: dashed guide line + pulsing target marker
+      if (frame.hasObjTarget) {
+        const tx = frame.objTargetX * SX;
+        const ty = frame.objTargetY * SY;
+        ctx.strokeStyle = "#ffd24a";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(tx, ty);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const pulse = 3.5 + Math.sin(performance.now() * 0.006) * 1.6;
+        ctx.strokeStyle = "#ffd24a";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(tx, ty, pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "#ffd24a";
+        ctx.beginPath();
+        ctx.arc(tx, ty, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(frame.heading + Math.PI / 2);

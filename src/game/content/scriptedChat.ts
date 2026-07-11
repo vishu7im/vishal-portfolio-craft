@@ -71,7 +71,7 @@ const RULES: Rule[] = [
     match: /\b(contact|hire|email|reach|linkedin|github|resume|cv)\b/i,
     answer: () => {
       const db = getPortfolioData();
-      return `Best routes: GitHub (${db.profile.github}) or LinkedIn (${db.profile.linkedin}). There's also a classic résumé view — top-right button.`;
+      return `Best routes: GitHub (${db.profile.github}) or LinkedIn (${db.profile.linkedin}). There's also a classic résumé view — top-center button.`;
     },
   },
   {
@@ -86,5 +86,5 @@ export function scriptedReply(question: string): string {
     if (rule.match.test(question)) return rule.answer();
   }
   const db = getPortfolioData();
-  return `Hmm, that's outside my training data. I know about ${db.profile.name}'s projects, AI & backend work, career, and education — try one of those, or grab the résumé from the top-right.`;
+  return `Hmm, that's outside my training data. I know about ${db.profile.name}'s projects, AI & backend work, career, and education — try one of those, or grab the résumé from the top center.`;
 }

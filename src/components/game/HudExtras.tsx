@@ -146,20 +146,20 @@ export function IntroOverlay() {
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/classic"
+              className="inline-flex items-center gap-2 rounded-full bg-[#20242c] px-8 py-3.5 text-base font-semibold text-[#f4ede0] shadow-lg transition hover:bg-[#2f3540] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20242c]/40 focus-visible:ring-offset-2"
+            >
+              <FileText className="h-5 w-5" strokeWidth={1.9} />
+              About me ▸
+            </Link>
             <button
               type="button"
               onClick={() => gameStore.introStart()}
-              className="rounded-full bg-[#20242c] px-7 py-3 text-sm font-semibold text-[#f4ede0] shadow-lg transition hover:bg-[#2f3540] active:scale-[0.98]"
+              className="rounded-full border border-[#20242c]/15 bg-white/55 px-5 py-3 text-sm font-semibold text-[#3a4048] shadow-sm transition hover:bg-white/85 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#20242c]/40 focus-visible:ring-offset-2"
             >
               Enter the world ▸
             </button>
-            <Link
-              to="/classic"
-              className="inline-flex items-center gap-2 rounded-full border border-[#20242c]/15 bg-white/55 px-5 py-3 text-sm font-semibold text-[#3a4048] shadow-sm transition hover:bg-white/85 active:scale-[0.98]"
-            >
-              <FileText className="h-4 w-4" strokeWidth={1.9} />
-              View résumé
-            </Link>
             <button
               type="button"
               onClick={() => gameStore.toggleMute()}

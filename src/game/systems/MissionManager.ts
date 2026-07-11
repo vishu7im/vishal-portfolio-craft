@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import toast from "react-hot-toast";
 import type { MissionDef } from "../types";
 import { WORLD } from "../world";
-import { gameStore } from "../state/gameStore";
+import { gameStore, frame } from "../state/gameStore";
 import { TEX_SS } from "../art/textureFactory";
 import type { CarController } from "./CarController";
 import type { AudioSystem } from "./AudioSystem";
@@ -38,6 +38,7 @@ export class MissionManager {
   private cpuBar?: Phaser.GameObjects.Graphics;
   private redPulse?: Phaser.GameObjects.Rectangle;
   private lastObjective = "";
+  private guideArrow?: Phaser.GameObjects.Text;
 
   get isActive() {
     return this.active !== null;
@@ -117,6 +118,44 @@ export class MissionManager {
     }
   }
 
+  /** The live navigation target for the active mission, or null (e.g. escape). */
+  private currentTarget(): { x: number; y: number } | null {
+    const m = this.active;
+    if (!m) return null;
+    if (m.type === "delivery" && m.deliver) return m.deliver;
+    if (m.type === "race" && m.checkpoints) return m.checkpoints[this.cpIndex] ?? null;
+    if (m.type === "boss" && m.stations) return m.stations[this.cpIndex] ?? null;
+    return null; // escape: survival, no fixed point
+  }
+
+  /** Publish the current target to the frame channel (minimap route) and point
+   *  a floating in-world arrow from the car toward it. */
+  private updateGuide() {
+    const t = this.currentTarget();
+    frame.hasObjTarget = !!t;
+    if (t) {
+      frame.objTargetX = t.x;
+      frame.objTargetY = t.y;
+      if (!this.guideArrow) {
+        this.guideArrow = this.scene.add
+          .text(0, 0, "➤", { fontFamily: "sans-serif", fontSize: "30px", color: "#ffd24a" })
+          .setOrigin(0.5)
+          .setDepth(99997);
+      }
+      const a = Math.atan2(t.y - this.car.y, t.x - this.car.x);
+      this.guideArrow.setPosition(this.car.x + Math.cos(a) * 92, this.car.y + Math.sin(a) * 92);
+      this.guideArrow.setRotation(a);
+      this.guideArrow.setVisible(true);
+    } else {
+      this.guideArrow?.setVisible(false);
+    }
+  }
+
+  private clearGuide() {
+    frame.hasObjTarget = false;
+    this.guideArrow?.setVisible(false);
+  }
+
   private cleanup() {
     this.pkg?.destroy();
     this.pkg = undefined;
@@ -131,6 +170,7 @@ export class MissionManager {
     this.redPulse?.destroy();
     this.redPulse = undefined;
     this.rig?.zoomTo(null);
+    this.clearGuide();
   }
 
   private start(m: MissionDef) {
@@ -140,7 +180,7 @@ export class MissionManager {
   private startCore(m: MissionDef) {
     this.active = m;
     this.removeBeacon(m.id);
-    gameStore.startMission(m.id, m.title);
+    gameStore.startMission(m.id, m.title, m.brief);
     this.lastObjective = m.title;
     this.audio.ding(0.9);
     toast(`🎯 ${m.title}: ${m.brief}`);
@@ -280,7 +320,7 @@ export class MissionManager {
   private fail(m: MissionDef, reason: string) {
     this.cleanup();
     this.active = null;
-    gameStore.set({ activeMissionId: null, objective: null });
+    gameStore.set({ activeMissionId: null, missionTitle: null, missionBrief: null, objective: null });
     this.lastObjective = "";
     this.audio.crash(0.5);
     toast(reason);
@@ -289,6 +329,7 @@ export class MissionManager {
 
   update(dt: number, time = 0) {
     if (!this.active) {
+      if (frame.hasObjTarget) this.clearGuide();
       for (const { mission } of this.beacons.values()) {
         if (Math.hypot(this.car.x - mission.giver.x, this.car.y - mission.giver.y) < mission.giver.radius) {
           this.start(mission);
@@ -297,6 +338,8 @@ export class MissionManager {
       }
       return;
     }
+
+    this.updateGuide();
 
     const m = this.active;
     if (m.type === "boss" && m.stations) {

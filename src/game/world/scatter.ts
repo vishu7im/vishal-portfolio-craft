@@ -3,6 +3,10 @@ import type { PropInstance, PropKind, PropPhysics } from "../types";
 // Deterministic scatter helpers so hand-authored areas can be dressed with
 // natural-looking clutter without listing every coordinate.
 
+// Global density multiplier for all decorative scatter. Lower = a cleaner,
+// less cluttered world (POIs, roads and buildings read more clearly).
+export const SCATTER_DENSITY = 0.5;
+
 export function mulberry32(seed: number) {
   let a = seed >>> 0;
   return () => {
@@ -40,8 +44,9 @@ export function scatter(
   const out: PropInstance[] = [];
   const physics = opts.physics ?? "static";
   const [smin, smax] = opts.scale ?? [0.9, 1.15];
+  const n = Math.max(3, Math.round(count * SCATTER_DENSITY));
   let attempts = 0;
-  while (out.length < count && attempts < count * 12) {
+  while (out.length < n && attempts < n * 12) {
     attempts++;
     const x = region.x + (rng() - 0.5) * region.w;
     const y = region.y + (rng() - 0.5) * region.h;
